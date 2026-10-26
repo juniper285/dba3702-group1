@@ -4,7 +4,7 @@
 \name{rentalapp-package}
 \alias{rentalapp}
 \alias{rentalapp-package}
-\title{rentalapp: Singapore Rental Intelligence App}
+\title{rentalapp: RentLens: Singapore Private Rental Explorer}
 \description{
 A Shiny app that helps renters check their budget against URA private residential rental contracts: what their budget gets them, where, how prices have moved, and a shortlist of options.
 }

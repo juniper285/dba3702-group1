@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_app.R
 \name{run_app}
 \alias{run_app}
-\title{Run the Rental Intelligence app}
+\title{Run the RentLens app}
 \usage{
 run_app(...)
 }
@@ -10,5 +10,5 @@ run_app(...)
 \item{...}{Passed to \code{\link[shiny:shinyApp]{shiny::shinyApp()}}, e.g. \code{options = list(port = 8080)}.}
 }
 \description{
-Run the Rental Intelligence app
+Run the RentLens app
 }

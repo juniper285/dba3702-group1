@@ -1,4 +1,4 @@
-#' Run the Rental Intelligence app
+#' Run the RentLens app
 #'
 #' @param ... Passed to [shiny::shinyApp()], e.g. `options = list(port = 8080)`.
 #' @export

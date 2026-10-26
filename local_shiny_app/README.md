@@ -1,4 +1,4 @@
-# Rental Intelligence App (`rentalapp`)
+# RentLens (`rentalapp`)
 
 A Shiny app for renters: budget check, listing check, options within budget, map, price
 trends, area comparison, shortlist and raw transactions. It is structured as
