@@ -1,6 +1,6 @@
 # Rental Intelligence App (`rentalapp`)
 
-A Shiny app for renters: budget check, options within budget, map, price
+A Shiny app for renters: budget check, listing check, options within budget, map, price
 trends, area comparison, shortlist and raw transactions. It is structured as
 an R package, following
 [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/structuring-project.html).
@@ -10,7 +10,7 @@ an R package, following
 ```r
 # one-time
 install.packages(c("shiny", "bslib", "DT", "dplyr", "ggplot2", "scales",
-                   "leaflet", "leaflet.extras", "sf", "pkgload", "testthat", "roxygen2"))
+                   "leaflet", "leaflet.extras", "sf", "httr2", "pkgload", "testthat", "roxygen2"))
 
 shiny::runApp("local_shiny_app")      # from the repo root, or "Run App" on app.R
 ```
@@ -69,5 +69,7 @@ source("dev/check.R")          # regenerate NAMESPACE + run tests
   `app_server.R`.
 - Data changed? Rebuild `sg_rental_map/data/rentals.rds`, then
   `source("data-raw/rentals.R")`.
+- "Check a listing" looks up addresses with the OneMap Search API (no key
+  needed); answers are cached for the R session.
 - MRT distances: put `mrt_stations.csv` (columns `station, lat, lng`) in
   `inst/extdata/`.

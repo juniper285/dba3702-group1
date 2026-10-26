@@ -4,6 +4,10 @@
 #' @noRd
 money <- function(x) paste0("S$", formatC(round(x), format = "d", big.mark = ","))
 
+#' money(), or "-" when there is no value
+#' @noRd
+money_or_dash <- function(x) if (is.na(x)) "-" else money(x)
+
 #' Format a date as its quarter, e.g. "2024 Q2"
 #' @noRd
 quarter_label <- function(d) {
