@@ -1,5 +1,5 @@
 Package: rentalapp
-Title: Singapore Rental Intelligence App
+Title: RentLens: Singapore Private Rental Explorer
 Version: 0.1.0
 Authors@R: person("DBA3702", "Group 1", role = c("aut", "cre"))
 Description: A Shiny app that helps renters check their budget against URA

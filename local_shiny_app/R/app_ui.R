@@ -4,7 +4,7 @@
 #' @noRd
 app_ui <- function(request) {
   page_navbar(
-    title = "[App Title]",
+    title = "RentLens",
     theme = app_theme(),
     fillable = FALSE,   # let each page scroll instead of squeezing content to fit
 
