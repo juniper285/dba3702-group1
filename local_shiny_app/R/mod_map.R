@@ -12,40 +12,46 @@ mod_map_ui <- function(id) {
   geo_choices <- sort(unique(rentals$geo_match[!is.na(rentals$loc_id)]))
 
   tagList(
-    layout_columns(
-      col_widths = c(4, 4, 4),
-      radioButtons(ns("metric"), "Colour circles by", metric_choices, inline = TRUE),
-      selectizeInput(ns("geo_match"), "Geocode quality", geo_choices,
-                     selected = grep("^Exact|^Good", geo_choices, value = TRUE),
-                     multiple = TRUE),
-      p(class = "text-muted mt-4",
-        format(sum(is.na(rentals$loc_id)), big.mark = ","),
-        " rentals have no coordinates and are not mapped.")
-    ),
     card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
-        "Click a circle to inspect one building, or draw a shape (left toolbar) to summarise an area",
-        actionButton(ns("clear"), "Clear selection", class = "btn-sm")
+      full_screen = TRUE,
+      header_with_actions(
+        span(icon("hand-pointer"), " Click a building, or draw an area with the tools on the left"),
+        actionButton(ns("clear"), "Clear selection", icon = icon("xmark"),
+                     class = "btn-sm btn-outline-secondary")
       ),
-      leafletOutput(ns("map"), height = 600),
-      card_footer("Circle size = number of rentals. Uses all sidebar filters and time period.")
-    ),
-    layout_columns(
-      col_widths = c(3, 3, 3, 3),
-      value_box("Rentals", textOutput(ns("vb_n")), textOutput(ns("sel_label")), theme = "primary"),
-      value_box("Projects", textOutput(ns("vb_proj")), theme = "secondary"),
-      value_box("Median rent", textOutput(ns("vb_rent")), theme = "secondary"),
-      value_box("Median S$ psf", textOutput(ns("vb_psf")), theme = "secondary")
+      layout_sidebar(
+        sidebar = sidebar(
+          position = "right", width = 300, class = "map-panel",
+          div(class = "section-title", "Selection"),
+          div(class = "selection-label", textOutput(ns("sel_label"))),
+          div(class = "kpi-stack",
+              kpi("Rentals", textOutput(ns("vb_n"))),
+              kpi("Projects", textOutput(ns("vb_proj"))),
+              kpi("Median rent", textOutput(ns("vb_rent"))),
+              kpi("Median psf", textOutput(ns("vb_psf")))),
+          div(class = "section-title mt-3", "Map options"),
+          div(class = "chips",
+              radioButtons(ns("metric"), "Colour circles by", metric_choices)),
+          selectizeInput(ns("geo_match"), "Geocode quality", geo_choices,
+                         selected = grep("^Exact|^Good", geo_choices, value = TRUE),
+                         multiple = TRUE, options = list(plugins = list("remove_button"))),
+          helpText(format(sum(is.na(rentals$loc_id)), big.mark = ","),
+                   " rentals have no coordinates and are not mapped. ",
+                   "Switch on the heatmap or another basemap with the layers button.")
+        ),
+        leafletOutput(ns("map"), height = 640)
+      ),
+      card_footer("Circle size = number of rentals; colour bins stay the same whatever the ",
+                  "filters. The map follows the Budget page filters and time period.")
     ),
     card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
+      header_with_actions(
         "Projects in the map selection",
-        actionButton(ns("add_short"), "Add selected to shortlist", class = "btn-sm btn-success")
+        actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
+                     class = "btn-sm btn-primary")
       ),
       DTOutput(ns("table"), fill = FALSE),
-      card_footer("Click rows to select them, then add them to your shortlist.")
+      card_footer("Select rows, then press 'Add to shortlist'.")
     )
   )
 }
@@ -156,9 +162,7 @@ mod_map_server <- function(id, filters, shortlist) {
     output$table <- renderDT({
       s <- table_data() |> mutate(last = format(last, "%b %Y"))
       s <- prettify(s)
-      datatable(s, rownames = FALSE, selection = "multiple",
-                options = list(pageLength = 10, order = list(), scrollX = TRUE)) |>
-        format_money_cols(s)
+      rl_datatable(s) |> format_money_cols(s)
     })
 
     observeEvent(input$add_short, {

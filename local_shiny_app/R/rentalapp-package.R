@@ -3,7 +3,6 @@
 
 #' @import shiny
 #' @import bslib
-#' @import ggplot2
 #' @import leaflet
 #' @importFrom dplyr filter mutate group_by summarise arrange transmute select
 #' @importFrom dplyr distinct semi_join anti_join left_join n n_distinct first
@@ -17,7 +16,7 @@
 #' @importFrom utils head read.csv write.csv
 NULL
 
-# Column names used inside dplyr / ggplot2 calls
+# Column names used inside dplyr calls
 utils::globalVariables(c(
   "project", "street", "district", "district_no", "type", "bedrooms", "bed_group",
   "rent", "area_band", "area_sqft", "psf", "lease_date", "quarter", "address",

@@ -9,7 +9,7 @@ an R package, following
 
 ```r
 # one-time
-install.packages(c("shiny", "bslib", "DT", "dplyr", "ggplot2", "scales",
+install.packages(c("shiny", "bslib", "DT", "dplyr", "plotly", "sass",
                    "leaflet", "leaflet.extras", "sf", "httr2", "pkgload", "testthat", "roxygen2"))
 
 shiny::runApp("local_shiny_app")      # from the repo root, or "Run App" on app.R

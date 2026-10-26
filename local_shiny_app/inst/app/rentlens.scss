@@ -1,0 +1,213 @@
+// RentLens look and feel, added on top of the bslib theme (app_theme())
+
+// ---- Navbar --------------------------------------------------------------
+.navbar {
+  border-bottom: 1px solid $border-color;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.navbar-brand .brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: $primary;
+  .fa, .fas, svg { margin-right: 0.35rem; }
+}
+.navbar .nav-link { font-weight: 500; }
+.navbar .nav-link svg { opacity: 0.75; margin-right: 0.25rem; }
+.nav-badge {
+  display: inline-block;
+  min-width: 1.35rem;
+  padding: 0.05rem 0.4rem;
+  margin-left: 0.3rem;
+  border-radius: 999px;
+  background: $primary;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  &:empty { display: none; }
+}
+
+// ---- Page structure ------------------------------------------------------
+.page-intro {
+  margin: 0.25rem 0 0.5rem;
+  h4 { font-weight: 700; margin-bottom: 0.15rem; letter-spacing: -0.01em; }
+}
+.card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.card-header {
+  background: #fff;
+  font-weight: 600;
+  .card-title-text { font-weight: 600; }
+}
+.card-header .shiny-input-container,
+.card-header .form-group { margin-bottom: 0; }
+.card-header .bslib-input-switch { font-weight: 400; font-size: 0.9rem; }
+.card-footer {
+  background: #fff;
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $text-muted;
+  margin: 0.25rem 0 0.5rem;
+}
+
+// ---- "Filters in use" line on pages without the sidebar --------------------
+.filter-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 1rem;
+  border: 1px solid $border-color;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.85rem;
+  svg { color: $primary; }
+  a { text-decoration: none; font-weight: 500; }
+}
+
+// The Budget page's filter sidebar sits flush with the page
+.budget-layout {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  margin: -1rem;
+  > .main { padding: 1rem 1.5rem; }
+}
+
+// ---- Sidebar filters -----------------------------------------------------
+.bslib-sidebar-layout > .sidebar {
+  background: #fff;
+  .filter-section {
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid $border-color;
+    > .shiny-input-container:last-child { margin-bottom: 0.75rem; }
+  }
+  .form-label, .control-label { font-size: 0.85rem; font-weight: 500; }
+  .accordion-button { font-weight: 600; font-size: 0.9rem; padding: 0.65rem 0.25rem; }
+  .accordion-body { padding: 0.5rem 0.25rem; }
+  .accordion, .accordion-item { border: 0; background: transparent; }
+  .accordion-button:not(.collapsed) { background: transparent; box-shadow: none; }
+}
+
+// Checkbox and radio groups shown as clickable chips
+.chips .shiny-options-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  label, .checkbox-inline, .radio-inline, .radio, .checkbox {
+    margin: 0 !important; padding: 0 !important; cursor: pointer;
+  }
+  input { position: absolute; opacity: 0; pointer-events: none; }
+  span {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    background: #fff;
+    transition: all 0.12s ease;
+  }
+  label:hover span { border-color: $primary; }
+  input:checked + span { background: $primary; border-color: $primary; color: #fff; }
+  input:focus-visible + span { outline: 2px solid rgba($primary, 0.4); outline-offset: 1px; }
+}
+.chips.mb-0 { margin-bottom: 0; }
+
+// ---- Headline tiles ------------------------------------------------------
+.kpi {
+  background: #fff;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-lg;
+  padding: 0.9rem 1.1rem;
+  height: 100%;
+  .kpi-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    svg { margin-right: 0.35rem; color: $primary; }
+  }
+  .kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-top: 0.15rem;
+  }
+  .kpi-note { font-size: 0.85rem; color: $text-muted; }
+}
+.kpi-stack { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.kpi-stack .kpi { padding: 0.6rem 0.75rem; }
+.kpi-stack .kpi-value { font-size: 1.2rem; }
+
+// ---- Verdict banner ------------------------------------------------------
+.verdict {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border-radius: $border-radius-lg;
+  border: 1px solid;
+  background: #fff;
+  .verdict-icon { font-size: 1.6rem; line-height: 1; margin-top: 0.15rem; }
+  .verdict-title { font-size: 1.15rem; font-weight: 700; }
+  .verdict-body { color: $body-color; }
+  &.verdict-success { border-color: rgba($success, 0.35); background: rgba($success, 0.06); .verdict-icon { color: $success; } }
+  &.verdict-danger  { border-color: rgba($danger, 0.35);  background: rgba($danger, 0.05);  .verdict-icon { color: $danger; } }
+  &.verdict-info    { border-color: rgba($info, 0.35);    background: rgba($info, 0.06);    .verdict-icon { color: $info; } }
+  &.verdict-accent  { border-color: rgba(#7b3294, 0.35);  background: rgba(#7b3294, 0.05); .verdict-icon { color: #7b3294; } }
+}
+
+// ---- Empty states --------------------------------------------------------
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  .empty-icon { font-size: 2rem; color: $primary; opacity: 0.8; margin-bottom: 0.5rem; }
+  h5 { font-weight: 700; }
+}
+.example-chip {
+  border: 1px solid $border-color;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  margin: 0.2rem;
+  font-size: 0.85rem;
+  color: $primary;
+  &:hover { border-color: $primary; background: rgba($primary, 0.06); }
+}
+
+// ---- Map -----------------------------------------------------------------
+.map-panel {
+  .selection-label { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; word-break: break-word; }
+}
+.leaflet-container { font-family: inherit; border-radius: 0 0 $border-radius-lg $border-radius-lg; }
+
+// ---- Tables --------------------------------------------------------------
+.dataTables_wrapper {
+  .dt-top { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+  .dataTables_filter input {
+    border: 1px solid $border-color;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    margin-left: 0;
+  }
+  .dt-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.85rem; }
+}
+table.dataTable {
+  font-size: 0.9rem;
+  thead th { font-weight: 600; color: $text-muted; border-bottom: 1px solid $border-color !important; }
+  tbody tr.selected > * { box-shadow: inset 0 0 0 9999px rgba($primary, 0.12) !important; color: inherit !important; }
+}
+
+// ---- Small screens -------------------------------------------------------
+@media (max-width: 576px) {
+  .kpi .kpi-value { font-size: 1.3rem; }
+  .verdict { flex-direction: column; gap: 0.5rem; }
+}

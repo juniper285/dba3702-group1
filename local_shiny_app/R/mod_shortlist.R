@@ -6,25 +6,37 @@
 mod_shortlist_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
-        "Your shortlist",
-        div(
-          actionButton(ns("remove"), "Remove selected", class = "btn-sm"),
-          actionButton(ns("clear"), "Clear all", class = "btn-sm"),
-          downloadButton(ns("download"), "Download CSV", class = "btn-sm")
-        )
-      ),
-      DTOutput(ns("table"), fill = FALSE),
-      card_footer("Figures use each option's rentals in the most recent period, ",
-                  "regardless of the sidebar filters, so your shortlist stays comparable. ",
-                  "Use 'Save this search' in the sidebar to keep a link to it.")
+    page_intro("Your shortlist",
+               "Compare the options you saved from Budget, Map and Check a listing."),
+    conditionalPanel(
+      "output.is_empty", ns = ns,
+      card(empty_state("star", "Nothing shortlisted yet",
+                       p(HTML(paste0("On the <b>Budget</b> or <b>Map</b> page, select rows in a ",
+                                     "table and press <b>Add to shortlist</b>. On <b>Check a ",
+                                     "listing</b>, add the project you are checking.")))))
     ),
-    card(
-      card_header("Shortlist at a glance"),
-      plotOutput(ns("plot"), height = 420),
-      card_footer("Dot = median rent, line = typical range. Red band = your budget range.")
+    conditionalPanel(
+      "!output.is_empty", ns = ns,
+      card(
+        header_with_actions(
+          "Saved options",
+          actionButton(ns("remove"), "Remove selected", icon = icon("trash-can"),
+                       class = "btn-sm btn-outline-secondary"),
+          actionButton(ns("clear"), "Clear all", icon = icon("xmark"),
+                       class = "btn-sm btn-outline-secondary"),
+          downloadButton(ns("download"), "Download CSV", class = "btn-sm btn-primary")
+        ),
+        DTOutput(ns("table"), fill = FALSE),
+        card_footer("Figures use each option's rentals in the most recent period, ",
+                    "regardless of the other filters, so your shortlist stays comparable. ",
+                    "Use 'Save search' on the Budget page to keep a link to it.")
+      ),
+      card(
+        card_header("Shortlist at a glance"),
+        plotly::plotlyOutput(ns("plot"), height = 420),
+        card_footer("Dot = median rent, line = typical range (middle 50%). ",
+                    "Red band = your budget range.")
+      )
     )
   )
 }
@@ -37,7 +49,7 @@ mod_shortlist_server <- function(id, filters, shortlist) {
     short_data <- reactive({
       sl <- shortlist()
       validate(need(nrow(sl) > 0,
-        "Your shortlist is empty. In 'Within budget' or 'Map', click rows and press 'Add selected to shortlist'."))
+        "Your shortlist is empty."))
       b <- filters$budget()
       period <- filters$period()
       d <- rentals_data() |>
@@ -57,14 +69,16 @@ mod_shortlist_server <- function(id, filters, shortlist) {
       s
     })
 
+    output$is_empty <- reactive(nrow(shortlist()) == 0)
+    outputOptions(output, "is_empty", suspendWhenHidden = FALSE)
+
     output$table <- renderDT({
       s <- prettify(short_data())
-      datatable(s, rownames = FALSE, escape = FALSE, selection = "multiple",
-                options = list(pageLength = 25, order = list(), scrollX = TRUE)) |>
+      rl_datatable(s, page_length = 25, escape = FALSE) |>
         format_money_cols(s) |>
         formatStyle("Budget fit",
                     color = styleEqual(c("Within range", "Below range", "Above range"),
-                                       c("#18bc9c", "#3498db", "#e74c3c")),
+                                       c("#15803d", "#0369a1", "#e11d48")),
                     fontWeight = "bold")
     })
 
@@ -87,18 +101,12 @@ mod_shortlist_server <- function(id, filters, shortlist) {
       }
     )
 
-    output$plot <- renderPlot({
+    output$plot <- plotly::renderPlotly({
       s <- short_data()
-      b <- filters$budget()
       s$label <- paste0(s$project, " (", s$bed_group, " BR)")
-      ggplot(s, aes(y = reorder(label, -median))) +
-        annotate("rect", xmin = b[1], xmax = b[2], ymin = -Inf, ymax = Inf,
-                 fill = "#e74c3c", alpha = 0.10) +
-        geom_linerange(aes(xmin = p25, xmax = p75), linewidth = 1.2, colour = "grey70") +
-        geom_point(aes(x = median), size = 3.5, colour = "#2c3e50") +
-        scale_x_continuous(labels = scales::label_dollar(prefix = "S$")) +
-        labs(x = "Monthly rent", y = NULL) +
-        theme_minimal(base_size = 13)
+      s$colour <- c("Within range" = "#15803d", "Below range" = "#0369a1",
+                    "Above range" = "#e11d48")[s$fits] |> unname()
+      range_dot_chart(s, filters$budget())
     })
 
     # Save and restore the shortlist inside "Save this search" links
