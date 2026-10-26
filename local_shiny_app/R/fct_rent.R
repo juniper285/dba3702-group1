@@ -1,0 +1,66 @@
+# ---- Rent summaries used across the tabs -------------------------------
+
+#' Keep only the most recent `months` months of a data set
+#' @noRd
+latest_months <- function(d, months) {
+  if (nrow(d) == 0) return(d)
+  cutoff <- seq(max(d$lease_date), by = paste0("-", months, " months"), length.out = 2)[2]
+  d[d$lease_date > cutoff, ]
+}
+
+#' Standard rent summary (one row per group of `d`)
+#'
+#' @param budget c(min, max); `within` is the share of rentals inside it.
+#' @noRd
+summarise_rent <- function(d, budget = c(NA, NA)) {
+  summarise(d,
+    median = median(rent),
+    p25    = unname(quantile(rent, 0.25)),
+    p75    = unname(quantile(rent, 0.75)),
+    psf    = median(psf, na.rm = TRUE),
+    n      = n(),
+    within = mean(rent >= budget[1] & rent <= budget[2]),
+    .groups = "drop"
+  )
+}
+
+#' One row per project + bedroom type: the "options" a renter can pick from
+#' @noRd
+summarise_options <- function(d) {
+  d |>
+    group_by(project, district, bed_group) |>
+    summarise(
+      size   = most_common(area_band),
+      median = median(rent),
+      p25    = unname(quantile(rent, 0.25)),
+      p75    = unname(quantile(rent, 0.75)),
+      psf    = median(psf, na.rm = TRUE),
+      n      = n(),
+      last   = max(lease_date),
+      .groups = "drop"
+    )
+}
+
+#' How a budget range compares with a set of rents
+#'
+#' @return A list: `verdict`, `colour` (a bootstrap theme), `advice` and
+#'   `share` (% of rents inside the budget).
+#' @noRd
+budget_verdict <- function(rents, budget) {
+  q <- quantile(rents, c(0.25, 0.75))
+  share <- round(100 * mean(rents >= budget[1] & rents <= budget[2]))
+  if (budget[2] < q[1]) {
+    list(verdict = "Below typical", colour = "danger", share = share,
+         advice = "Most comparable units rent for more. Try other districts, fewer bedrooms or a smaller unit.")
+  } else if (budget[1] > q[2]) {
+    list(verdict = "Above typical", colour = "info", share = share,
+         advice = "Most comparable units rent for less than your minimum. You have room to negotiate.")
+  } else {
+    list(verdict = "Realistic", colour = "success", share = share,
+         advice = "Your range overlaps the typical rents for these filters.")
+  }
+}
+
+#' Empty shortlist (one row per project + bedroom type)
+#' @noRd
+empty_shortlist <- function() data.frame(project = character(), bed_group = character())

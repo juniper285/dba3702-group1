@@ -1,0 +1,23 @@
+Package: rentalapp
+Title: Singapore Rental Intelligence App
+Version: 0.1.0
+Authors@R: person("DBA3702", "Group 1", role = c("aut", "cre"))
+Description: A Shiny app that helps renters check their budget against URA
+    private residential rental contracts: what their budget gets them,
+    where, how prices have moved, and a shortlist of options.
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    bslib,
+    dplyr,
+    DT,
+    ggplot2,
+    scales,
+    shiny (>= 1.7.0),
+    stats,
+    utils
+Suggests:
+    pkgload,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1

@@ -1,0 +1,22 @@
+#' @keywords internal
+"_PACKAGE"
+
+#' @import shiny
+#' @import bslib
+#' @import ggplot2
+#' @importFrom dplyr filter mutate group_by summarise arrange transmute select
+#' @importFrom dplyr distinct semi_join anti_join left_join n n_distinct first
+#' @importFrom dplyr case_when across all_of desc
+#' @importFrom DT DTOutput renderDT datatable formatCurrency formatPercentage
+#' @importFrom DT formatStyle styleEqual styleInterval
+#' @importFrom stats median quantile reorder
+#' @importFrom utils head read.csv write.csv
+NULL
+
+# Column names used inside dplyr / ggplot2 calls
+utils::globalVariables(c(
+  "project", "street", "district", "district_no", "type", "bedrooms", "bed_group",
+  "rent", "area_band", "area_sqft", "psf", "lease_date", "quarter", "address",
+  "lat", "lng", "loc_id", "geo_match", "group", "label", "median", "p25", "p75",
+  "n", "last", "fits", "listings"
+))
