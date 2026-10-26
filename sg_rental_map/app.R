@@ -184,8 +184,14 @@ server <- function(input, output, session) {
   ## Base map (drawn once)
   output$map <- renderLeaflet({
     leaflet(options = leafletOptions(preferCanvas = TRUE)) |>
-      addProviderTiles(providers$CartoDB.Positron, group = "Light") |>
-      addProviderTiles(providers$OneMapSG.Default, group = "OneMap") |>
+      # Keyless basemaps: CARTO now requires an API key, and the old
+      # maps-*.onemap.sg tile host bundled in leaflet.providers is offline
+      addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Light") |>
+      addTiles("https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png",
+               group = "OneMap",
+               options = tileOptions(minZoom = 11, maxZoom = 19),
+               attribution = paste0('New OneMap | Map data &copy; contributors, ',
+                                    '<a href="https://www.sla.gov.sg">Singapore Land Authority</a>')) |>
       addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
       addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
                        overlayGroups = c("Buildings", "Heatmap"),
