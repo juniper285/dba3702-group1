@@ -14,6 +14,8 @@ mod_about_ui <- function(id) {
       "comparable rentals fall inside it."),
     p(strong("Within budget"), " lists each project and bedroom type whose median ",
       "recent rent falls inside your budget range."),
+    p(strong("Map"), " locations come from geocoding each project's address. ",
+      "'Geocode quality' lets you hide projects whose location is less certain."),
     p("These are historical transactions, not live listings. Use them to check ",
       "whether rents advertised on property portals are reasonable, then use ",
       "'Find listings' to search for available units."),

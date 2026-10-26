@@ -8,11 +8,12 @@ raw <- data.frame(
   area_sqft   = c(450, NA, 1200)
 )
 
-test_that("prepare_rentals() adds labels, bedroom groups and quarters", {
+test_that("prepare_rentals() adds labels, bedroom groups, quarters and locations", {
   d <- prepare_rentals(raw)
   expect_equal(d$district[2], "D10 Bukit Timah, Holland, Tanglin")
   expect_equal(d$bed_group, c("1", "5+", "Unknown"))
   expect_equal(d$quarter, as.Date(c("2024-01-01", "2024-04-01", "2024-04-01")))
+  expect_equal(d$loc_id, c(1L, 1L, NA))
 })
 
 test_that("filter_market() applies the sidebar filters and drops missing floor areas", {

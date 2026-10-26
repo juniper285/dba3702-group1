@@ -13,7 +13,7 @@ app_ui <- function(request) {
 
     nav_panel("Budget check",  mod_budget_check_ui("budget_check")),
     nav_panel("Within budget", mod_within_budget_ui("within_budget")),
-    nav_panel("Map",           card(card_header("Map"), div(style = "height: 600px;"))),  # to be built
+    nav_panel("Map",           mod_map_ui("map")),
     nav_panel("Price trends",  mod_trends_ui("trends")),
     nav_panel("Compare areas", mod_compare_ui("compare")),
     nav_panel("Shortlist",     mod_shortlist_ui("shortlist")),
