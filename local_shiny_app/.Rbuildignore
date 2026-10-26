@@ -1,0 +1,7 @@
+^app\.R$
+^dev$
+^data-raw$
+^README\.md$
+^\.Rproj\.user$
+^.*\.Rproj$
+^rsconnect$
