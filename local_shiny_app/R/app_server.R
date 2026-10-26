@@ -4,7 +4,7 @@ app_server <- function(input, output, session) {
   # Filtered data sets every tab works from
   filters <- mod_filters_server("filters")
 
-  # The shortlist is shared: "Within budget", "Map" and "Check a listing" add to it,
+  # The shortlist is shared: "Budget", "Map" and "Check a listing" add to it,
   # "Shortlist" shows and edits it
   shortlist <- reactiveVal(empty_shortlist())
 
@@ -17,5 +17,15 @@ app_server <- function(input, output, session) {
   mod_shortlist_server("shortlist", filters, shortlist)
   mod_transactions_server("transactions", filters)
 
+  # Number of shortlisted options, shown next to "Shortlist" in the navbar
+  output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")
+
+  # "Filters in use" line on the pages that follow the Budget page's filters
+  for (page in c("map", "market", "shortlist", "records")) {
+    output[[paste0("filter_note_", page)]] <- renderText(filters$summary())
+  }
+  observeEvent(input$edit_filters, nav_select("nav", "budget"))
+
+  setBookmarkExclude("edit_filters")
   onBookmarked(function(url) showBookmarkUrlModal(url))
 }

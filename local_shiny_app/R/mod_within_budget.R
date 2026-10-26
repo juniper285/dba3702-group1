@@ -1,37 +1,31 @@
-#' "Within budget" tab: what can I get within my budget?
+#' Options within budget (bottom of the "Budget" page): what can I get?
 #'
 #' @param filters The list returned by mod_filters_server().
 #' @param shortlist The shared shortlist reactiveVal.
 #' @noRd
 mod_within_budget_ui <- function(id) {
   ns <- NS(id)
-  tagList(
-    layout_columns(
-      col_widths = c(3, 3, 3, 3),
-      value_box("Project and bedroom options", textOutput(ns("options")), theme = "success"),
-      value_box("Projects", textOutput(ns("projects")), theme = "secondary"),
-      value_box("Districts", textOutput(ns("districts")), theme = "secondary"),
-      value_box("Bedroom types", textOutput(ns("beds_n")), textOutput(ns("beds")), theme = "secondary")
-    ),
-    card(
-      card_header("Where your budget goes: options by district and bedrooms"),
-      plotOutput(ns("plot"), height = 420)
-    ),
-    card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
-        "Projects with a median rent inside your budget range",
-        actionButton(ns("add_short"), "Add selected to shortlist", class = "btn-sm btn-success")
-      ),
-      layout_columns(
-        col_widths = c(4, 8),
-        numericInput(ns("min_n"), "Minimum recent rentals per row", value = 3, min = 1),
-        uiOutput(ns("distance_note"))
-      ),
+  navset_card_underline(
+    title = div(class = "card-title-text", "Options within your budget",
+                div(class = "small text-muted fw-normal", textOutput(ns("summary"), inline = TRUE))),
+    nav_panel(
+      "List", icon = icon("list"),
+      div(class = "d-flex flex-wrap gap-3 align-items-end",
+          numericInput(ns("min_n"), "Min. recent rentals per row", value = 3, min = 1,
+                       width = "240px"),
+          div(class = "text-muted small mb-3", uiOutput(ns("distance_note"), inline = TRUE))),
       DTOutput(ns("table"), fill = FALSE),
-      card_footer("Click rows to select them, then add them to your shortlist. ",
-                  "Click a column header to sort; use Search to filter.")
-    )
+      div(class = "text-muted small mt-2",
+          "Each row is a project and bedroom type whose median recent rent is inside your ",
+          "budget. Select rows, then press 'Add to shortlist'.")
+    ),
+    nav_panel(
+      "By district", icon = icon("chart-bar"),
+      plotly::plotlyOutput(ns("plot"), height = 620)
+    ),
+    nav_spacer(),
+    nav_item(actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
+                          class = "btn-sm btn-primary"))
   )
 }
 
@@ -50,45 +44,40 @@ mod_within_budget_server <- function(id, filters, shortlist) {
         add_distance(filters$destination())
     })
 
-    output$options   <- renderText(format(nrow(within_data()), big.mark = ","))
-    output$projects  <- renderText(format(n_distinct(within_data()$project), big.mark = ","))
-    output$districts <- renderText(n_distinct(within_data()$district))
-    output$beds_n    <- renderText(n_distinct(within_data()$bed_group))
-    output$beds      <- renderText({
-      beds <- intersect(bed_levels, unique(within_data()$bed_group))
-      if (length(beds) == 0) "None" else paste("Bedrooms:", paste(beds, collapse = ", "))
+    output$summary <- renderText({
+      s <- within_data()
+      beds <- intersect(bed_levels, unique(s$bed_group))
+      paste0(format(nrow(s), big.mark = ","), " options in ",
+             format(n_distinct(s$project), big.mark = ","), " projects across ",
+             n_distinct(s$district), " districts",
+             if (length(beds)) paste0(" · bedrooms: ", paste(beds, collapse = ", ")) else "")
     })
 
     output$distance_note <- renderUI({
       mrt <- if ("mrt_km" %in% names(project_coords())) " and the nearest MRT station" else ""
-      p(class = "text-muted mt-4",
-        paste0("Distances are to ", filters$destination(), mrt, "."))
+      paste0("Distances are to ", filters$destination(), mrt, " (change it under 'Commute').")
     })
 
-    output$plot <- renderPlot({
+    output$plot <- plotly::renderPlotly({
       s <- within_data()
       validate(need(nrow(s) > 0,
         "Nothing matches your budget range. Try widening the budget or the filters."))
-      s$bed_group <- factor(s$bed_group, levels = rev(bed_levels))
-      order <- names(sort(table(s$district)))
-      s$district <- factor(s$district, levels = order)
+      counts <- s |> group_by(district, bed_group) |> summarise(n = n(), .groups = "drop")
+      order <- names(sort(tapply(counts$n, counts$district, sum)))
+      counts$district <- factor(counts$district, levels = order)
+      counts$bed_group <- factor(counts$bed_group, levels = bed_levels)
 
-      ggplot(s, aes(y = district, fill = bed_group)) +
-        geom_bar() +
-        scale_fill_manual(values = c("1" = "#18bc9c", "2" = "#3498db", "3" = "#2c3e50",
-                                     "4" = "#f39c12", "5+" = "#e74c3c", "Unknown" = "#bdc3c7"),
-                          breaks = bed_levels) +
-        labs(x = "Number of project and bedroom options", y = NULL, fill = "Bedrooms") +
-        theme_minimal(base_size = 13) +
-        theme(legend.position = "top")
+      plotly::plot_ly(counts, y = ~district, x = ~n, color = ~bed_group, colors = bed_colours,
+                      type = "bar", orientation = "h",
+                      hovertemplate = "%{y}<br>%{x} options<extra>%{fullData.name} BR</extra>") |>
+        rl_plotly("Number of project and bedroom options", NULL) |>
+        plotly::layout(barmode = "stack", legend = list(title = list(text = "Bedrooms")))
     })
 
     output$table <- renderDT({
       s <- within_data() |> mutate(last = format(last, "%b %Y"))
       s <- prettify(s)
-      datatable(s, rownames = FALSE, selection = "multiple",
-                options = list(pageLength = 15, order = list(), scrollX = TRUE)) |>
-        format_money_cols(s)
+      rl_datatable(s, page_length = 15) |> format_money_cols(s)
     })
 
     observeEvent(input$add_short, {

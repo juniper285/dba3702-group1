@@ -2,7 +2,6 @@
 
 export(run_app)
 import(bslib)
-import(ggplot2)
 import(leaflet)
 import(shiny)
 importFrom(DT,

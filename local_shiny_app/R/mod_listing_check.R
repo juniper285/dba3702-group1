@@ -5,7 +5,7 @@
 #' project, nearby, in the same district and in the same region.
 #'
 #' Uses all rentals of the chosen bedroom count and property type in the
-#' sidebar's "most recent" period; the other sidebar filters are ignored so
+#' Budget page's "most recent" period; the other filters are ignored so
 #' every level compares like with like.
 #'
 #' @param filters The list returned by mod_filters_server().
@@ -15,56 +15,92 @@ mod_listing_check_ui <- function(id) {
   ns <- NS(id)
   rentals <- rentals_data()
 
+  examples <- c("018987", "Tanjong Pagar", "Holland Village", "Punggol")
+  example_chips <- lapply(examples, function(q) {
+    tags$button(type = "button", class = "example-chip", q,
+                onclick = sprintf("Shiny.setInputValue('%s', '%s', {priority: 'event'})",
+                                  ns("example"), q))
+  })
+
   tagList(
+    page_intro("Is this asking rent fair?",
+               "Find the unit you are viewing, enter its asking rent, and see how it ",
+               "compares with past rentals in the same project, nearby, in the district ",
+               "and in the region."),
     layout_columns(
-      col_widths = c(4, 8),
+      col_widths = c(5, 7),
       card(
-        card_header("The unit you are considering"),
+        card_header(icon("house"), " The unit you are considering"),
+        card_body(
+        fillable = FALSE,
         div(class = "d-flex gap-2 align-items-end",
             textInput(ns("query"), "Address, building or postal code",
-                      placeholder = "e.g. 018987 or The Sail", width = "100%"),
-            actionButton(ns("lookup"), "Find", class = "btn-primary mb-3")),
+                      placeholder = "e.g. 018987 or The Sail", width = "100%") |>
+              tagAppendAttributes(
+                onkeydown = sprintf("if (event.key === 'Enter') document.getElementById('%s').click()",
+                                    ns("lookup")),
+                .cssSelector = "input"),
+            actionButton(ns("lookup"), "Find", icon = icon("magnifying-glass"),
+                         class = "btn-primary mb-3 text-nowrap")),
         uiOutput(ns("suggestions")),
-        helpText("Or click the map to drop a pin."),
-        numericInput(ns("asking"), "Asking rent (S$ per month, optional)", value = NA,
-                     min = 0, step = 100),
+        div(class = "small text-muted mb-3", "Or click the map to drop a pin. Try: ",
+            example_chips),
         layout_columns(
           col_widths = c(6, 6),
-          selectInput(ns("beds"), "Bedrooms", c("Any", bed_levels[bed_levels != "Unknown"]),
-                      selected = "2"),
+          numericInput(ns("asking"), "Asking rent (S$ / month)", value = NA, min = 0, step = 100),
           numericInput(ns("area"), "Floor area (sqft, optional)", value = NA, min = 100, step = 50)
         ),
-        selectInput(ns("type"), "Property type", c("Any", sort(unique(rentals$type))),
-                    selected = "Non-Landed Properties"),
+        layout_columns(
+          col_widths = c(4, 8),
+          selectInput(ns("beds"), "Bedrooms", c("Any", bed_levels[bed_levels != "Unknown"]),
+                      selected = "2"),
+          selectInput(ns("type"), "Property type", c("Any", sort(unique(rentals$type))),
+                      selected = "Non-Landed Properties")
+        ),
         sliderInput(ns("radius"), "Nearby means within", min = 200, max = 2000,
                     value = 500, step = 100, post = " m")
+        )
       ),
       card(
-        card_header(textOutput(ns("place_label"))),
-        leafletOutput(ns("map"), height = 470),
-        card_footer("Circles = buildings with comparable rentals inside the radius ",
-                    "(hover for their median rent).")
+        card_header(icon("location-dot"), " ", textOutput(ns("place_label"), inline = TRUE)),
+        leafletOutput(ns("map"), height = 520),
+        card_footer("Purple = your place and radius. Dark circles = buildings with comparable ",
+                    "rentals inside the radius (hover for their median rent).")
       )
     ),
-    uiOutput(ns("verdict")),
-    card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
-        "Comparable past rentals",
-        actionButton(ns("add_short"), "Add this project to shortlist", class = "btn-sm btn-success")
-      ),
-      DTOutput(ns("table"), fill = FALSE),
-      card_footer(textOutput(ns("table_note")))
+    conditionalPanel(
+      "!output.has_place", ns = ns,
+      card(empty_state("magnifying-glass-location", "Start by finding the unit",
+                       "Search for an address or postal code, or click the map. ",
+                       "Add the asking rent to see whether it is fair."))
     ),
-    card(
-      card_header(
-        class = "d-flex justify-content-between align-items-center",
-        "Where the asking rent falls",
-        radioButtons(ns("level"), NULL, inline = TRUE,
-                     c("Same project", "Nearby", "Same district", "Same region"),
-                     selected = "Nearby")
+    conditionalPanel(
+      "output.has_place", ns = ns,
+      uiOutput(ns("verdict")),
+      card(
+        class = "mt-3",
+        header_with_actions(
+          "Comparable past rentals",
+          actionButton(ns("add_short"), "Add this project to shortlist", icon = icon("star"),
+                       class = "btn-sm btn-primary")
+        ),
+        DTOutput(ns("table"), fill = FALSE),
+        card_footer(textOutput(ns("table_note")))
       ),
-      plotOutput(ns("plot"), height = 360)
+      card(
+        header_with_actions(
+          "Where the asking rent falls",
+          div(class = "chips mb-0",
+              radioButtons(ns("level"), NULL, inline = TRUE,
+                           c("Same project", "Nearby", "Same district", "Same region"),
+                           selected = "Nearby"))
+        ),
+        plotly::plotlyOutput(ns("plot"), height = 360),
+        card_footer(
+          span(style = paste0("color:", rl_colours[["typical"]]), "\u25A0"), " typical range  ",
+          "\u2507 median  ",
+          span(style = paste0("color:", rl_colours[["accent"]]), "\u2503"), " your asking rent")
+      )
     )
   )
 }
@@ -72,19 +108,19 @@ mod_listing_check_ui <- function(id) {
 #' @noRd
 mod_listing_check_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
-    setBookmarkExclude(c(dt_bookmark_inputs("table"), "lookup", "add_short",
+    setBookmarkExclude(c(dt_bookmark_inputs("table"), "lookup", "add_short", "example",
                          "map_click", "map_bounds", "map_center", "map_zoom",
                          "map_shape_mouseover", "map_shape_mouseout",
                          "map_marker_mouseover", "map_marker_mouseout"))
 
-    accent <- "#7b3294"   # the user's own pin and asking rent only
+    accent <- rl_colours[["accent"]]   # the user's own pin and asking rent only
 
     # The place being checked: list(lat, lng, building, address), or NULL
     place <- reactiveVal(NULL)
     matches <- reactiveVal(NULL)
 
-    observeEvent(input$lookup, {
-      hits <- onemap_search(input$query)
+    lookup <- function(query) {
+      hits <- onemap_search(query)
       matches(hits)
       if (nrow(hits) == 0) {
         showNotification("No address found. Try a 6-digit postal code, or click the map.",
@@ -92,7 +128,15 @@ mod_listing_check_server <- function(id, filters, shortlist) {
       } else {
         place(as.list(hits[1, ]))
       }
+    }
+    observeEvent(input$lookup, lookup(input$query))
+    observeEvent(input$example, {
+      updateTextInput(session, "query", value = input$example)
+      lookup(input$example)
     })
+
+    output$has_place <- reactive(!is.null(place()))
+    outputOptions(output, "has_place", suspendWhenHidden = FALSE)
 
     # Several matches: let the user pick the right one
     output$suggestions <- renderUI({
@@ -143,27 +187,48 @@ mod_listing_check_server <- function(id, filters, shortlist) {
       req(place())
       t <- levels_table()
       near <- t[2, ]
-      tiles <- list(
-        value_box(paste("Median rent,", tolower(near$level)), money_or_dash(near$median),
-                  paste0("Average ", money_or_dash(near$mean), " · ",
-                         format(near$n, big.mark = ","), " rentals"),
-                  theme = "primary"),
-        value_box("Typical range nearby",
-                  if (near$n > 0) paste0(money(near$p25), " - ", money(near$p75)) else "-",
-                  "middle 50% of rents", theme = "secondary")
+      district <- t[3, ]
+      tiles <- layout_columns(
+        col_widths = c(4, 4, 4),
+        kpi(paste("Median rent,", tolower(near$level)), money_or_dash(near$median),
+            paste0("average ", money_or_dash(near$mean), " \u00B7 ",
+                   format(near$n, big.mark = ","), " rentals"), icon = "coins"),
+        kpi("Typical range nearby",
+            if (near$n > 0) paste0(money(near$p25), " - ", money(near$p75)) else "-",
+            "middle 50% of rents", icon = "arrows-left-right"),
+        kpi("Median rent, same district", money_or_dash(district$median),
+            paste0(format(district$n, big.mark = ","), " rentals"), icon = "map")
       )
-      if (!is.na(input$asking)) {
-        r <- level_row()
-        tiles[[3]] <- value_box(
-          "Your asking rent", money(input$asking),
-          if (r$n > 0) asking_verdict(r, input$asking, input$beds)
-          else paste("No past rentals at the", tolower(input$level), "level."),
-          if (!is.na(r$pct_psf_below))
-            paste0("Per sqft: S$", format(round(input$asking / input$area, 2), nsmall = 2),
-                   ", ", higher_lower(r$pct_psf_below), " of them."),
-          theme = value_box_theme(bg = accent, fg = "white"))
+      few <- if (near$n < 10)
+        p(class = "small text-muted mt-2 mb-0", icon("circle-info"),
+          " Few rentals nearby: widen the radius or use the district figures.")
+
+      if (is.na(input$asking)) {
+        return(tagList(
+          div(class = "verdict verdict-info",
+              div(class = "verdict-icon", icon("pen-to-square")),
+              div(div(class = "verdict-title", "Add the asking rent"),
+                  div(class = "verdict-body",
+                      "Enter the asking rent above to see how it compares with these rentals."))),
+          div(class = "mt-3", tiles), few))
       }
-      do.call(layout_columns, c(list(col_widths = rep(12 / length(tiles), length(tiles))), tiles))
+      r <- level_row()
+      psf <- if (!is.na(r$pct_psf_below))
+        paste0(" Per sqft that is S$", format(round(input$asking / input$area, 2), nsmall = 2),
+               ", ", higher_lower(r$pct_psf_below), " of them.")
+      tagList(
+        div(class = "verdict verdict-accent",
+            div(class = "verdict-icon", icon("scale-balanced")),
+            div(div(class = "verdict-title",
+                    if (r$n > 0) asking_verdict(r, input$asking, input$beds)
+                    else paste("No past rentals at the", tolower(input$level), "level.")),
+                div(class = "verdict-body",
+                    if (r$n > 0 && round(r$diff_pct, 1) == 0) paste0("That is the median, ", money(r$median), ".", psf)
+                    else if (r$n > 0) paste0("That is ", sprintf("%.1f%%", abs(r$diff_pct)),
+                                             if (r$diff_pct > 0) " above" else " below",
+                                             " the median of ", money(r$median), ".", psf),
+                    " Change the level under the chart to compare more widely."))),
+        div(class = "mt-3", tiles), few)
     })
 
     output$table <- renderDT({
@@ -206,25 +271,12 @@ mod_listing_check_server <- function(id, filters, shortlist) {
              "Regions are approximated from postal districts.")
     })
 
-    output$plot <- renderPlot({
-      r <- level_row()
-      s <- sets()[[match(input$level, c("Same project", "Nearby", "Same district", "Same region"))]]
+    output$plot <- plotly::renderPlotly({
+      i <- match(input$level, c("Same project", "Nearby", "Same district", "Same region"))
+      s <- sets()[[i]]
       validate(need(nrow(s) > 0, paste0("No past rentals at the '", input$level,
                                         "' level. Try another level or a wider radius.")))
-      rent <- s$rent[s$rent <= quantile(s$rent, 0.99)]   # hide extreme top 1%
-      ggplot(data.frame(rent = rent), aes(rent)) +
-        annotate("rect", xmin = r$p25, xmax = r$p75, ymin = -Inf, ymax = Inf,
-                 fill = "#18bc9c", alpha = 0.15) +
-        geom_histogram(bins = 30, fill = "#2c3e50", colour = "white") +
-        geom_vline(xintercept = r$median, linetype = "dashed", colour = "#2c3e50") +
-        (if (!is.na(input$asking))
-          geom_vline(xintercept = input$asking, linewidth = 1.4, colour = accent)) +
-        scale_x_continuous(labels = scales::label_dollar(prefix = "S$")) +
-        labs(x = "Monthly rent", y = "Number of rentals",
-             caption = paste0("Green band = typical range, dashed = median",
-                              if (!is.na(input$asking)) ", purple = your asking rent", "",
-                              ". n = ", format(r$n, big.mark = ","))) +
-        theme_minimal(base_size = 14)
+      rent_histogram(s$rent, mark = input$asking)
     })
 
     # Map: pin, radius and the comparable buildings inside it

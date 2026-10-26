@@ -1,23 +1,28 @@
-#' "Compare areas" tab: which areas fit my budget?
+#' "Compare areas" (Market page): which areas fit my budget?
 #'
 #' @param filters The list returned by mod_filters_server().
 #' @noRd
 mod_compare_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    layout_columns(
-      col_widths = c(4, 4, 4),
-      radioButtons(ns("compare_by"), "Compare by", c("District", "Project"), inline = TRUE),
-      numericInput(ns("min_n"), "Minimum recent rentals per row", value = 5, min = 1),
-      p(class = "text-muted mt-4",
-        "Highlighted rows have a median rent within your budget range.")
-    ),
-    conditionalPanel(
-      "input.compare_by == 'District'", ns = ns,
-      card(card_header("Median rent by district (lines = typical range)"),
-           plotOutput(ns("district_plot"), height = 650))
-    ),
-    card(card_header("Comparison table"), DTOutput(ns("table"), fill = FALSE))
+    card(
+      class = "mt-3",
+      header_with_actions(
+        "Median rent by area",
+        div(class = "chips mb-0",
+            radioButtons(ns("compare_by"), NULL, c("District", "Project"), inline = TRUE)),
+        div(class = "d-flex align-items-center gap-2 small text-muted fw-normal",
+            "Min. rentals per row",
+            numericInput(ns("min_n"), NULL, value = 5, min = 1, width = "80px"))
+      ),
+      conditionalPanel(
+        "input.compare_by == 'District'", ns = ns,
+        plotly::plotlyOutput(ns("district_plot"), height = 650)
+      ),
+      DTOutput(ns("table"), fill = FALSE),
+      card_footer("Dot = median rent, line = typical range (middle 50%). Green = median within ",
+                  "your budget range. Highlighted rows have a median within your budget.")
+    )
   )
 }
 
@@ -39,35 +44,24 @@ mod_compare_server <- function(id, filters) {
       s
     })
 
-    output$district_plot <- renderPlot({
+    output$district_plot <- plotly::renderPlotly({
       s <- compare_data()
       req(input$compare_by == "District", !"project" %in% names(s))
       b <- filters$budget()
-      s$fits <- ifelse(s$median >= b[1] & s$median <= b[2],
-                       "Median within budget", "Median outside budget")
-
-      ggplot(s, aes(y = reorder(district, -median))) +
-        annotate("rect", xmin = b[1], xmax = b[2], ymin = -Inf, ymax = Inf,
-                 fill = "#e74c3c", alpha = 0.08) +
-        geom_linerange(aes(xmin = p25, xmax = p75), linewidth = 1.2, colour = "grey70") +
-        geom_point(aes(x = median, colour = fits), size = 3.5) +
-        scale_colour_manual(values = c("Median within budget"  = "#18bc9c",
-                                       "Median outside budget" = "#95a5a6")) +
-        scale_x_continuous(labels = scales::label_dollar(prefix = "S$")) +
-        labs(x = "Monthly rent", y = NULL, colour = NULL) +
-        theme_minimal(base_size = 13) +
-        theme(legend.position = "top")
+      s$label <- s$district
+      s$colour <- ifelse(s$median >= b[1] & s$median <= b[2],
+                         rl_colours[["typical"]], rl_colours[["muted"]])
+      range_dot_chart(s, b)
     })
 
     output$table <- renderDT({
       b <- filters$budget()
       s <- prettify(compare_data())
-      datatable(s, rownames = FALSE,
-                options = list(pageLength = 15, order = list(), scrollX = TRUE)) |>
+      rl_datatable(s, page_length = 15, selection = "none") |>
         format_money_cols(s) |>
         formatStyle("Median rent", target = "row",
                     backgroundColor = styleInterval(c(b[1] - 0.5, b[2] + 0.5),
-                                                    c("white", "#e8f8f5", "white")))
+                                                    c("transparent", "#ecfdf5", "transparent")))
     })
   })
 }

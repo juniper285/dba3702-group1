@@ -4,13 +4,16 @@
 #' @noRd
 mod_transactions_ui <- function(id) {
   ns <- NS(id)
-  card(
-    card_header(
-      class = "d-flex justify-content-between align-items-center",
-      "Rental transactions matching your filters",
-      downloadButton(ns("download"), "Download CSV", class = "btn-sm")
-    ),
-    DTOutput(ns("table"), fill = FALSE)
+  tagList(
+    page_intro("Rental records",
+               "Every URA rental contract matching your filters, newest first."),
+    card(
+      header_with_actions(
+        textOutput(ns("count"), inline = TRUE),
+        downloadButton(ns("download"), "Download CSV", class = "btn-sm btn-primary")
+      ),
+      DTOutput(ns("table"), fill = FALSE)
+    )
   )
 }
 
@@ -30,10 +33,11 @@ mod_transactions_server <- function(id, filters) {
     })
 
     output$table <- renderDT({
-      datatable(records(), rownames = FALSE,
-                options = list(pageLength = 20, scrollX = TRUE)) |>
+      rl_datatable(records(), page_length = 20, selection = "none") |>
         formatCurrency("Monthly rent", "S$", digits = 0)
     })
+
+    output$count <- renderText(paste(format(nrow(records()), big.mark = ","), "rentals"))
 
     output$download <- downloadHandler(
       filename = function() "rental_transactions.csv",
