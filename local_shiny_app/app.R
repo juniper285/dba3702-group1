@@ -153,7 +153,7 @@ summarise_rent <- function(d, budget = c(NA, NA)) {
     median = median(rent),
     p25    = unname(quantile(rent, 0.25)),
     p75    = unname(quantile(rent, 0.75)),
-    psf    = median(psf),
+    psf    = median(psf, na.rm = TRUE),
     n      = n(),
     within = mean(rent >= budget[1] & rent <= budget[2]),
     .groups = "drop"
@@ -434,12 +434,13 @@ server <- function(input, output, session) {
   market <- reactive({
     d <- rentals
     if (length(input$district)) d <- d[d$district %in% input$district, ]
-    d[d$bed_group %in% input$beds &
+    # which() drops rows with no floor area instead of returning NA rows
+    d[which(d$bed_group %in% input$beds &
       d$type %in% input$type &
       d$area_sqft >= input$area[1] &
       (d$area_sqft <= input$area[2] | input$area[2] >= area_max) &
       d$lease_date >= input$period[1] &
-      d$lease_date <= input$period[2], ]
+      d$lease_date <= input$period[2]), ]
   })
 
   # B) The user's selection: the market narrowed to chosen projects
@@ -525,7 +526,7 @@ server <- function(input, output, session) {
         median = median(rent),
         p25    = unname(quantile(rent, 0.25)),
         p75    = unname(quantile(rent, 0.75)),
-        psf    = median(psf),
+        psf    = median(psf, na.rm = TRUE),
         n      = n(),
         last   = max(lease_date),
         .groups = "drop"
@@ -613,7 +614,7 @@ server <- function(input, output, session) {
         median = median(rent),
         p25    = unname(quantile(rent, 0.25)),
         p75    = unname(quantile(rent, 0.75)),
-        psf    = median(psf),
+        psf    = median(psf, na.rm = TRUE),
         n      = n(),
         .groups = "drop"
       ) |>
