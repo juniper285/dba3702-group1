@@ -12,7 +12,10 @@ Imports:
     dplyr,
     DT,
     ggplot2,
+    leaflet,
+    leaflet.extras,
     scales,
+    sf,
     shiny (>= 1.7.0),
     stats,
     utils

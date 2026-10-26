@@ -37,7 +37,7 @@ mod_shortlist_server <- function(id, filters, shortlist) {
     short_data <- reactive({
       sl <- shortlist()
       validate(need(nrow(sl) > 0,
-        "Your shortlist is empty. In 'Within budget', click rows and press 'Add selected to shortlist'."))
+        "Your shortlist is empty. In 'Within budget' or 'Map', click rows and press 'Add selected to shortlist'."))
       b <- filters$budget()
       period <- filters$period()
       d <- rentals_data() |>

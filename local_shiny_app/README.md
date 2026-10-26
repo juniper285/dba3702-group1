@@ -1,6 +1,6 @@
 # Rental Intelligence App (`rentalapp`)
 
-A Shiny app for renters: budget check, options within budget, price
+A Shiny app for renters: budget check, options within budget, map, price
 trends, area comparison, shortlist and raw transactions. It is structured as
 an R package, following
 [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/structuring-project.html).
@@ -10,7 +10,7 @@ an R package, following
 ```r
 # one-time
 install.packages(c("shiny", "bslib", "DT", "dplyr", "ggplot2", "scales",
-                   "pkgload", "testthat", "roxygen2"))
+                   "leaflet", "leaflet.extras", "sf", "pkgload", "testthat", "roxygen2"))
 
 shiny::runApp("local_shiny_app")      # from the repo root, or "Run App" on app.R
 ```
@@ -44,14 +44,14 @@ local_shiny_app/
   `selection`, `comparables`, `budget`, ...). Every other module receives
   that list as `filters`.
 - The shortlist is a `reactiveVal` created in `app_server()` and passed to the
-  module that adds to it (Within budget) and the one that shows it (Shortlist).
+  modules that add to it (Within budget, Map) and show it (Shortlist).
 - Rental data is read once per R session by `rentals_data()` (`fct_data.R`).
 
 ### Naming conventions
 
 | Prefix   | Contains                                | Example                    |
 |----------|-----------------------------------------|----------------------------|
-| `mod_`   | a Shiny module: `mod_x_ui()` + `mod_x_server()` | `mod_trends.R`    |
+| `mod_`   | a Shiny module: `mod_x_ui()` + `mod_x_server()` | `mod_map.R`       |
 | `fct_`   | app logic with no Shiny inputs/outputs  | `budget_verdict()`         |
 | `utils_` | generic helpers                         | `money()`                  |
 

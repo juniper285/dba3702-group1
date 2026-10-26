@@ -1,0 +1,26 @@
+test_that("clicking a building selects it and its rows can be shortlisted", {
+  rentals <- rentals_data()
+  filters <- list(
+    market   = reactive(rentals[rentals$district_no == 1, ]),
+    projects = reactive(NULL),
+    recent   = reactive(12)
+  )
+  shortlist <- reactiveVal(empty_shortlist())
+
+  testServer(mod_map_server, args = list(filters = filters, shortlist = shortlist), {
+    session$setInputs(metric = "psf", geo_match = unique(rentals$geo_match))
+    expect_true(all(selected()$district_no == 1))
+
+    loc <- loc_summary()$loc_id[1]
+    session$setInputs(map_marker_click = list(id = as.character(loc)))
+    expect_true(all(selected()$loc_id == loc))
+    expect_equal(output$vb_proj, "1")
+
+    session$setInputs(table_rows_selected = 1, add_short = 1)
+    expect_equal(nrow(shortlist()), 1)
+    expect_equal(shortlist()$project, table_data()$project[1])
+
+    session$setInputs(clear = 1)
+    expect_null(sel$ids)
+  })
+})

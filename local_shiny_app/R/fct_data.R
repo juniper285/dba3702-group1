@@ -42,10 +42,11 @@ rentals_data <- function() {
 #' Add the columns the app uses to the raw contracts
 #'
 #' @param d Data frame as written by data-raw/rentals.R.
-#' @return `d` plus `district` (label), `bed_group` and `quarter`.
+#' @return `d` plus `district` (label), `bed_group`, `quarter` and `loc_id`
+#'   (one id per map location; NA when the contract has no coordinates).
 #' @noRd
 prepare_rentals <- function(d) {
-  d |>
+  d <- d |>
     mutate(
       district = paste0("D", sprintf("%02d", district_no), " ",
                         district_names[sprintf("%02d", district_no)]),
@@ -56,6 +57,10 @@ prepare_rentals <- function(d) {
       ),
       quarter = as.Date(cut(lease_date, "quarter"))
     )
+  has_xy <- !is.na(d$lat) & !is.na(d$lng)
+  xy <- paste(d$lat, d$lng)
+  d$loc_id <- ifelse(has_xy, match(xy, unique(xy[has_xy])), NA_integer_)
+  d
 }
 
 #' The sidebar filters, applied to a set of contracts
