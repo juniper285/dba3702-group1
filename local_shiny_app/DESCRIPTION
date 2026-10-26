@@ -12,6 +12,7 @@ Imports:
     dplyr,
     DT,
     ggplot2,
+    httr2,
     leaflet,
     leaflet.extras,
     scales,

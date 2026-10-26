@@ -12,6 +12,7 @@ app_ui <- function(request) {
     sidebar = sidebar(width = 320, mod_filters_ui("filters")),
 
     nav_panel("Budget check",  mod_budget_check_ui("budget_check")),
+    nav_panel("Check a listing", mod_listing_check_ui("listing_check")),
     nav_panel("Within budget", mod_within_budget_ui("within_budget")),
     nav_panel("Map",           mod_map_ui("map")),
     nav_panel("Price trends",  mod_trends_ui("trends")),
