@@ -74,6 +74,7 @@ haversine_km <- function(lat1, lng1, lat2, lng2) {
 }
 
 walk_m_per_min <- 80   # walking speed for the "minutes to MRT" estimates
+mrt_max        <- 2000 # MRT-distance slider's top end means "any distance"
 
 #' MRT/LRT stations (inst/extdata/mrt_stations.csv: station, lat, lng, kind)
 #'
@@ -84,6 +85,13 @@ mrt_stations <- function() {
     f <- app_sys("extdata", "mrt_stations.csv")
     if (nzchar(f)) read.csv(f) else NULL
   })
+}
+
+#' Location (lat, lng) of a station by name
+#' @noRd
+station_location <- function(station, mrt = mrt_stations()) {
+  st <- mrt[mrt$station == station, ][1, ]
+  c(st$lat, st$lng)
 }
 
 #' Nearest MRT/LRT station to each point (straight line)

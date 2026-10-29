@@ -4,8 +4,8 @@
 #'   - `market`: all filters except the project choice
 #'   - `selection`: the market narrowed to the chosen projects (errors if empty)
 #'   - `comparables`: the selection, most recent months only
-#'   - `projects`, `districts`, `budget`, `recent`, `period`, `destination`:
-#'     the sidebar inputs
+#'   - `projects`, `districts`, `budget`, `recent`, `period`, `destination`,
+#'     `mrt_pick`, `mrt_dist`: the sidebar inputs
 #'   - `summary`: the filters as one line of text
 #' @noRd
 mod_filters_ui <- function(id) {
@@ -50,10 +50,17 @@ mod_filters_ui <- function(id) {
                     selected = filter_defaults$recent)
       ),
       accordion_panel(
-        "Commute", icon = icon("building-columns"),
+        "Commute and MRT", icon = icon("train-subway"),
         selectInput(ns("destination"), "Your university, workplace or key place",
                     destination_choices, selected = filter_defaults$destination),
-        helpText("Distances are straight-line estimates from each project.")
+        selectizeInput(ns("mrt_pick"), "Near a specific MRT/LRT station (optional)",
+                       choices = c("", sort(mrt_stations()$station)),
+                       options = list(placeholder = "Any station")),
+        sliderInput(ns("mrt_dist"), "Within this distance (m)",
+                    min = 100, max = mrt_max, value = mrt_max, step = 100),
+        helpText("No station chosen: distance to the nearest station, and the top of ",
+                 "the slider means any distance. Station chosen: buildings within this ",
+                 "distance of it (ring on the map). Straight-line; about 80 m per minute walking.")
       )
     ),
     div(class = "d-flex gap-2 mt-3",
@@ -81,6 +88,14 @@ mod_filters_server <- function(id) {
                            selected = intersect(input$project, d$project))
     }, ignoreNULL = FALSE)
 
+    # Start from a 500 m (about 6 min) walk when a station is picked and the
+    # slider is still at "any distance"
+    observeEvent(input$mrt_pick, {
+      if (isTruthy(input$mrt_pick) && input$mrt_dist >= mrt_max) {
+        updateSliderInput(session, "mrt_dist", value = 500)
+      }
+    })
+
     setBookmarkExclude("reset")
     observeEvent(input$reset, {
       updateSliderInput(session, "budget", value = filter_defaults$budget)
@@ -93,11 +108,17 @@ mod_filters_server <- function(id) {
                            end = max(rentals$lease_date))
       updateSelectInput(session, "recent", selected = filter_defaults$recent)
       updateSelectInput(session, "destination", selected = filter_defaults$destination)
+      updateSelectizeInput(session, "mrt_pick", selected = "")
+      updateSliderInput(session, "mrt_dist", value = mrt_max)
     })
 
+    mrt_pick <- reactive(if (isTruthy(input$mrt_pick)) input$mrt_pick else NULL)
+    mrt_dist <- reactive(if (is.null(input$mrt_dist)) mrt_max else input$mrt_dist)
+
     market <- reactive({
+      near <- if (!is.null(mrt_pick())) station_location(mrt_pick())
       filter_market(rentals, input$district, input$beds, input$type,
-                    input$area, input$period)
+                    input$area, input$period, near, mrt_dist())
     })
 
     selection <- reactive({
@@ -125,6 +146,8 @@ mod_filters_server <- function(id) {
         if (!setequal(input$type, unique(rentals$type))) paste(length(input$type), "property type(s)"),
         if (input$area[1] > 0 || input$area[2] < area_max)
           paste0(format(input$area[1], big.mark = ","), "-", format(input$area[2], big.mark = ","), " sqft"),
+        if (!is.null(mrt_pick())) paste0("within ", mrt_dist(), " m of ", mrt_pick())
+        else if (mrt_dist() < mrt_max) paste0("within ", mrt_dist(), " m of an MRT/LRT"),
         paste0(format(input$period[1], "%b %Y"), " - ", format(input$period[2], "%b %Y")),
         paste0("benchmarks: latest ", input$recent, " months")
       )
@@ -141,7 +164,9 @@ mod_filters_server <- function(id) {
       recent      = recent,
       summary     = summary,
       period      = reactive(input$period),
-      destination = reactive(input$destination)
+      destination = reactive(input$destination),
+      mrt_pick    = mrt_pick,
+      mrt_dist    = mrt_dist
     )
   })
 }

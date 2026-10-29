@@ -28,3 +28,20 @@ test_that("filter_market() applies the sidebar filters and drops missing floor a
   expect_equal(nrow(filter_market(d, "D01 Raffles Place, Marina", bed_levels, d$type,
                                   c(0, area_max), as.Date(c("2024-01-01", "2024-12-31")))), 1)
 })
+
+test_that("filter_market() keeps buildings near an MRT/LRT station", {
+  d <- prepare_rentals(raw)
+  d$area_sqft <- 500
+  d$mrt_m <- c(300, 300, NA)
+  period <- as.Date(c("2024-01-01", "2024-12-31"))
+  near_any <- filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period, mrt_dist = 500)
+  expect_equal(nrow(near_any), 2)
+  expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
+                                  mrt_dist = 200)), 0)
+  # 1.3, 103.8 is about 111 m south of this point
+  station <- c(1.301, 103.8)
+  expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
+                                  near = station, mrt_dist = 200)), 2)
+  expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
+                                  near = station, mrt_dist = 100)), 0)
+})
