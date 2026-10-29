@@ -24,7 +24,19 @@ mod_about_ui <- function(id) {
           "districts). The table shows how far the asking rent is above (+) or below (-) each median. ",
           "Addresses are looked up with OneMap; street-level geocodes are left out of the radius."),
         p(strong("Map"), " locations come from geocoding each project's address. ",
-          "'Geocode quality' lets you hide projects whose location is less certain.")
+          "'Geocode quality' lets you hide projects whose location is less certain. ",
+          "Click a building or draw an area to select it; with 'Apply map selection to all ",
+          "pages' on, every other page uses only the selected buildings. Yellow stars mark ",
+          "universities, polytechnics and work areas."),
+        p(strong("Area A vs B"), " (Market page): select a building or draw an area on the ",
+          "map, press 'Save as Area A', then do the same for Area B to compare them."),
+        p(strong("Compare properties"), " puts up to three projects side by side; ",
+          strong("Value for money"), " plots each project's median rent against its median ",
+          "floor area and ranks projects by the lowest rent per sqft."),
+        p(strong("MRT/LRT"), ": every building gets its nearest station. Filter by distance ",
+          "to the nearest station, or pick a station to keep buildings within a walking ",
+          "distance of it (shown as a ring on the map). Station locations come from LTA's ",
+          "station exit data.")
       ),
       card(
         card_header(icon("triangle-exclamation"), " Things to keep in mind"),
@@ -34,7 +46,7 @@ mod_about_ui <- function(id) {
         p("URA reports floor area as a range; the midpoint is used for rent per sqft, ",
           "so psf figures are estimates."),
         p("Records with no bedroom count are shown as 'Unknown'. Distances are ",
-          "straight-line estimates."),
+          "straight-line estimates; walking times assume about 80 m per minute."),
         p("Medians based on few rentals are noisy: every figure shows how many rentals ",
           "it is based on.")
       )

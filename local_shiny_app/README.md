@@ -1,7 +1,9 @@
 # RentLens (`rentalapp`)
 
-A Shiny app for renters: budget check, listing check, options within budget, map, price
-trends, area comparison, shortlist and raw transactions. It is structured as
+A Shiny app for renters: budget check, listing check, options within budget, map
+(with key places, MRT/LRT stations and map selections applied to every page), price
+trends, area comparison (districts, Area A vs B), property comparison, value for
+money, shortlist and raw transactions. It is structured as
 an R package, following
 [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/structuring-project.html).
 
@@ -44,8 +46,15 @@ local_shiny_app/
   `selection`, `comparables`, `budget`, ...). Every other module receives
   that list as `filters`.
 - The shortlist is a `reactiveVal` created in `app_server()` and passed to the
-  modules that add to it (Within budget, Map) and show it (Shortlist).
-- Rental data is read once per R session by `rentals_data()` (`fct_data.R`).
+  modules that add to it (Within budget, Map) and show it (Shortlist,
+  Compare properties).
+- The map selection (`new_map_selection()`) and saved areas
+  (`new_saved_areas()`) are `reactiveValues` created in `app_server()`. The
+  map writes them; `mod_filters_server()` applies the selection to `market`
+  (the map itself uses `base`, before the selection), and Area A vs B reads
+  the saved areas.
+- Rental data is read once per R session by `rentals_data()` (`fct_data.R`),
+  which also attaches each contract's nearest MRT/LRT station.
 
 ### Naming conventions
 
@@ -73,3 +82,7 @@ source("dev/check.R")          # regenerate NAMESPACE + run tests
   needed); answers are cached for the R session.
 - MRT/LRT stations: `inst/extdata/mrt_stations.csv` (columns `station, lat, lng,
   kind`), rebuilt from LTA's station-exit data with `source("data-raw/mrt_stations.R")`.
+- Key places (universities, polytechnics, business districts, transport,
+  hospitals) are listed in `destination_groups` in `R/fct_location.R`.
+- Optional schools layer: put `schools.csv` (columns `name, lat, lng`) in
+  `inst/extdata/`.
