@@ -44,7 +44,8 @@ mod_map_ui <- function(id) {
         leafletOutput(ns("map"), height = 640)
       ),
       card_footer("Circle size = number of rentals; colour bins stay the same whatever the ",
-                  "filters. The map follows the Budget page filters and time period.")
+                  "filters. 'Vs my budget' colours each building by whether its median rent is ",
+                  "below, within or above your budget. The map follows the Budget page filters.")
     ),
     card(
       header_with_actions(
@@ -116,7 +117,7 @@ mod_map_server <- function(id, filters, shortlist) {
     observe({
       req(map_ready())
       d <- loc_summary(); m <- input$metric; pal <- map_palette(m)
-      vals <- d[[m]]
+      vals <- if (m == "budget") budget_fit(d$rent, filters$budget()) else d[[m]]
       p <- leafletProxy("map", data = d) |> clearGroup("Buildings") |> clearGroup("Heatmap")
       if (nrow(d) == 0) return(removeControl(p, "legend"))
       p |>
@@ -129,7 +130,8 @@ mod_map_server <- function(id, filters, shortlist) {
                    blur = 20, radius = 12, max = quantile(d$n, 0.9)) |>
         addLegend("bottomright", pal = pal, values = vals, layerId = "legend",
                   title = names(metric_choices)[metric_choices == m],
-                  labFormat = labelFormat(prefix = "S$", big.mark = ","))
+                  labFormat = if (m == "budget") labelFormat()
+                              else labelFormat(prefix = "S$", big.mark = ","))
     })
 
     # Ring around the station chosen in the filters; fly there when it changes

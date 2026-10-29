@@ -4,6 +4,7 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     market   = reactive(rentals[rentals$district_no == 1, ]),
     projects = reactive(NULL),
     recent   = reactive(12),
+    budget   = reactive(c(3000, 5000)),
     mrt_pick = reactive(NULL),
     mrt_dist = reactive(mrt_max)
   )
