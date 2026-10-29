@@ -84,3 +84,31 @@ compare_two_areas <- function(a, b) {
     mutate(diff = (b_median - a_median) / a_median) |>
     arrange(match(bed_group, bed_levels))
 }
+
+#' Where a median rent sits against a budget range
+#' @noRd
+fits_budget <- function(median, budget) {
+  case_when(is.na(median)     ~ "No rentals",
+            median < budget[1] ~ "Below range",
+            median > budget[2] ~ "Above range",
+            TRUE               ~ "Within range")
+}
+
+#' One row per chosen project, in the order given, for "Compare properties"
+#'
+#' @param d Contracts of the chosen projects.
+#' @param projects Project names; a project with no contracts gets a row with n = 0.
+#' @noRd
+summarise_projects <- function(d, projects, budget) {
+  s <- d |>
+    group_by(project) |>
+    summarise(district = paste(sort(unique(district)), collapse = ", "),
+              n = n(), median = median(rent),
+              p25 = unname(quantile(rent, 0.25)), p75 = unname(quantile(rent, 0.75)),
+              psf = median(psf, na.rm = TRUE), sqft = median(area_sqft, na.rm = TRUE),
+              last = max(lease_date), .groups = "drop")
+  s <- left_join(data.frame(project = projects), s, by = "project")
+  s$n[is.na(s$n)] <- 0L
+  s$fits <- fits_budget(s$median, budget)
+  s
+}

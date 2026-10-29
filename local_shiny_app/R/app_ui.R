@@ -32,13 +32,14 @@ app_ui <- function(request) {
     nav_panel(
       "Market", value = "market", icon = icon("chart-line"),
       page_intro("How is the market moving?",
-                 "Rent trends over time and how areas compare, for your filters."),
+                 "Rent trends over time, and how areas and properties compare, for your filters."),
       filter_note_ui("market"),
       navset_underline(
         id = "market_tab",
         nav_panel("Price trends", value = "trends", mod_trends_ui("trends")),
         nav_panel("Compare areas", value = "compare", mod_compare_ui("compare")),
-        nav_panel("Area A vs B", value = "area_compare", mod_area_compare_ui("area_compare"))
+        nav_panel("Area A vs B", value = "area_compare", mod_area_compare_ui("area_compare")),
+        nav_panel("Compare properties", value = "properties", mod_properties_ui("properties"))
       )
     ),
     nav_panel(
