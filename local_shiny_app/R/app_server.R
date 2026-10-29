@@ -22,6 +22,7 @@ app_server <- function(input, output, session) {
   mod_trends_server("trends", filters)
   mod_compare_server("compare", filters)
   mod_properties_server("properties", filters, shortlist)
+  mod_value_server("value", filters)
   mod_shortlist_server("shortlist", filters, shortlist)
   mod_transactions_server("transactions", filters)
 
