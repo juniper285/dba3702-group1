@@ -64,3 +64,23 @@ budget_verdict <- function(rents, budget) {
 #' Empty shortlist (one row per project + bedroom type)
 #' @noRd
 empty_shortlist <- function() data.frame(project = character(), bed_group = character())
+
+#' Two areas side by side, one row per bedroom type
+#'
+#' @param a,b Contracts in Area A and Area B.
+#' @return Rentals, median rent and median psf for each area, plus
+#'   `diff` = how far B's median is above (+) or below (-) A's, as a share.
+#' @noRd
+compare_two_areas <- function(a, b) {
+  side <- function(d, tag) {
+    s <- d |>
+      group_by(bed_group) |>
+      summarise(n = n(), median = median(rent), psf = median(psf, na.rm = TRUE),
+                .groups = "drop")
+    names(s)[-1] <- paste0(tag, "_", names(s)[-1])
+    s
+  }
+  dplyr::full_join(side(a, "a"), side(b, "b"), by = "bed_group") |>
+    mutate(diff = (b_median - a_median) / a_median) |>
+    arrange(match(bed_group, bed_levels))
+}

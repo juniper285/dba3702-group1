@@ -38,3 +38,13 @@ test_that("budget_verdict() compares the budget with the typical range", {
   expect_equal(v$verdict, "Realistic")
   expect_equal(v$share, 60)
 })
+
+test_that("compare_two_areas() lines up the areas by bedrooms", {
+  a <- data.frame(bed_group = c("1", "1", "2"), rent = c(3000, 3200, 4000), psf = 5)
+  b <- data.frame(bed_group = c("1", "3"), rent = c(3300, 6000), psf = 4)
+  s <- compare_two_areas(a, b)
+  expect_equal(s$bed_group, c("1", "2", "3"))
+  expect_equal(s$a_median, c(3100, 4000, NA))
+  expect_equal(s$b_n, c(1, NA, 1))
+  expect_equal(s$diff[1], 200 / 3100)
+})

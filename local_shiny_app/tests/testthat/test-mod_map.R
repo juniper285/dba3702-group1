@@ -9,8 +9,10 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     mrt_dist = reactive(mrt_max)
   )
   shortlist <- reactiveVal(empty_shortlist())
+  areas <- new_saved_areas()
 
-  testServer(mod_map_server, args = list(filters = filters, shortlist = shortlist), {
+  testServer(mod_map_server, args = list(filters = filters, shortlist = shortlist,
+                                         areas = areas), {
     session$setInputs(metric = "psf", geo_match = unique(rentals$geo_match))
     expect_true(all(selected()$district_no == 1))
 
@@ -25,8 +27,12 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     expect_equal(nrow(shortlist()), 1)
     expect_equal(shortlist()$project, table_data()$project[1])
 
+    session$setInputs(save_a = 1)
+    expect_equal(areas$a_ids, loc)
+
     session$setInputs(clear = 1)
     expect_null(sel$ids)
+    expect_null(areas$a_ids)
   })
 })
 
