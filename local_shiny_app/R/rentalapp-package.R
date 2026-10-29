@@ -21,5 +21,5 @@ utils::globalVariables(c(
   "project", "street", "district", "district_no", "type", "bedrooms", "bed_group",
   "rent", "area_band", "area_sqft", "psf", "lease_date", "quarter", "address",
   "lat", "lng", "loc_id", "geo_match", "group", "label", "median", "p25", "p75",
-  "n", "last", "fits", "listings", "mrt_station", "mrt_m"
+  "n", "last", "fits", "listings", "mrt_station", "mrt_m", "month", "Bedrooms"
 ))

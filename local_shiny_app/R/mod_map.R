@@ -47,6 +47,13 @@ mod_map_ui <- function(id) {
                   "filters. 'Vs my budget' colours each building by whether its median rent is ",
                   "below, within or above your budget. The map follows the Budget page filters.")
     ),
+    layout_columns(
+      col_widths = c(7, 5),
+      card(card_header(textOutput(ns("trend_title"), inline = TRUE)),
+           plotly::plotlyOutput(ns("trend"), height = 330),
+           card_footer("Months with fewer than 3 rentals are left out.")),
+      card(card_header("By bedrooms"), DTOutput(ns("beds"), fill = FALSE))
+    ),
     card(
       header_with_actions(
         "Projects in the map selection",
@@ -55,6 +62,13 @@ mod_map_ui <- function(id) {
       ),
       DTOutput(ns("table"), fill = FALSE),
       card_footer("Select rows, then press 'Add to shortlist'.")
+    ),
+    card(
+      header_with_actions(
+        "Rentals in the map selection",
+        downloadButton(ns("download"), "Download CSV", class = "btn-sm btn-outline-secondary")
+      ),
+      DTOutput(ns("contracts"), fill = FALSE)
     )
   )
 }
@@ -63,7 +77,8 @@ mod_map_ui <- function(id) {
 mod_map_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
-    observe(setBookmarkExclude(c(dt_bookmark_inputs("table"), "add_short", "clear",
+    observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
+                                 "add_short", "clear",
                                  grep("^map_", names(input), value = TRUE))))
 
     # Mapped rentals: the market narrowed to chosen projects (like
@@ -183,5 +198,65 @@ mod_map_server <- function(id, filters, shortlist) {
     observeEvent(input$add_short, {
       add_to_shortlist(shortlist, table_data(), input$table_rows_selected)
     })
+
+    # ---- Breakdown of the selection ----
+    output$trend_title <- renderText(paste(
+      "Median rent psf by month:", if (is.null(sel$label)) "all mapped rentals" else sel$label))
+
+    output$trend <- plotly::renderPlotly({
+      d <- selected()[!is.na(selected()$psf), ]
+      validate(need(nrow(d) > 0, "No rentals in this selection."))
+      d$month <- as.Date(cut(d$lease_date, "month"))
+      by_bed <- d |> group_by(month, bed_group) |>
+        summarise(psf = median(psf), n = n(), .groups = "drop") |> filter(n >= 3)
+      overall <- d |> group_by(month) |>
+        summarise(psf = median(psf), n = n(), .groups = "drop") |> filter(n >= 3)
+      validate(need(nrow(overall) > 0, "Not enough rentals per month to draw a trend."))
+      hover <- "%{x|%b %Y}<br>S$%{y:.2f} psf<br>%{text} rentals"
+      plotly::plot_ly() |>
+        plotly::add_lines(data = by_bed, x = ~month, y = ~psf, text = ~n,
+                          color = ~factor(paste(bed_group, "BR"), paste(bed_levels, "BR")),
+                          colors = unname(bed_colours), opacity = 0.6,
+                          hovertemplate = paste0(hover, "<extra>%{fullData.name}</extra>")) |>
+        plotly::add_lines(data = overall, x = ~month, y = ~psf, text = ~n, name = "All",
+                          line = list(color = rl_colours[["ink"]], width = 3),
+                          hovertemplate = paste0(hover, "<extra>All</extra>")) |>
+        rl_plotly(NULL, "S$ psf per month")
+    })
+
+    output$beds <- renderDT({
+      validate(need(nrow(selected()) > 0, "No rentals in this selection."))
+      s <- selected() |>
+        group_by(Bedrooms = bed_group) |>
+        summarise(Rentals = n(), `Median rent` = median(rent),
+                  `Median sqft` = median(area_sqft, na.rm = TRUE),
+                  `Median psf` = median(psf, na.rm = TRUE), .groups = "drop") |>
+        arrange(match(Bedrooms, bed_levels))
+      datatable(s, rownames = FALSE, selection = "none", class = "compact hover row-border",
+                options = list(dom = "t", pageLength = 20)) |>
+        formatCurrency("Median rent", "S$", digits = 0) |>
+        formatCurrency("Median psf", "S$", digits = 2) |>
+        DT::formatRound("Median sqft", 0)
+    })
+
+    contracts <- reactive({
+      selected() |>
+        arrange(desc(lease_date)) |>
+        transmute(Month = format(lease_date, "%Y-%m"), Project = project, Street = street,
+                  District = district, Type = type, Bedrooms = bed_group,
+                  `Area (sqft)` = area_band, Rent = rent, PSF = round(psf, 2),
+                  Address = address, `Nearest MRT/LRT` = mrt_station,
+                  `Geocode quality` = geo_match)
+    })
+
+    output$contracts <- renderDT({
+      rl_datatable(contracts(), page_length = 15, selection = "none") |>
+        formatCurrency("Rent", "S$", digits = 0)
+    })
+
+    output$download <- downloadHandler(
+      filename = function() paste0("rentals_map_selection-", Sys.Date(), ".csv"),
+      content  = function(file) write.csv(contracts(), file, row.names = FALSE)
+    )
   })
 }
