@@ -104,20 +104,37 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
       uiOutput(ns("area_hint"))
     ),
     commute = tagList(
-      p(class = "text-muted", "How far are you willing to travel?"),
-      sliderInput(ns("mrt_dist"), "Distance to an MRT/LRT station (m)", min = 100, max = mrt_max,
-                  value = s$mrt_dist, step = 100, width = "100%"),
-      selectizeInput(ns("mrt_pick"), "Near a specific station (optional)",
-                     choices = c("", choices$stations), selected = s$mrt_pick, width = "100%",
-                     options = list(placeholder = "Any station")),
-      helpText("No station chosen: distance to the nearest station; the top of the slider ",
-               "means any distance. Station chosen: homes within that distance of it. ",
-               "About 80 m is one minute's walk."),
-      sliderInput(ns("place_km"), "Distance to one of my places (km)", min = 1,
-                  max = place_km_max, value = s$place_km, step = 1, width = "100%"),
-      helpText("The top of the slider means any distance. Straight-line distances.")
+      p(class = "text-muted", "How far are you willing to travel? These are optional: switch ",
+        "one on, or just start using it."),
+      optional_block(
+        ns("mrt_limit"), "Close to an MRT/LRT station", on = s$mrt_dist < mrt_max,
+        sliderInput(ns("mrt_dist"), "Within (m)", min = 100, max = mrt_max - 100, step = 100,
+                    value = if (s$mrt_dist >= mrt_max) 500 else s$mrt_dist, width = "100%"),
+        helpText("Straight-line distance to the nearest station; about 80 m is one minute's walk.")),
+      optional_block(
+        ns("station_on"), "Near a specific station", on = nzchar(s$mrt_pick),
+        selectizeInput(ns("mrt_pick"), NULL, choices = c("", choices$stations),
+                       selected = s$mrt_pick, width = "100%",
+                       options = list(placeholder = "Pick a station")),
+        helpText("Homes within the distance above of this station (up to 2 km if that's off).")),
+      optional_block(
+        ns("place_limit"), "Close to one of my places", on = s$place_km < place_km_max,
+        sliderInput(ns("place_km"), "Within (km)", min = 1, max = place_km_max - 1, step = 1,
+                    value = if (s$place_km >= place_km_max) 5 else s$place_km, width = "100%"),
+        helpText("Straight-line distance to the nearest of your places."))
     )
   )
+}
+
+#' An optional setting: a switch, and controls that stay greyed out until it
+#' is on (using a greyed control switches it on; see settings.js)
+#'
+#' @param id Namespaced id of the switch.
+#' @noRd
+optional_block <- function(id, title, on, ...) {
+  div(class = "optional-block",
+      div(class = "optional-head", input_switch(id, title, value = on)),
+      div(class = "optional-body", ...))
 }
 
 #' Read the shown sections of the settings form back into settings
@@ -143,9 +160,13 @@ read_settings_form <- function(input, s, sections, places) {
     if (!is.null(input$area)) s$area <- input$area
   }
   if ("commute" %in% sections) {
-    if (!is.null(input$mrt_dist)) s$mrt_dist <- input$mrt_dist
-    s$mrt_pick <- if (is.null(input$mrt_pick)) "" else input$mrt_pick
-    if (!is.null(input$place_km)) s$place_km <- input$place_km
+    # A switched-off option is stored as "any": the top of the range
+    # (mrt_max, place_km_max) or no station. NULL switch = not on screen.
+    if (isFALSE(input$mrt_limit)) s$mrt_dist <- mrt_max
+    else if (!is.null(input$mrt_dist)) s$mrt_dist <- min(input$mrt_dist, mrt_max - 100)
+    s$mrt_pick <- if (isFALSE(input$station_on) || is.null(input$mrt_pick)) "" else input$mrt_pick
+    if (isFALSE(input$place_limit)) s$place_km <- place_km_max
+    else if (!is.null(input$place_km)) s$place_km <- min(input$place_km, place_km_max - 1)
   }
   s
 }
@@ -162,6 +183,7 @@ mod_settings_server <- function(id) {
     setBookmarkExclude(c("stored", "open", "open_nav", "save", "next_step", "back", "skip",
                          "finish", "start_over", names(default_settings(choices)),
                          "place_search", "place_name", "place_kind", "place_kind_label",
+                         "mrt_limit", "station_on", "place_limit",
                          "add_place",
                          "remove_place"))
 
