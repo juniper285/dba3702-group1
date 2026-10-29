@@ -36,11 +36,10 @@ settings_sections <- c(budget = "Budget", places = "Places that matter",
 #' One section of the settings form
 #'
 #' @param ns The settings module's namespace function.
-#' @param s The settings to show.
-#' @param custom Addresses the renter added (name, lat, lng).
+#' @param s The settings to show (the places list is drawn by the server,
+#'   output `place_list`).
 #' @noRd
-settings_section_ui <- function(ns, section, s, choices = settings_choices(),
-                                custom = custom_places(s)) {
+settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
   switch(
     section,
     budget = tagList(
@@ -50,21 +49,23 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices(),
       uiOutput(ns("budget_hint"))
     ),
     places = tagList(
-      p(class = "text-muted", "Where will you travel to most? Every list shows the ",
-        "distance from each home to these places."),
-      selectizeInput(ns("key_places"), "Universities, workplaces and other key places",
-                     destination_choices, multiple = TRUE, width = "100%",
-                     selected = intersect(s$places$name, key_places$name),
-                     options = list(placeholder = "e.g. NUS, one-north, CBD",
-                                    maxItems = max_places, plugins = list("remove_button"))),
-      div(class = "d-flex gap-2 align-items-end",
-          textInput(ns("address"), "Or add any address or postal code",
-                    placeholder = "e.g. 1 Fusionopolis Way or 138632", width = "100%"),
-          div(class = "mb-3", actionButton(ns("find"), "Add", icon = icon("plus"),
-                                           class = "btn-outline-primary"))),
-      div(class = "chips",
-          checkboxGroupInput(ns("custom_keep"), if (nrow(custom)) "Your addresses (untick to remove)",
-                             choices = custom$name, selected = custom$name, inline = TRUE))
+      p(class = "text-muted", "Add the places you travel to most, one at a time. Every list ",
+        "shows the distance from each home to them."),
+      div(class = "place-form",
+          textInput(ns("place_address"), "Address or postal code", width = "100%",
+                    placeholder = "e.g. 21 Lower Kent Ridge Road or 119077"),
+          div(class = "chips place-kinds",
+              radioButtons(ns("place_kind"), "Icon", inline = TRUE, selected = "work",
+                           choiceNames = lapply(seq_len(nrow(place_kinds)), function(i) {
+                             tagList(icon(place_kinds$icon[i]), place_kinds$label[i])
+                           }),
+                           choiceValues = place_kinds$kind)),
+          div(class = "d-flex gap-2 align-items-end",
+              textInput(ns("place_name"), "Name", width = "100%",
+                        placeholder = "e.g. My office, NUS, Mum's place"),
+              div(class = "mb-3", actionButton(ns("add_place"), "Add place", icon = icon("plus"),
+                                               class = "btn-primary text-nowrap")))),
+      uiOutput(ns("place_list"))
     ),
     area = tagList(
       p(class = "text-muted", "Where should we look? Leave empty to search all of Singapore."),
@@ -107,24 +108,16 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices(),
   )
 }
 
-#' Addresses in the settings that are not key places
-#' @noRd
-custom_places <- function(s) s$places[!s$places$name %in% key_places$name, ]
-
 #' Read the shown sections of the settings form back into settings
 #'
 #' @param input The settings module's input.
 #' @param s The settings before editing (kept for sections not shown).
 #' @param sections Sections whose inputs are on screen.
-#' @param custom Addresses added so far (name, lat, lng).
+#' @param places The places list being edited (see new_places()).
 #' @noRd
-read_settings_form <- function(input, s, sections, custom) {
+read_settings_form <- function(input, s, sections, places) {
   if ("budget" %in% sections && !is.null(input$budget)) s$budget <- input$budget
-  if ("places" %in% sections) {
-    keep <- custom[custom$name %in% input$custom_keep, ]
-    s$places <- utils::head(rbind(key_place(input$key_places), keep), max_places)
-    rownames(s$places) <- NULL
-  }
+  if ("places" %in% sections) s$places <- places
   if ("area" %in% sections) {
     s$districts <- if (is.null(input$districts)) character() else input$districts
     if (!is.null(input$period)) s$period <- as.Date(input$period)
@@ -152,10 +145,10 @@ mod_settings_server <- function(id) {
     first_visit <- reactiveVal(FALSE)
     restored <- FALSE       # settings came from a "Save search" link
 
-    setBookmarkExclude(c("stored", "open", "open_nav", "save", "find", "address",
-                         "next_step", "back", "skip", "finish", "start_over",
-                         names(default_settings(choices)), "key_places", "custom_keep",
-                         "types", "beds"))
+    setBookmarkExclude(c("stored", "open", "open_nav", "save", "next_step", "back", "skip",
+                         "finish", "start_over", names(default_settings(choices)),
+                         "place_address", "place_name", "place_kind", "add_place",
+                         "remove_place"))
 
     # What this browser saved last time ("none" on a first visit)
     observeEvent(input$stored, once = TRUE, {
@@ -175,22 +168,59 @@ mod_settings_server <- function(id) {
       session$sendCustomMessage("rentlens-save-settings", settings_to_json(s))
     }
 
-    # Addresses added in the form (kept while the form is open)
-    custom <- reactiveVal(custom_places(default_settings(choices)))
+    # ---- Places that matter: added one at a time ----
+    # The list being edited (kept while the dialog or wizard is open)
+    places <- reactiveVal(new_places())
 
-    observeEvent(input$find, {
-      hit <- onemap_search(input$address)
+    observeEvent(input$add_place, {
+      address <- trimws(input$place_address)
+      if (!nzchar(address)) {
+        showNotification("Type an address or postal code first.", type = "warning")
+        return()
+      }
+      if (nrow(places()) >= max_places) {
+        showNotification(paste("You can add up to", max_places, "places."), type = "warning")
+        return()
+      }
+      hit <- onemap_search(address)
       if (nrow(hit) == 0) {
         showNotification("No address found. Try a postal code or a fuller address.", type = "warning")
         return()
       }
-      name <- if (nzchar(hit$building[1]) && hit$building[1] != "NIL") hit$building[1] else hit$address[1]
-      name <- tools::toTitleCase(tolower(name))
-      custom(unique(rbind(custom(), data.frame(name = name, lat = hit$lat[1], lng = hit$lng[1]))))
-      keep <- unique(c(input$custom_keep, name))
-      updateCheckboxGroupInput(session, "custom_keep", label = "Your addresses (untick to remove)",
-                               choices = custom()$name, selected = keep, inline = TRUE)
-      updateTextInput(session, "address", value = "")
+      name <- trimws(input$place_name)
+      if (!nzchar(name)) name <- default_place_name(input$place_kind, places()$name)
+      if (name %in% places()$name) {
+        showNotification(paste0("You already have a place called '", name, "'."), type = "warning")
+        return()
+      }
+      places(rbind(places(), new_places(name = name, kind = input$place_kind,
+                                        address = place_address(hit[1, ]),
+                                        lat = hit$lat[1], lng = hit$lng[1])))
+      updateTextInput(session, "place_address", value = "")
+      updateTextInput(session, "place_name", value = "")
+    })
+
+    observeEvent(input$remove_place, {
+      places(places()[places()$name != input$remove_place, ])
+    })
+
+    output$place_list <- renderUI({
+      pl <- places()
+      if (nrow(pl) == 0) {
+        return(div(class = "place-empty", icon("map-pin"), " No places yet. Add one above."))
+      }
+      div(class = "place-list",
+          lapply(seq_len(nrow(pl)), function(i) {
+            remove <- sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'}); return false;",
+                              ns("remove_place"), jsonlite::toJSON(pl$name[i], auto_unbox = TRUE))
+            div(class = "place-row",
+                div(class = "place-icon", icon(place_icon(pl$kind[i]))),
+                div(class = "flex-fill",
+                    div(class = "place-name", pl$name[i]),
+                    if (nzchar(pl$address[i])) div(class = "place-address", pl$address[i])),
+                tags$a(href = "#", class = "place-remove", title = paste("Remove", pl$name[i]),
+                       onclick = remove, icon("xmark")))
+          }))
     })
 
     # Typical rents for the budget step, so the budget is realistic
@@ -207,7 +237,7 @@ mod_settings_server <- function(id) {
     # ---- The settings dialog ----
     open_dialog <- function() {
       s <- settings()
-      custom(custom_places(s))
+      places(s$places)
       tabs <- lapply(names(settings_sections), function(k) {
         nav_panel(settings_sections[[k]], div(class = "pt-3", settings_section_ui(ns, k, s, choices)))
       })
@@ -228,7 +258,7 @@ mod_settings_server <- function(id) {
     observeEvent(input$open_nav, open_dialog())
 
     observeEvent(input$save, {
-      save(read_settings_form(input, settings(), names(settings_sections), custom()))
+      save(read_settings_form(input, settings(), names(settings_sections), places()))
       removeModal()
       showNotification("Settings saved.", type = "message", duration = 3)
     })
@@ -247,7 +277,7 @@ mod_settings_server <- function(id) {
                     settings_sections[[section]]),
         div(class = "progress mb-3", style = "height: 4px;",
             div(class = "progress-bar", style = sprintf("width: %d%%;", round(100 * k / n_steps)))),
-        settings_section_ui(ns, section, draft(), choices, custom()),
+        settings_section_ui(ns, section, draft(), choices),
         if (section == "commute") uiOutput(ns("preview")),
         footer = tagList(
           actionLink(ns("skip"), "Skip setup", class = "me-auto small text-muted"),
@@ -262,13 +292,13 @@ mod_settings_server <- function(id) {
     }
     open_wizard <- function(s) {
       draft(s)
-      custom(custom_places(s))
+      places(s$places)
       step(1)
       show_step()
     }
     # Keep what was entered on this step before moving on
     keep_step <- function() {
-      draft(read_settings_form(input, draft(), names(settings_sections)[step()], custom()))
+      draft(read_settings_form(input, draft(), names(settings_sections)[step()], places()))
     }
     observeEvent(input$next_step, { keep_step(); step(step() + 1); show_step() })
     observeEvent(input$back,      { keep_step(); step(step() - 1); show_step() })
@@ -297,7 +327,7 @@ mod_settings_server <- function(id) {
 
     # Last step: a preview of matching homes and how far they are
     output$preview <- renderUI({
-      s <- read_settings_form(input, draft(), "commute", custom())
+      s <- read_settings_form(input, draft(), "commute", places())
       near <- if (nzchar(s$mrt_pick)) station_location(s$mrt_pick)
       d <- filter_market(rentals_data(), s$districts, s$beds, s$types, s$area, s$period,
                          near, s$mrt_dist, s$places, s$place_km)

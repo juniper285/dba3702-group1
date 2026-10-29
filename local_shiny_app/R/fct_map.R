@@ -138,17 +138,19 @@ base_map <- function() {
     add_station_layers()
 }
 
-#' Show the renter's places that matter as purple pins
+#' Show the renter's places that matter as purple pins, with each place's icon
 #'
 #' @param map A leafletProxy().
-#' @param places Data frame with `name`, `lat`, `lng`.
+#' @param places Data frame with `name`, `lat`, `lng` and optionally `kind`.
 #' @noRd
 update_my_places <- function(map, places) {
   map <- clearGroup(map, "My places")
   if (nrow(places) == 0) return(map)
+  kind <- if (is.null(places$kind)) "other" else places$kind
   addAwesomeMarkers(map, data = places, lng = ~lng, lat = ~lat, group = "My places",
                     label = ~paste("My place:", name),
-                    icon = awesomeIcons(icon = "heart", library = "fa", iconColor = "white",
+                    icon = awesomeIcons(icon = place_icon(kind, "map_icon"),
+                                        library = "fa", iconColor = "white",
                                         markerColor = "purple"))
 }
 

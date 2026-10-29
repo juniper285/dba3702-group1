@@ -7,6 +7,55 @@
 place_km_max <- 30   # "max distance to my places" slider's top end means "any distance"
 max_places   <- 6
 
+# Icons a renter can give a place: `icon` for the app (Font Awesome 6),
+# `map_icon` for the map's pins (leaflet's Font Awesome 4 names)
+place_kinds <- data.frame(
+  kind     = c("work", "study", "home", "family", "leisure", "other"),
+  label    = c("Work", "School", "Home", "Family", "Leisure", "Other"),
+  icon     = c("briefcase", "graduation-cap", "house", "heart", "dumbbell", "location-dot"),
+  map_icon = c("briefcase", "graduation-cap", "home", "heart", "bicycle", "map-marker")
+)
+
+#' A table of places (name, kind, address, lat, lng); no rows by default
+#' @noRd
+new_places <- function(name = character(), kind = character(), address = character(),
+                       lat = numeric(), lng = numeric()) {
+  data.frame(name = name, kind = kind, address = address, lat = lat, lng = lng)
+}
+
+#' Street address of a OneMap search result, e.g. "1 Fusionopolis Way, Singapore 138632"
+#'
+#' OneMap's ADDRESS ends with the building name, which can be a shop inside
+#' the building, so the building name is dropped and the postal code added.
+#' @param hit One row of onemap_search().
+#' @noRd
+place_address <- function(hit) {
+  a <- hit$address
+  if (nzchar(hit$building) && hit$building != "NIL") a <- sub(hit$building, "", a, fixed = TRUE)
+  a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(a)))
+  a <- tools::toTitleCase(tolower(a))
+  if (grepl("^\\d{6}$", hit$postal)) paste0(a, ", Singapore ", hit$postal) else a
+}
+
+#' A name for a new place when none was typed: its icon's label, numbered
+#' if taken ("Work", "Work 2", ...)
+#' @noRd
+default_place_name <- function(kind, taken) {
+  base <- place_kinds$label[match(kind, place_kinds$kind)]
+  if (is.na(base)) base <- "Place"
+  name <- base; i <- 1
+  while (name %in% taken) { i <- i + 1; name <- paste(base, i) }
+  name
+}
+
+#' Font Awesome icon name for a place kind ("other" when unknown)
+#' @noRd
+place_icon <- function(kind, column = "icon") {
+  i <- match(kind, place_kinds$kind)
+  i[is.na(i)] <- nrow(place_kinds)
+  place_kinds[[column]][i]
+}
+
 #' Valid choices for each setting, from the rental data
 #' @noRd
 settings_choices <- function(rentals = rentals_data()) {
@@ -21,7 +70,7 @@ settings_choices <- function(rentals = rentals_data()) {
 default_settings <- function(choices = settings_choices()) {
   list(
     budget    = c(3000, 5000),
-    places    = key_place("NUS (Kent Ridge)"),
+    places    = new_places(),
     districts = character(),
     beds      = bed_levels,
     types     = choices$types,
@@ -85,11 +134,14 @@ settings_from_json <- function(json, choices = settings_choices()) {
     if (p[1] <= p[2]) s$period <- p
   }
 
-  # Places: name + a location in Singapore
+  # Places: name + a location in Singapore (kind and address are optional)
   pl <- x$places
   if (is.data.frame(pl) && all(c("name", "lat", "lng") %in% names(pl))) {
-    pl <- data.frame(name = as.character(pl$name), lat = as.numeric(pl$lat),
-                     lng = as.numeric(pl$lng))
+    kind <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
+    pl <- new_places(name = as.character(pl$name),
+                     kind = ifelse(kind %in% place_kinds$kind, kind, "other"),
+                     address = if (is.null(pl$address)) "" else as.character(pl$address),
+                     lat = as.numeric(pl$lat), lng = as.numeric(pl$lng))
     pl <- pl[!is.na(pl$lat) & !is.na(pl$lng) & nzchar(pl$name) &
                pl$lat > 1.1 & pl$lat < 1.5 & pl$lng > 103.5 & pl$lng < 104.1, ]
     s$places <- utils::head(pl[!duplicated(pl$name), ], max_places)
