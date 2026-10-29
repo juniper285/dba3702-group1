@@ -87,7 +87,7 @@ mrt_stations <- function() {
   })
 }
 
-#' Schools (optional inst/extdata/schools.csv: name, lat, lng)
+#' Schools (inst/extdata/schools.csv: name, lat, lng, optionally level)
 #'
 #' @return The schools, or NULL if the file is missing or lacks those columns.
 #' @noRd

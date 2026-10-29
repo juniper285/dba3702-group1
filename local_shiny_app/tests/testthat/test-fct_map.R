@@ -22,3 +22,10 @@ test_that("budget_fit() places rents below, within or above the budget", {
   expect_equal(as.character(f), budget_levels[c(1, 2, 2, 3)])
   expect_equal(levels(f), budget_levels)
 })
+
+test_that("base_map() shows the schools layer when schools.csv is shipped", {
+  skip_if(is.null(schools_data()))
+  calls <- base_map()$x$calls
+  methods <- vapply(calls, `[[`, "", "method")
+  expect_true("Schools" %in% calls[[which(methods == "addLayersControl")]]$args[[2]])
+})

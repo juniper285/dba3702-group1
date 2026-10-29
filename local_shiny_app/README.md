@@ -84,5 +84,6 @@ source("dev/check.R")          # regenerate NAMESPACE + run tests
   kind`), rebuilt from LTA's station-exit data with `source("data-raw/mrt_stations.R")`.
 - Key places (universities, polytechnics, business districts, transport,
   hospitals) are listed in `destination_groups` in `R/fct_location.R`.
-- Optional schools layer: put `schools.csv` (columns `name, lat, lng`) in
-  `inst/extdata/`.
+- Schools: `inst/extdata/schools.csv` (columns `name, level, postal, lat, lng`),
+  rebuilt from MOE's school list (data.gov.sg), geocoded with OneMap, by
+  `source("data-raw/schools.R")`.
