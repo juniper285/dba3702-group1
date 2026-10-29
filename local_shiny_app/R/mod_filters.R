@@ -1,7 +1,10 @@
 #' Filters (sidebar of the Budget page, used by most pages)
 #'
+#' @param map_sel The shared map selection (reactiveValues with `ids`,
+#'   `label` and `apply`), or NULL.
 #' @return The server returns a list of reactives the tabs work from:
-#'   - `market`: all filters except the project choice
+#'   - `base`: all filters except the project choice and the map selection
+#'   - `market`: `base`, narrowed to the map selection when that is applied
 #'   - `selection`: the market narrowed to the chosen projects (errors if empty)
 #'   - `comparables`: the selection, most recent months only
 #'   - `projects`, `districts`, `budget`, `recent`, `period`, `destination`,
@@ -76,7 +79,7 @@ mod_filters_ui <- function(id) {
 filter_defaults <- list(budget = c(3000, 5000), recent = 12, destination = "NUS (Kent Ridge)")
 
 #' @noRd
-mod_filters_server <- function(id) {
+mod_filters_server <- function(id, map_sel = NULL) {
   moduleServer(id, function(input, output, session) {
     rentals <- rentals_data()
 
@@ -115,17 +118,26 @@ mod_filters_server <- function(id) {
     mrt_pick <- reactive(if (isTruthy(input$mrt_pick)) input$mrt_pick else NULL)
     mrt_dist <- reactive(if (is.null(input$mrt_dist)) mrt_max else input$mrt_dist)
 
-    market <- reactive({
+    base <- reactive({
       near <- if (!is.null(mrt_pick())) station_location(mrt_pick())
       filter_market(rentals, input$district, input$beds, input$type,
                     input$area, input$period, near, mrt_dist())
+    })
+
+    # Is a map selection narrowing every page?
+    sel_applied <- reactive(!is.null(map_sel) && !is.null(map_sel$ids) && isTRUE(map_sel$apply))
+
+    market <- reactive({
+      d <- base()
+      if (sel_applied()) d <- d[which(d$loc_id %in% map_sel$ids), ]
+      d
     })
 
     selection <- reactive({
       d <- market()
       if (length(input$project)) d <- d[d$project %in% input$project, ]
       validate(need(nrow(d) > 0,
-        "No rentals match these filters. Try widening the filters on the Budget page."))
+        "No rentals match these filters. Try widening the filters on the Budget page or clearing the map selection."))
       d
     })
 
@@ -140,6 +152,7 @@ mod_filters_server <- function(id) {
         else if (length(input$district) <= 2) paste(sub(" .*", "", input$district), collapse = ", ")
         else paste(length(input$district), "districts"),
         if (length(input$project)) paste(length(input$project), "project(s)"),
+        if (sel_applied()) paste("map selection:", map_sel$label),
         if (setequal(input$beds, bed_levels)) "any bedrooms"
         else if (length(input$beds)) paste(paste(input$beds, collapse = ", "), "bedrooms")
         else "no bedrooms selected",
@@ -155,6 +168,7 @@ mod_filters_server <- function(id) {
     })
 
     list(
+      base        = base,
       market      = market,
       selection   = selection,
       comparables = reactive(latest_months(selection(), recent())),

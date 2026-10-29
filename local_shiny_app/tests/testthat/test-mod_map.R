@@ -1,7 +1,7 @@
 test_that("clicking a building selects it and its rows can be shortlisted", {
   rentals <- rentals_data()
   filters <- list(
-    market   = reactive(rentals[rentals$district_no == 1, ]),
+    base     = reactive(rentals[rentals$district_no == 1, ]),
     projects = reactive(NULL),
     recent   = reactive(12),
     budget   = reactive(c(3000, 5000)),
@@ -27,5 +27,27 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
 
     session$setInputs(clear = 1)
     expect_null(sel$ids)
+  })
+})
+
+test_that("an applied map selection narrows the filters' market", {
+  map_sel <- new_map_selection()
+  testServer(mod_filters_server, args = list(map_sel = map_sel), {
+    rentals <- rentals_data()
+    session$setInputs(
+      budget = c(3000, 5000), district = NULL, project = NULL,
+      beds = bed_levels, type = unique(rentals$type), area = c(0, area_max),
+      period = range(rentals$lease_date), recent = "12", destination = "NUS (Kent Ridge)",
+      mrt_pick = "", mrt_dist = mrt_max
+    )
+    loc <- base()$loc_id[!is.na(base()$loc_id)][1]
+    map_sel$ids <- loc; map_sel$label <- "One building"
+    session$flushReact()
+    expect_true(all(market()$loc_id == loc))
+    expect_match(summary(), "map selection: One building")
+
+    map_sel$apply <- FALSE
+    session$flushReact()
+    expect_equal(nrow(market()), nrow(base()))
   })
 })
