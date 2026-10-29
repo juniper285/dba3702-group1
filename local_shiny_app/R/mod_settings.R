@@ -87,12 +87,10 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                      selected = s$districts, width = "100%",
                      options = list(placeholder = "Anywhere in Singapore",
                                     plugins = list("remove_button"))),
-      dateRangeInput(ns("period"), "Rentals that started between",
-                     start = s$period[1], end = s$period[2],
-                     min = choices$dates[1], max = choices$dates[2], format = "M yyyy"),
-      selectInput(ns("recent"), "Compare my budget with rentals from the most recent",
-                  choices = c("6 months" = 6, "12 months" = 12, "24 months" = 24),
-                  selected = s$recent)
+      selectInput(ns("recent"), "Use rentals from the", choices = recent_choices,
+                  selected = s$recent),
+      helpText(sprintf("Rentals up to %s, the latest in the data.",
+                       format(choices$dates[2], "%b %Y")))
     ),
     home = tagList(
       p(class = "text-muted", "What kind of home are you after?"),
@@ -134,8 +132,10 @@ read_settings_form <- function(input, s, sections, places) {
   if ("places" %in% sections) s$places <- places
   if ("area" %in% sections) {
     s$districts <- if (is.null(input$districts)) character() else input$districts
-    if (!is.null(input$period)) s$period <- as.Date(input$period)
-    if (!is.null(input$recent)) s$recent <- as.numeric(input$recent)
+    if (!is.null(input$recent)) {
+      s$recent <- as.numeric(input$recent)
+      s$period <- period_for(s$recent, settings_choices()$dates)
+    }
   }
   if ("home" %in% sections) {
     if (length(input$beds)) s$beds <- input$beds

@@ -93,8 +93,7 @@ mod_filters_server <- function(id, settings, map_sel = NULL) {
       parts <- c(
         settings_summary(s()),
         if (length(input$project)) paste(length(input$project), "project(s)"),
-        if (sel_applied()) paste("map selection:", map_sel$label),
-        paste0("benchmarks: latest ", s()$recent, " months")
+        if (sel_applied()) paste("map selection:", map_sel$label)
       )
       paste(parts, collapse = " · ")
     })

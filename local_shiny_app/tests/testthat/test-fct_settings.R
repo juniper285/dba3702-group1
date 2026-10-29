@@ -27,7 +27,7 @@ test_that("nothing saved, or not JSON, gives NULL", {
 test_that("invalid fields fall back to their defaults one by one", {
   json <- '{"budget": [5000, 1000], "beds": ["2", "9"], "types": ["Castle"],
             "mrt_pick": "Hogwarts MRT", "mrt_dist": 50, "recent": 7,
-            "period": ["2020-01-01", "2030-01-01"],
+            "period": ["2020-01-01", "2021-01-01"],
             "places": [{"name": "London", "lat": 51.5, "lng": -0.1},
                        {"name": "Office", "lat": 1.29, "lng": 103.85}]}'
   s <- settings_from_json(json, choices)
@@ -38,7 +38,7 @@ test_that("invalid fields fall back to their defaults one by one", {
   expect_equal(s$mrt_pick, "")
   expect_equal(s$mrt_dist, d$mrt_dist)
   expect_equal(s$recent, 12)
-  expect_equal(s$period, choices$dates)     # clamped to the data
+  expect_equal(s$period, period_for(12, choices$dates))   # follows the window, not the saved dates
   expect_equal(s$places$name, "Office")     # outside Singapore dropped
 })
 
@@ -106,4 +106,15 @@ test_that("chosen_place() reads a picked suggestion, or looks up typed text", {
   expect_equal(typed$name, "1 MAIN ROAD")
   expect_equal(nrow(chosen_place("", search = fake)), 0)
   expect_equal(nrow(chosen_place("nowhere", search = function(q) data.frame())), 0)
+})
+
+test_that("period_for() covers the last N months of data, at most all of it", {
+  dates <- as.Date(c("2021-09-01", "2026-08-01"))
+  expect_equal(period_for(12, dates), as.Date(c("2025-08-02", "2026-08-01")))
+  expect_equal(period_for(60, dates), as.Date(c("2021-09-01", "2026-08-01")))
+  # the same rentals as latest_months()
+  d <- data.frame(lease_date = seq(dates[1], dates[2], by = "month"), rent = 1)
+  p <- period_for(12, dates)
+  expect_equal(latest_months(d, 12)$lease_date,
+               d$lease_date[d$lease_date >= p[1] & d$lease_date <= p[2]])
 })

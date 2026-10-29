@@ -7,6 +7,21 @@
 place_km_max <- 30   # "max distance to my places" slider's top end means "any distance"
 max_places   <- 6
 
+# How far back to look, in months: one window for every page (the data
+# covers five years)
+recent_choices <- c("Last 6 months" = 6, "Last 12 months" = 12, "Last 2 years" = 24,
+                    "Last 3 years" = 36, "Last 5 years" = 60)
+
+#' Lease-start dates covered by the last `months` months of data
+#'
+#' Matches latest_months(): rentals after the cutoff, up to the latest one.
+#' @param dates First and last lease date in the data.
+#' @noRd
+period_for <- function(months, dates) {
+  cutoff <- seq(dates[2], by = paste0("-", months, " months"), length.out = 2)[2]
+  c(max(cutoff + 1, dates[1]), dates[2])
+}
+
 # Icons a renter can give a place: `icon` for the app (Font Awesome 6),
 # `map_icon` for the map's pins (leaflet's Font Awesome 4 names)
 place_kinds <- data.frame(
@@ -116,7 +131,7 @@ default_settings <- function(choices = settings_choices()) {
     beds      = bed_levels,
     types     = choices$types,
     area      = c(0, area_max),
-    period    = choices$dates,
+    period    = period_for(12, choices$dates),
     recent    = 12,
     mrt_pick  = "",
     mrt_dist  = mrt_max,
@@ -163,17 +178,13 @@ settings_from_json <- function(json, choices = settings_choices()) {
   keep("beds",      pick(x$beds, bed_levels))
   keep("types",     pick(x$types, choices$types))
   keep("area",      num_range(x$area, 0, area_max))
-  keep("recent",    if (isTRUE(as.numeric(x$recent) %in% c(6, 12, 24))) as.numeric(x$recent))
+  keep("recent",    if (isTRUE(as.numeric(x$recent) %in% recent_choices)) as.numeric(x$recent))
   keep("mrt_pick",  if (identical(x$mrt_pick, "") || isTRUE(x$mrt_pick %in% choices$stations)) x$mrt_pick)
   keep("mrt_dist",  one_num(x$mrt_dist, 100, mrt_max))
   keep("place_km",  one_num(x$place_km, 1, place_km_max))
 
-  # Period: clamp to the data we have
-  p <- tryCatch(as.Date(unlist(x$period)), error = function(e) NULL)
-  if (length(p) == 2 && !anyNA(p)) {
-    p <- pmin(pmax(p, choices$dates[1]), choices$dates[2])
-    if (p[1] <= p[2]) s$period <- p
-  }
+  # The period always follows the window, up to the latest data
+  s$period <- period_for(s$recent, choices$dates)
 
   # Places: name + a location in Singapore (kind and address are optional)
   pl <- x$places
@@ -211,7 +222,7 @@ settings_summary <- function(s, choices = settings_choices()) {
     if (nrow(s$places) && s$place_km < place_km_max) paste0("within ", s$place_km, " km of them"),
     if (nzchar(s$mrt_pick)) paste0("within ", s$mrt_dist, " m of ", s$mrt_pick)
     else if (s$mrt_dist < mrt_max) paste0("within ", s$mrt_dist, " m of an MRT/LRT"),
-    paste0(format(s$period[1], "%b %Y"), " - ", format(s$period[2], "%b %Y"))
+    tolower(names(recent_choices)[match(s$recent, recent_choices)])
   )
 }
 
