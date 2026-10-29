@@ -35,15 +35,18 @@
     }, 600);   // let the Search page and its table draw first
   }
 
-  var registered = false;
+  // Shiny is loaded before this script, so the handlers can be registered
+  // now. Every handler must take exactly one argument, or Shiny refuses it.
+  Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });
+  Shiny.addCustomMessageHandler("rentlens-clear-settings", function (_) { write(null); });
+  Shiny.addCustomMessageHandler("rentlens-coach", function (m) { coach(m); });
+
   $(document).on("shiny:connected", function () {
-    if (!registered) {
-      Shiny.addCustomMessageHandler("rentlens-save-settings", write);
-      Shiny.addCustomMessageHandler("rentlens-clear-settings", function () { write(null); });
-      Shiny.addCustomMessageHandler("rentlens-coach", coach);
-      registered = true;
-    }
-    // "none" tells the server there is nothing saved yet (first visit)
-    Shiny.setInputValue("settings-stored", read() || "none");
+    // "none" tells the server there is nothing saved yet (first visit).
+    // Deferred so it runs after Shiny has finished connecting: an error
+    // thrown inside this event would stop Shiny from starting up.
+    setTimeout(function () {
+      Shiny.setInputValue("settings-stored", read() || "none");
+    }, 0);
   });
 })();
