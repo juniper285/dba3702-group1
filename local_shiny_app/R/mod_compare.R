@@ -29,14 +29,22 @@ mod_compare_ui <- function(id) {
       card_footer("Redder = more expensive. Numbers = median monthly rent (S$ thousands); ",
                   "hover for the exact figure and rental count. ",
                   "Blank = fewer rentals than the minimum per row.")
-    )
+    ),
+    card(
+      card_header("Does being near an MRT/LRT station cost more?"),
+      plotly::plotlyOutput(ns("mrt_plot"), height = 450),
+      card_footer("One dot per project (recent rentals), sized by rental count; hover for ",
+                  "details. Red line = overall trend.")
+    ),
+    card(card_header("Projects by distance to the nearest MRT/LRT station"),
+         DTOutput(ns("mrt_table"), fill = FALSE))
   )
 }
 
 #' @noRd
 mod_compare_server <- function(id, filters) {
   moduleServer(id, function(input, output, session) {
-    setBookmarkExclude(dt_bookmark_inputs("table"))
+    setBookmarkExclude(dt_bookmark_inputs(c("table", "mrt_table")))
 
     recent_market <- reactive({
       d <- latest_months(filters$market(), filters$recent())
@@ -87,6 +95,49 @@ mod_compare_server <- function(id, filters) {
         plotly::add_annotations(x = ~bed_group, y = ~district, text = ~sprintf("%.1f", median / 1000),
                                 showarrow = FALSE, font = list(size = 11)) |>
         rl_plotly("Bedrooms", NULL)
+    })
+
+    # One row per project with its nearest station (chart and table)
+    mrt_projects <- reactive({
+      s <- recent_market() |>
+        filter(!is.na(mrt_m)) |>
+        group_by(project, district) |>
+        summarise(mrt_station = first(mrt_station), mrt_m = first(mrt_m),
+                  median = median(rent), psf = median(psf, na.rm = TRUE), n = n(),
+                  .groups = "drop") |>
+        filter(n >= input$min_n, !is.na(psf)) |>
+        mutate(walk_min = walk_minutes(mrt_m))
+      validate(need(nrow(s) > 5, "Not enough projects to compare."))
+      s
+    })
+
+    output$mrt_plot <- plotly::renderPlotly({
+      s <- mrt_projects()
+      fit <- if (nrow(s) >= 30) stats::loess(psf ~ mrt_m, s) else stats::lm(psf ~ mrt_m, s)
+      line <- data.frame(mrt_m = seq(min(s$mrt_m), max(s$mrt_m), length.out = 60))
+      line$psf <- stats::predict(fit, line)
+      plotly::plot_ly() |>
+        plotly::add_markers(
+          data = s, x = ~mrt_m, y = ~psf, size = ~n, sizes = c(5, 25), name = "Projects",
+          marker = list(color = rl_colours[["ink"]], opacity = 0.35),
+          text = ~sprintf("<b>%s</b><br>%s<br>Nearest: %s (%s m, ~%s min walk)<br>Median rent %s<br>Median S$%.2f psf<br>%s rentals",
+                          project, district, mrt_station, format(mrt_m, big.mark = ","),
+                          walk_min, money(median), psf, n),
+          hoverinfo = "text") |>
+        plotly::add_trace(data = line, x = ~mrt_m, y = ~psf, type = "scatter", mode = "lines",
+                          name = "Trend", hoverinfo = "skip", inherit = FALSE,
+                          line = list(color = rl_colours[["budget"]], width = 3)) |>
+        rl_plotly("Distance to nearest MRT/LRT station (m)", "Median rent per sqft",
+                  money_y = TRUE) |>
+        plotly::layout(showlegend = FALSE)
+    })
+
+    output$mrt_table <- renderDT({
+      s <- mrt_projects() |>
+        arrange(mrt_m) |>
+        select(project, district, mrt_station, mrt_m, walk_min, median, psf, n) |>
+        prettify()
+      rl_datatable(s, selection = "none") |> format_money_cols(s)
     })
 
     output$table <- renderDT({
