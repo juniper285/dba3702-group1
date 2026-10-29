@@ -13,7 +13,7 @@ test_that("base_map() has the key-place and MRT/LRT layers", {
   methods <- vapply(calls, `[[`, "", "method")
   expect_true(all(c("addMarkers", "addAwesomeMarkers", "addCircleMarkers") %in% methods))
   overlays <- calls[[which(methods == "addLayersControl")]]$args[[2]]
-  expect_true(all(c("Schools and work areas", "Airport, ports and hospitals",
+  expect_true(all(c("My places", "Schools and work areas", "Airport, ports and hospitals",
                     "MRT/LRT stations") %in% overlays))
 })
 
