@@ -14,7 +14,8 @@ latest_months <- function(d, months) {
 #' @noRd
 summarise_rent <- function(d, budget = c(NA, NA)) {
   summarise(d,
-    median = median(rent),
+    median  = median(rent),
+    average = mean(rent),
     p25    = unname(quantile(rent, 0.25)),
     p75    = unname(quantile(rent, 0.75)),
     psf    = median(psf, na.rm = TRUE),
@@ -30,8 +31,9 @@ summarise_options <- function(d) {
   d |>
     group_by(project, district, bed_group) |>
     summarise(
-      size   = most_common(area_band),
-      median = median(rent),
+      size    = most_common(area_band),
+      median  = median(rent),
+      average = mean(rent),
       p25    = unname(quantile(rent, 0.25)),
       p75    = unname(quantile(rent, 0.75)),
       psf    = median(psf, na.rm = TRUE),
@@ -103,7 +105,7 @@ summarise_projects <- function(d, projects, budget) {
   s <- d |>
     group_by(project) |>
     summarise(district = paste(sort(unique(district)), collapse = ", "),
-              n = n(), median = median(rent),
+              n = n(), median = median(rent), average = mean(rent),
               p25 = unname(quantile(rent, 0.25)), p75 = unname(quantile(rent, 0.75)),
               psf = median(psf, na.rm = TRUE), sqft = median(area_sqft, na.rm = TRUE),
               last = max(lease_date), .groups = "drop")

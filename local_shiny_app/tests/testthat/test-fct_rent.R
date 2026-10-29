@@ -19,6 +19,7 @@ test_that("summarise_rent() reports the share within budget and ignores missing 
   expect_equal(s$n, 4)
   expect_equal(s$within, 0.5)
   expect_equal(s$psf, 6)
+  expect_equal(s$average, 3350)
 })
 
 test_that("summarise_options() gives one row per project and bedroom type", {
@@ -26,6 +27,7 @@ test_that("summarise_options() gives one row per project and bedroom type", {
   expect_equal(nrow(s), 3)
   a1 <- s[s$project == "A" & s$bed_group == "1", ]
   expect_equal(a1$median, 3200)
+  expect_equal(a1$average, 3200)
   expect_equal(a1$size, "400 to 500")
   expect_equal(a1$last, as.Date("2024-06-01"))
 })

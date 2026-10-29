@@ -80,7 +80,7 @@ mod_area_compare_server <- function(id, map_data, areas) {
       div(class = "kpi-stack",
           kpi("Rentals", format(nrow(d), big.mark = ",")),
           kpi("Projects", format(n_distinct(d$project), big.mark = ",")),
-          kpi("Median rent", money(median(d$rent))),
+          kpi("Median rent", money(median(d$rent)), paste("average", money(mean(d$rent)))),
           kpi("Median psf", paste0("S$", format(round(median(d$psf, na.rm = TRUE), 2), nsmall = 2))))
     }
     output$a_tiles <- renderUI(tiles(a_data()))
