@@ -1,8 +1,12 @@
 #' The app's server: wires the modules together
 #' @noRd
 app_server <- function(input, output, session) {
+  # The building or area selected on the map; with "Apply map selection to
+  # all pages" on, the filters narrow every page to it
+  map_sel <- new_map_selection()
+
   # Filtered data sets every tab works from
-  filters <- mod_filters_server("filters")
+  filters <- mod_filters_server("filters", map_sel)
 
   # The shortlist is shared: "Budget", "Map" and "Check a listing" add to it,
   # "Shortlist" shows and edits it
@@ -11,7 +15,7 @@ app_server <- function(input, output, session) {
   mod_budget_check_server("budget_check", filters)
   mod_listing_check_server("listing_check", filters, shortlist)
   mod_within_budget_server("within_budget", filters, shortlist)
-  mod_map_server("map", filters, shortlist)
+  mod_map_server("map", filters, shortlist, map_sel)
   mod_trends_server("trends", filters)
   mod_compare_server("compare", filters)
   mod_shortlist_server("shortlist", filters, shortlist)

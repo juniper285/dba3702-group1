@@ -5,6 +5,9 @@
 #'
 #' @param filters The list returned by mod_filters_server().
 #' @param shortlist The shared shortlist reactiveVal.
+#' @param map_sel The shared map selection: reactiveValues with `ids` (map
+#'   locations, NULL = nothing selected), `label` and `apply` (narrow every
+#'   page to it).
 #' @noRd
 mod_map_ui <- function(id) {
   ns <- NS(id)
@@ -24,6 +27,7 @@ mod_map_ui <- function(id) {
           position = "right", width = 300, class = "map-panel",
           div(class = "section-title", "Selection"),
           div(class = "selection-label", textOutput(ns("sel_label"))),
+          input_switch(ns("apply_sel"), "Apply map selection to all pages", value = TRUE),
           div(class = "kpi-stack",
               kpi("Rentals", textOutput(ns("vb_n"))),
               kpi("Projects", textOutput(ns("vb_proj"))),
@@ -74,25 +78,27 @@ mod_map_ui <- function(id) {
 }
 
 #' @noRd
-mod_map_server <- function(id, filters, shortlist) {
+mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()) {
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
     observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
                                  "add_short", "clear",
                                  grep("^map_", names(input), value = TRUE))))
 
-    # Mapped rentals: the market narrowed to chosen projects (like
-    # filters$selection(), but without validate() so the map can be empty)
+    # Mapped rentals: the filters (before the map selection) narrowed to chosen
+    # projects (like filters$selection(), but without validate() so the map can be empty)
     map_data <- reactive({
-      d <- filters$market()
+      d <- filters$base()
       if (length(filters$projects())) d <- d[d$project %in% filters$projects(), ]
       d[!is.na(d$loc_id) & d$geo_match %in% input$geo_match, ]
     })
 
     loc_summary <- reactive(summarise_locations(map_data()))
 
-    # Selection: a clicked building, a drawn area, or nothing (= everything mapped)
-    sel <- reactiveValues(ids = NULL, label = NULL)
+    # Selection: a clicked building, a drawn area, or nothing (= everything mapped).
+    # Shared with the filters, which apply it to every page when asked to
+    sel <- map_sel
+    observe(sel$apply <- isTRUE(input$apply_sel))
 
     observeEvent(input$map_marker_click, {
       id <- input$map_marker_click$id
@@ -103,8 +109,15 @@ mod_map_server <- function(id, filters, shortlist) {
     observeEvent(input$map_draw_new_feature, {
       shape <- drawn_to_sf(input$map_draw_new_feature)
       locs_sf <- map_locations_sf()
-      sel$ids <- locs_sf$loc_id[lengths(st_intersects(locs_sf, shape)) > 0]
-      sel$label <- sprintf("Drawn area (%d buildings)", length(sel$ids))
+      # Only the buildings on show (the geocode-quality choice hides some)
+      ids <- intersect(locs_sf$loc_id[lengths(st_intersects(locs_sf, shape)) > 0],
+                       loc_summary()$loc_id)
+      if (length(ids) == 0) {
+        showNotification("No buildings in that area. Try drawing a larger shape.", type = "warning")
+        return()
+      }
+      sel$ids <- ids
+      sel$label <- sprintf("Drawn area (%d buildings)", length(ids))
     })
     clear_sel <- function() { sel$ids <- NULL; sel$label <- NULL }
     observeEvent(input$map_draw_deleted_features, clear_sel())
@@ -258,5 +271,21 @@ mod_map_server <- function(id, filters, shortlist) {
       filename = function() paste0("rentals_map_selection-", Sys.Date(), ".csv"),
       content  = function(file) write.csv(contracts(), file, row.names = FALSE)
     )
+
+    # Keep the selection in "Save search" links
+    onBookmark(function(state) {
+      state$values$sel_ids   <- sel$ids
+      state$values$sel_label <- sel$label
+    })
+    onRestore(function(state) {
+      if (length(state$values$sel_ids) > 0) {
+        sel$ids   <- as.integer(unlist(state$values$sel_ids))
+        sel$label <- unlist(state$values$sel_label)
+      }
+    })
   })
 }
+
+#' An empty map selection (see mod_map_server())
+#' @noRd
+new_map_selection <- function() reactiveValues(ids = NULL, label = NULL, apply = TRUE)
