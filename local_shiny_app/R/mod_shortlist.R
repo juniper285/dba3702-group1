@@ -76,7 +76,7 @@ mod_shortlist_server <- function(id, filters, shortlist) {
                                 median > b[2] ~ "Above range",
                                 TRUE          ~ "Within range")) |>
         arrange(median) |>
-        add_distance(filters$destination())
+        add_distance(filters$places())
       s$listings <- listing_link(s$project)
       s
     })

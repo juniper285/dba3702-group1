@@ -162,16 +162,32 @@ project_coords <- function() {
   })
 }
 
+#' Key places as a places table (name, lat, lng), in the order given
+#' @noRd
+key_place <- function(names) {
+  p <- key_places[match(names, key_places$name), c("name", "lat", "lng")]
+  p <- p[!is.na(p$name), ]
+  rownames(p) <- NULL
+  p
+}
+
+#' Name of the distance column for a place, e.g. "To NTU (km)"
+#' @noRd
+place_column <- function(name) paste0("To ", name, " (km)")
+
 #' Add distance columns to a project-level table
 #'
 #' @param s Data frame with a `project` column.
-#' @param destination A name from `destinations`.
+#' @param places Data frame with `name`, `lat`, `lng`: one "To <name> (km)"
+#'   column is added per place.
 #' @noRd
-add_distance <- function(s, destination, coords = project_coords()) {
+add_distance <- function(s, places, coords = project_coords()) {
   keep <- intersect(c("project", "lat", "lng", "mrt_station", "mrt_m"), names(coords))
   s <- left_join(s, coords[, keep], by = "project")
-  dest <- destinations[[destination]]
-  s$dest_km <- round(haversine_km(s$lat, s$lng, dest[1], dest[2]), 1)
+  for (i in seq_len(nrow(places))) {
+    s[[place_column(places$name[i])]] <-
+      round(haversine_km(s$lat, s$lng, places$lat[i], places$lng[i]), 1)
+  }
   if ("mrt_m" %in% names(s)) s$walk_min <- walk_minutes(s$mrt_m)
   select(s, -lat, -lng)
 }

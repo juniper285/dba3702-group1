@@ -7,8 +7,9 @@
 #'   - `market`: `base`, narrowed to the map selection when that is applied
 #'   - `selection`: the market narrowed to the chosen projects (errors if empty)
 #'   - `comparables`: the selection, most recent months only
-#'   - `projects`, `districts`, `budget`, `recent`, `period`, `destination`,
-#'     `mrt_pick`, `mrt_dist`: the sidebar inputs
+#'   - `projects`, `districts`, `budget`, `recent`, `period`, `mrt_pick`,
+#'     `mrt_dist`: the sidebar inputs
+#'   - `places`: the places that matter (name, lat, lng), for distance columns
 #'   - `summary`: the filters as one line of text
 #' @noRd
 mod_filters_ui <- function(id) {
@@ -178,7 +179,7 @@ mod_filters_server <- function(id, map_sel = NULL) {
       recent      = recent,
       summary     = summary,
       period      = reactive(input$period),
-      destination = reactive(input$destination),
+      places      = reactive(key_place(input$destination)),
       mrt_pick    = mrt_pick,
       mrt_dist    = mrt_dist
     )

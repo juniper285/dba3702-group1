@@ -92,7 +92,7 @@ mod_properties_server <- function(id, filters, shortlist) {
     summary_data <- reactive({
       summarise_projects(mutate(data(), project = as.character(project)), projects(),
                          filters$budget()) |>
-        add_distance(filters$destination())
+        add_distance(filters$places())
     })
 
     output$cards <- renderUI({
@@ -113,8 +113,10 @@ mod_properties_server <- function(id, filters, shortlist) {
               format(x$last, "%b %Y"), ")", br(),
               if (!is.na(x$mrt_station))
                 tagList(strong("Nearest MRT/LRT: "), x$mrt_station, " (~", x$walk_min, " min walk)", br()),
-              if (!is.na(x$dest_km))
-                tagList(strong("To ", filters$destination(), ": "), x$dest_km, " km", br()),
+              lapply(filters$places()$name, function(place) {
+                km <- x[[place_column(place)]]
+                if (!is.na(km)) tagList(strong("To ", place, ": "), km, " km", br())
+              }),
               strong("Budget fit: "), x$fits),
             if (x$n < 5) span(class = "badge bg-warning text-dark", "Few rentals: a rough guide")
           )
