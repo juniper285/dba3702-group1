@@ -18,6 +18,8 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     session$setInputs(map_marker_click = list(id = as.character(loc)))
     expect_true(all(selected()$loc_id == loc))
     expect_equal(output$vb_proj, "1")
+    expect_equal(nrow(contracts()), nrow(selected()))
+    expect_true(all(contracts()$Project == selected()$project[1]))
 
     session$setInputs(table_rows_selected = 1, add_short = 1)
     expect_equal(nrow(shortlist()), 1)
