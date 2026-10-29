@@ -71,14 +71,26 @@ prepare_rentals <- function(d) {
 #'
 #' Every argument except `d` is a sidebar input. Empty `districts` = all.
 #' Contracts with no floor area are dropped.
+#'
+#' @param near c(lat, lng) of a chosen MRT/LRT station, or NULL.
+#' @param mrt_dist Metres. With `near`: keep buildings within this distance
+#'   of that station. Without: keep buildings within this distance of their
+#'   nearest station (`mrt_max` or more = any distance).
 #' @noRd
-filter_market <- function(d, districts, beds, types, area, period) {
+filter_market <- function(d, districts, beds, types, area, period,
+                          near = NULL, mrt_dist = mrt_max) {
   if (length(districts)) d <- d[d$district %in% districts, ]
   # which() drops rows with no floor area instead of returning NA rows
-  d[which(d$bed_group %in% beds &
-          d$type %in% types &
-          d$area_sqft >= area[1] &
-          (d$area_sqft <= area[2] | area[2] >= area_max) &
-          d$lease_date >= period[1] &
-          d$lease_date <= period[2]), ]
+  d <- d[which(d$bed_group %in% beds &
+               d$type %in% types &
+               d$area_sqft >= area[1] &
+               (d$area_sqft <= area[2] | area[2] >= area_max) &
+               d$lease_date >= period[1] &
+               d$lease_date <= period[2]), ]
+  if (!is.null(near)) {
+    d <- d[which(haversine_km(d$lat, d$lng, near[1], near[2]) * 1000 <= mrt_dist), ]
+  } else if (mrt_dist < mrt_max) {
+    d <- d[which(d$mrt_m <= mrt_dist), ]
+  }
+  d
 }
