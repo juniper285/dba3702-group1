@@ -8,6 +8,8 @@
 #' @param map_sel The shared map selection: reactiveValues with `ids` (map
 #'   locations, NULL = nothing selected), `label` and `apply` (narrow every
 #'   page to it).
+#' @param areas The shared saved areas for "Area A vs B" (see new_saved_areas()).
+#' @return The server returns a list with `map_data`, the mapped rentals.
 #' @noRd
 mod_map_ui <- function(id) {
   ns <- NS(id)
@@ -28,6 +30,10 @@ mod_map_ui <- function(id) {
           div(class = "section-title", "Selection"),
           div(class = "selection-label", textOutput(ns("sel_label"))),
           input_switch(ns("apply_sel"), "Apply map selection to all pages", value = TRUE),
+          div(class = "d-flex gap-2 mb-1",
+              actionButton(ns("save_a"), "Save as Area A", class = "btn-sm btn-area-a flex-fill"),
+              actionButton(ns("save_b"), "Save as Area B", class = "btn-sm btn-area-b flex-fill")),
+          div(class = "small text-muted mb-2", textOutput(ns("areas_status"), inline = TRUE)),
           div(class = "kpi-stack",
               kpi("Rentals", textOutput(ns("vb_n"))),
               kpi("Projects", textOutput(ns("vb_proj"))),
@@ -78,11 +84,12 @@ mod_map_ui <- function(id) {
 }
 
 #' @noRd
-mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()) {
+mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection(),
+                           areas = new_saved_areas()) {
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
     observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
-                                 "add_short", "clear",
+                                 "add_short", "clear", "save_a", "save_b",
                                  grep("^map_", names(input), value = TRUE))))
 
     # Mapped rentals: the filters (before the map selection) narrowed to chosen
@@ -121,10 +128,30 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     })
     clear_sel <- function() { sel$ids <- NULL; sel$label <- NULL }
     observeEvent(input$map_draw_deleted_features, clear_sel())
+    # "Clear selection" also wipes the saved Area A and Area B
     observeEvent(input$clear, {
       clear_sel()
+      for (k in names(areas)) areas[[k]] <- NULL
       leafletProxy("map") |> clearGroup("Selected") |>
         removeDrawToolbar(clearFeatures = TRUE) |> add_draw_toolbar()
+    })
+
+    # Save the selection as Area A or B, for "Area A vs B"
+    save_area <- function(w) {
+      if (is.null(sel$ids)) {
+        showNotification("Click a building or draw an area on the map first.", type = "warning")
+        return()
+      }
+      areas[[paste0(w, "_ids")]]   <- sel$ids
+      areas[[paste0(w, "_label")]] <- sel$label
+      showNotification(paste0("Saved as Area ", toupper(w), ": ", sel$label,
+                              ". Compare them on Market > Area A vs B."), type = "message")
+    }
+    observeEvent(input$save_a, save_area("a"))
+    observeEvent(input$save_b, save_area("b"))
+    output$areas_status <- renderText({
+      lab <- function(w) if (is.null(areas[[paste0(w, "_label")]])) "not set" else areas[[paste0(w, "_label")]]
+      paste0("A: ", lab("a"), " | B: ", lab("b"))
     })
 
     selected <- reactive({
@@ -182,6 +209,21 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         s <- map_locations() |> filter(loc_id %in% ids)
         p |> addCircleMarkers(data = s, lng = ~lng, lat = ~lat, group = "Selected",
                               radius = 9, fill = FALSE, color = "#000", weight = 2.5,
+                              options = pathOptions(interactive = FALSE))
+      }
+    })
+
+    # Outline the saved areas (A navy, B orange)
+    observe({
+      req(map_ready())
+      p <- leafletProxy("map") |> clearGroup("Area A") |> clearGroup("Area B")
+      for (w in c("a", "b")) {
+        ids <- areas[[paste0(w, "_ids")]]
+        if (is.null(ids)) next
+        s <- map_locations() |> filter(loc_id %in% ids)
+        p <- addCircleMarkers(p, data = s, lng = ~lng, lat = ~lat,
+                              group = paste("Area", toupper(w)), radius = 12, fill = FALSE,
+                              color = area_colours[[w]], weight = 2,
                               options = pathOptions(interactive = FALSE))
       }
     })
@@ -272,17 +314,23 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
       content  = function(file) write.csv(contracts(), file, row.names = FALSE)
     )
 
-    # Keep the selection in "Save search" links
+    # Keep the selection and saved areas in "Save search" links
     onBookmark(function(state) {
       state$values$sel_ids   <- sel$ids
       state$values$sel_label <- sel$label
+      state$values$areas     <- reactiveValuesToList(areas)
     })
     onRestore(function(state) {
       if (length(state$values$sel_ids) > 0) {
         sel$ids   <- as.integer(unlist(state$values$sel_ids))
         sel$label <- unlist(state$values$sel_label)
       }
+      a <- state$values$areas
+      for (k in c("a_ids", "b_ids")) if (length(a[[k]])) areas[[k]] <- as.integer(unlist(a[[k]]))
+      for (k in c("a_label", "b_label")) if (length(a[[k]])) areas[[k]] <- unlist(a[[k]])
     })
+
+    list(map_data = map_data)
   })
 }
 
