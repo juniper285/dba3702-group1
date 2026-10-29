@@ -31,8 +31,8 @@ local_shiny_app/
 │   ├── fct_*.R            business logic: data, rent summaries, distances, map pieces
 │   ├── utils_*.R          small helpers: formatting, bookmarking
 │   └── rentalapp-package.R  package-wide imports
-├── inst/extdata/          rentals.rds (and optional mrt_stations.csv)
-├── data-raw/rentals.R     rebuilds inst/extdata/rentals.rds from the source data
+├── inst/extdata/          rentals.rds, mrt_stations.csv
+├── data-raw/             scripts that rebuild inst/extdata/ from the source data
 ├── dev/                   developer scripts (run_dev.R, check.R)
 ├── tests/testthat/        unit tests for fct_/utils_ and module tests (testServer)
 └── man/                   generated documentation
@@ -71,5 +71,5 @@ source("dev/check.R")          # regenerate NAMESPACE + run tests
   `source("data-raw/rentals.R")`.
 - "Check a listing" looks up addresses with the OneMap Search API (no key
   needed); answers are cached for the R session.
-- MRT distances: put `mrt_stations.csv` (columns `station, lat, lng`) in
-  `inst/extdata/`.
+- MRT/LRT stations: `inst/extdata/mrt_stations.csv` (columns `station, lat, lng,
+  kind`), rebuilt from LTA's station-exit data with `source("data-raw/mrt_stations.R")`.
