@@ -118,8 +118,8 @@ mod_compare_server <- function(id, filters) {
       line$psf <- stats::predict(fit, line)
       plotly::plot_ly() |>
         plotly::add_markers(
-          data = s, x = ~mrt_m, y = ~psf, size = ~n, sizes = c(5, 25), name = "Projects",
-          marker = list(color = rl_colours[["ink"]], opacity = 0.35),
+          data = s, x = ~mrt_m, y = ~psf, name = "Projects",
+          marker = list(color = rl_colours[["ink"]], opacity = 0.35, size = dot_sizes(s$n)),
           text = ~sprintf("<b>%s</b><br>%s<br>Nearest: %s (%s m, ~%s min walk)<br>Median rent %s<br>Median S$%.2f psf<br>%s rentals",
                           project, district, mrt_station, format(mrt_m, big.mark = ","),
                           walk_min, money(median), psf, n),

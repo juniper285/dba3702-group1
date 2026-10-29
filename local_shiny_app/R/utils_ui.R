@@ -162,6 +162,12 @@ range_dot_chart <- function(s, budget = NULL) {
                    shapes = if (!is.null(budget)) list(band(budget[1], budget[2], rl_colours[["budget"]], 0.08)))
 }
 
+#' Marker sizes (pixels) for counts, by area: biggest count = `max` pixels
+#'
+#' Used instead of plotly's `size = ~n`, which warns about line widths.
+#' @noRd
+dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
+
 #' A DataTable with the app's defaults
 #' @noRd
 rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE, ...) {

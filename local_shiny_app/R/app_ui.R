@@ -39,7 +39,8 @@ app_ui <- function(request) {
         nav_panel("Price trends", value = "trends", mod_trends_ui("trends")),
         nav_panel("Compare areas", value = "compare", mod_compare_ui("compare")),
         nav_panel("Area A vs B", value = "area_compare", mod_area_compare_ui("area_compare")),
-        nav_panel("Compare properties", value = "properties", mod_properties_ui("properties"))
+        nav_panel("Compare properties", value = "properties", mod_properties_ui("properties")),
+        nav_panel("Value for money", value = "value", mod_value_ui("value"))
       )
     ),
     nav_panel(
