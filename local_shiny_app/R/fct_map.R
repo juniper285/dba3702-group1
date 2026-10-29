@@ -124,7 +124,7 @@ base_map <- function() {
                                   '<a href="https://www.sla.gov.sg">Singapore Land Authority</a>')) |>
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
     addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
-                     overlayGroups = c("Buildings", "Schools and work areas",
+                     overlayGroups = c("Buildings", "My places", "Schools and work areas",
                                        "Airport, ports and hospitals", "Heatmap",
                                        "MRT/LRT stations",
                                        if (!is.null(schools_data())) "Schools"),
@@ -136,6 +136,20 @@ base_map <- function() {
     setView(103.83, 1.33, zoom = 12) |>
     add_key_places() |>
     add_station_layers()
+}
+
+#' Show the renter's places that matter as purple pins
+#'
+#' @param map A leafletProxy().
+#' @param places Data frame with `name`, `lat`, `lng`.
+#' @noRd
+update_my_places <- function(map, places) {
+  map <- clearGroup(map, "My places")
+  if (nrow(places) == 0) return(map)
+  addAwesomeMarkers(map, data = places, lng = ~lng, lat = ~lat, group = "My places",
+                    label = ~paste("My place:", name),
+                    icon = awesomeIcons(icon = "heart", library = "fa", iconColor = "white",
+                                        markerColor = "purple"))
 }
 
 #' Draw a dashed ring of `radius` metres around a station (or remove it)

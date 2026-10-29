@@ -47,7 +47,8 @@ mod_map_ui <- function(id) {
                          multiple = TRUE, options = list(plugins = list("remove_button"))),
           helpText(format(sum(is.na(rentals$loc_id)), big.mark = ","),
                    " rentals have no coordinates and are not mapped. ",
-                   "Yellow stars mark universities, polytechnics and work areas. Use the ",
+                   "Purple pins are your places that matter; yellow stars mark universities, ",
+                   "polytechnics and work areas. Use the ",
                    "layers button for MRT/LRT stations, the airport and hospitals, the ",
                    "heatmap, or another basemap.")
         ),
@@ -187,6 +188,12 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
                   title = names(metric_choices)[metric_choices == m],
                   labFormat = if (m == "budget") labelFormat()
                               else labelFormat(prefix = "S$", big.mark = ","))
+    })
+
+    # The renter's places that matter
+    observe({
+      req(map_ready())
+      leafletProxy("map") |> update_my_places(filters$places())
     })
 
     # Ring around the station chosen in the filters; fly there when it changes
