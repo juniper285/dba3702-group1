@@ -103,7 +103,8 @@ add_station_layers <- function(map, mrt = mrt_stations(), schools = schools_data
   if (!is.null(schools)) {
     map <- addCircleMarkers(map, data = schools, lng = ~lng, lat = ~lat, group = "Schools",
                             radius = 4, color = "#6a3d9a", weight = 1.5, fillColor = "#cab2d6",
-                            fillOpacity = 1, label = ~name)
+                            fillOpacity = 1,
+                            label = if (is.null(schools$level)) ~name else ~paste0(name, " (", level, ")"))
   }
   map
 }
