@@ -22,6 +22,13 @@ mod_compare_ui <- function(id) {
       DTOutput(ns("table"), fill = FALSE),
       card_footer("Dot = median rent, line = typical range (middle 50%). Green = median within ",
                   "your budget range. Highlighted rows have a median within your budget.")
+    ),
+    card(
+      card_header("Median rent by district and bedrooms"),
+      plotly::plotlyOutput(ns("heat"), height = 650),
+      card_footer("Redder = more expensive. Numbers = median monthly rent (S$ thousands); ",
+                  "hover for the exact figure and rental count. ",
+                  "Blank = fewer rentals than the minimum per row.")
     )
   )
 }
@@ -31,9 +38,14 @@ mod_compare_server <- function(id, filters) {
   moduleServer(id, function(input, output, session) {
     setBookmarkExclude(dt_bookmark_inputs("table"))
 
-    compare_data <- reactive({
+    recent_market <- reactive({
       d <- latest_months(filters$market(), filters$recent())
       validate(need(nrow(d) > 0, "No rentals match these filters."))
+      d
+    })
+
+    compare_data <- reactive({
+      d <- recent_market()
       groups <- if (input$compare_by == "District") "district" else c("project", "district")
       s <- d |>
         group_by(across(all_of(groups))) |>
@@ -52,6 +64,29 @@ mod_compare_server <- function(id, filters) {
       s$colour <- ifelse(s$median >= b[1] & s$median <= b[2],
                          rl_colours[["typical"]], rl_colours[["muted"]])
       range_dot_chart(s, b)
+    })
+
+    output$heat <- plotly::renderPlotly({
+      s <- recent_market() |>
+        filter(bed_group != "Unknown") |>
+        group_by(district, bed_group) |>
+        summarise(median = median(rent), n = n(), .groups = "drop") |>
+        filter(n >= input$min_n)
+      validate(need(nrow(s) > 0, "Not enough rentals to fill the grid."))
+      order <- names(sort(tapply(s$median, s$district, median)))
+      s$district <- factor(s$district, levels = order)
+      s$bed_group <- factor(s$bed_group, levels = setdiff(bed_levels, "Unknown"))
+      # Cap colours at the 95th percentile so one luxury outlier doesn't wash out the rest
+      top <- unname(quantile(s$median, 0.95))
+      plotly::plot_ly(s, x = ~bed_group, y = ~district, z = ~pmin(median, top),
+                      type = "heatmap", colorscale = "RdBu", reversescale = TRUE, xgap = 2, ygap = 2,
+                      text = ~sprintf("%s<br>%s BR<br>Median %s<br>%s rentals", district, bed_group,
+                                      money(median), format(n, big.mark = ",")),
+                      hoverinfo = "text",
+                      colorbar = list(title = list(text = "Median rent"), tickprefix = "S$")) |>
+        plotly::add_annotations(x = ~bed_group, y = ~district, text = ~sprintf("%.1f", median / 1000),
+                                showarrow = FALSE, font = list(size = 11)) |>
+        rl_plotly("Bedrooms", NULL)
     })
 
     output$table <- renderDT({
