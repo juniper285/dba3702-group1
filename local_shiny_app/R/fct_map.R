@@ -45,7 +45,54 @@ add_draw_toolbar <- function(map) {
                  editOptions = editToolbarOptions())
 }
 
-#' Empty Singapore map with basemaps, search and drawing tools
+# Schools and work areas show as yellow stars (always on); airport, ports and
+# hospitals get their own layer with icons
+star_groups <- c("Universities", "Polytechnics", "Business districts")
+star_svg <- paste0(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>",
+  "<path d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6 5.6 21.1 7 14l-5.3-5 7.2-.9z' ",
+  "fill='#FFD60A' stroke='#5c4a00' stroke-width='1.3' stroke-linejoin='round'/></svg>")
+place_icons   <- c("Transport" = "plane", "Hospitals" = "plus-square")
+place_colours <- c("Transport" = "green", "Hospitals" = "red")
+
+#' Add the key places: stars for schools and work areas, icons for the rest
+#' @noRd
+add_key_places <- function(map, places = key_places) {
+  stars  <- places[places$group %in% star_groups, ]
+  others <- places[!places$group %in% star_groups, ]
+  star <- makeIcon(
+    iconUrl = paste0("data:image/svg+xml;charset=UTF-8", ",",
+                     utils::URLencode(star_svg, reserved = TRUE)),
+    iconWidth = 26, iconHeight = 26, iconAnchorX = 13, iconAnchorY = 13)
+  map |>
+    addMarkers(data = stars, lng = ~lng, lat = ~lat, icon = star,
+               group = "Schools and work areas", label = ~paste0(name, " (", group, ")")) |>
+    addAwesomeMarkers(data = others, lng = ~lng, lat = ~lat,
+                      group = "Airport, ports and hospitals",
+                      label = ~paste0(name, " (", group, ")"),
+                      icon = awesomeIcons(icon = unname(place_icons[others$group]),
+                                          library = "fa", iconColor = "white",
+                                          markerColor = unname(place_colours[others$group])))
+}
+
+#' Add small white dots for MRT/LRT stations and purple dots for schools
+#' @noRd
+add_station_layers <- function(map, mrt = mrt_stations(), schools = schools_data()) {
+  if (!is.null(mrt)) {
+    map <- addCircleMarkers(map, data = mrt, lng = ~lng, lat = ~lat, group = "MRT/LRT stations",
+                            radius = 4, color = "#222", weight = 1.5, fillColor = "#fff",
+                            fillOpacity = 1, label = ~station)
+  }
+  if (!is.null(schools)) {
+    map <- addCircleMarkers(map, data = schools, lng = ~lng, lat = ~lat, group = "Schools",
+                            radius = 4, color = "#6a3d9a", weight = 1.5, fillColor = "#cab2d6",
+                            fillOpacity = 1, label = ~name)
+  }
+  map
+}
+
+#' Empty Singapore map with basemaps, search, drawing tools and the
+#' key-place and MRT/LRT layers
 #' @noRd
 base_map <- function() {
   leaflet(options = leafletOptions(preferCanvas = TRUE)) |>
@@ -59,13 +106,32 @@ base_map <- function() {
                                   '<a href="https://www.sla.gov.sg">Singapore Land Authority</a>')) |>
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
     addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
-                     overlayGroups = c("Buildings", "Heatmap"),
+                     overlayGroups = c("Buildings", "Schools and work areas",
+                                       "Airport, ports and hospitals", "Heatmap",
+                                       "MRT/LRT stations",
+                                       if (!is.null(schools_data())) "Schools"),
                      options = layersControlOptions(collapsed = TRUE),
                      position = "bottomleft") |>
-    hideGroup("Heatmap") |>
+    hideGroup(c("Airport, ports and hospitals", "Heatmap", "MRT/LRT stations", "Schools")) |>
     addSearchOSM() |>
     add_draw_toolbar() |>
-    setView(103.83, 1.33, zoom = 12)
+    setView(103.83, 1.33, zoom = 12) |>
+    add_key_places() |>
+    add_station_layers()
+}
+
+#' Draw a dashed ring of `radius` metres around a station (or remove it)
+#'
+#' @param map A leafletProxy().
+#' @param station Station name, or NULL to remove the ring.
+#' @noRd
+update_station_ring <- function(map, station, radius) {
+  map <- clearGroup(map, "Station radius")
+  if (is.null(station)) return(map)
+  st <- station_location(station)
+  addCircles(map, lng = st[2], lat = st[1], radius = radius, group = "Station radius",
+             color = "#222", weight = 2, dashArray = "6", fillOpacity = 0.05,
+             label = paste0(station, ": ", radius, " m (about ", walk_minutes(radius), " min walk)"))
 }
 
 #' Summarise contracts to one row per map location
@@ -75,6 +141,7 @@ summarise_locations <- function(d) {
     group_by(loc_id, lat, lng) |>
     summarise(project = paste(head(unique(project), 3), collapse = " / "),
               address = first(address), district = first(district),
+              mrt = first(mrt_station), mrt_m = first(mrt_m),
               n = n(), rent = median(rent), psf = median(psf, na.rm = TRUE),
               .groups = "drop")
 }
@@ -83,8 +150,9 @@ summarise_locations <- function(d) {
 #' @noRd
 location_labels <- function(d) {
   sprintf(
-    "<b>%s</b><br>%s<br>%s<br>%s rentals<br>Median rent %s<br>Median S$%.2f psf",
+    "<b>%s</b><br>%s<br>%s<br>%s rentals<br>Median rent %s<br>Median S$%.2f psf<br>Nearest station: %s",
     d$project, ifelse(is.na(d$address), "", d$address), d$district,
-    format(d$n, big.mark = ","), money(d$rent), d$psf) |>
+    format(d$n, big.mark = ","), money(d$rent), d$psf,
+    ifelse(is.na(d$mrt), "-", paste0(d$mrt, " (", format(d$mrt_m, big.mark = ","), " m)"))) |>
     lapply(HTML)
 }

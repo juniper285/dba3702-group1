@@ -87,6 +87,20 @@ mrt_stations <- function() {
   })
 }
 
+#' Schools (optional inst/extdata/schools.csv: name, lat, lng)
+#'
+#' @return The schools, or NULL if the file is missing or lacks those columns.
+#' @noRd
+schools_data <- function() {
+  cached("schools", {
+    f <- app_sys("extdata", "schools.csv")
+    s <- if (nzchar(f)) read.csv(f) else NULL
+    if (!is.null(s)) names(s) <- tolower(names(s))
+    if (is.null(s) || !all(c("name", "lat", "lng") %in% names(s))) NULL
+    else s[!is.na(s$lat) & !is.na(s$lng), ]
+  })
+}
+
 #' Location (lat, lng) of a station by name
 #' @noRd
 station_location <- function(station, mrt = mrt_stations()) {
