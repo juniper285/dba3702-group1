@@ -7,3 +7,12 @@ test_that("drawn_to_sf() converts drawn polygons and circles", {
   expect_true(lengths(sf::st_intersects(inside, drawn_to_sf(square))) == 1)
   expect_true(lengths(sf::st_intersects(inside, drawn_to_sf(circle))) == 1)
 })
+
+test_that("base_map() has the key-place and MRT/LRT layers", {
+  calls <- base_map()$x$calls
+  methods <- vapply(calls, `[[`, "", "method")
+  expect_true(all(c("addMarkers", "addAwesomeMarkers", "addCircleMarkers") %in% methods))
+  overlays <- calls[[which(methods == "addLayersControl")]]$args[[2]]
+  expect_true(all(c("Schools and work areas", "Airport, ports and hospitals",
+                    "MRT/LRT stations") %in% overlays))
+})

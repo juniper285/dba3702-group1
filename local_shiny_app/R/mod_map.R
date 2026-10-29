@@ -37,7 +37,9 @@ mod_map_ui <- function(id) {
                          multiple = TRUE, options = list(plugins = list("remove_button"))),
           helpText(format(sum(is.na(rentals$loc_id)), big.mark = ","),
                    " rentals have no coordinates and are not mapped. ",
-                   "Switch on the heatmap or another basemap with the layers button.")
+                   "Yellow stars mark universities, polytechnics and work areas. Use the ",
+                   "layers button for MRT/LRT stations, the airport and hospitals, the ",
+                   "heatmap, or another basemap.")
         ),
         leafletOutput(ns("map"), height = 640)
       ),
@@ -128,6 +130,17 @@ mod_map_server <- function(id, filters, shortlist) {
         addLegend("bottomright", pal = pal, values = vals, layerId = "legend",
                   title = names(metric_choices)[metric_choices == m],
                   labFormat = labelFormat(prefix = "S$", big.mark = ","))
+    })
+
+    # Ring around the station chosen in the filters; fly there when it changes
+    observe({
+      req(map_ready())
+      leafletProxy("map") |> update_station_ring(filters$mrt_pick(), filters$mrt_dist())
+    })
+    observeEvent(filters$mrt_pick(), {
+      req(map_ready())
+      st <- station_location(filters$mrt_pick())
+      leafletProxy("map") |> flyTo(st[2], st[1], zoom = 15)
     })
 
     # Outline the selected buildings
