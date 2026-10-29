@@ -86,6 +86,17 @@
   }
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };
 
+  // ---- Optional settings (optional_block() in R): using a greyed-out
+  // control switches its option on ----
+  function activateOptional(e) {
+    var body = e.target.closest && e.target.closest(".optional-body");
+    if (!body) return;
+    var sw = body.parentNode.querySelector(".optional-head input[type=checkbox]");
+    if (sw && !sw.checked) { sw.checked = true; $(sw).trigger("change"); }
+  }
+  document.addEventListener("mousedown", activateOptional, true);
+  document.addEventListener("focusin", activateOptional, true);
+
   // Shiny is loaded before this script, so the handlers can be registered
   // now. Every handler must take exactly one argument, or Shiny refuses it.
   Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });

@@ -146,6 +146,21 @@
 }
 .place-empty { color: $text-muted; font-size: 0.9rem; padding: 0.25rem 0; }
 
+// ---- Optional settings: greyed out until switched on ----------------------
+.optional-block {
+  padding: 0.75rem 1rem 0.25rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-lg;
+  background: #fff;
+  .optional-head .form-check-label { font-weight: 600; }
+  .optional-body { transition: opacity 0.15s ease, filter 0.15s ease; }
+  &:has(.optional-head input:not(:checked)) {
+    background: transparent;
+    .optional-body { opacity: 0.4; filter: grayscale(1); cursor: pointer; }
+  }
+}
+
 // ---- Setup wizard --------------------------------------------------------
 .wizard-title { font-weight: 700; .small { font-weight: 500; } }
 .wizard-preview {

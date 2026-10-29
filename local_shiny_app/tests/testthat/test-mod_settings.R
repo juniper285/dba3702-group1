@@ -98,3 +98,33 @@ test_that("a picked suggestion is added without another lookup", {
     expect_equal(places()$kind, "home")
   })
 })
+
+test_that("switched-off optional distances mean any distance", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    session$setInputs(mrt_limit = FALSE, mrt_dist = 700, station_on = FALSE, mrt_pick = "Novena MRT",
+                      place_limit = TRUE, place_km = 8)
+    session$setInputs(save = 1)
+    expect_equal(settings()$mrt_dist, mrt_max)     # off = any
+    expect_equal(settings()$mrt_pick, "")          # off = no station
+    expect_equal(settings()$place_km, 8)
+
+    session$setInputs(open = 2)
+    session$setInputs(mrt_limit = TRUE, mrt_dist = 700, station_on = TRUE, place_limit = FALSE)
+    session$setInputs(save = 2)
+    expect_equal(settings()$mrt_dist, 700)
+    expect_equal(settings()$mrt_pick, "Novena MRT")
+    expect_equal(settings()$place_km, place_km_max)
+  })
+})
+
+test_that("the preview works before any place is added", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = "none")
+    step(5)
+    session$setInputs(mrt_limit = TRUE, mrt_dist = 1000, station_on = FALSE, mrt_pick = "",
+                      place_limit = FALSE, place_km = 5)
+    expect_match(output$preview$html, "options in your budget")
+  })
+})
