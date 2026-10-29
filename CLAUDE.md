@@ -87,7 +87,7 @@ Pages in `R/app_ui.R`:
 
 | File | Page / role |
 |------|-------------|
-| `mod_settings.R` | **My settings** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the greyed-out optional commute switches. `read_settings_form()` turns inputs into settings. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
+| `mod_settings.R` | **My settings** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
 | `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |

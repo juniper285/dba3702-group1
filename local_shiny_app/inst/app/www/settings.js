@@ -87,7 +87,7 @@
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out
-  // control switches its option on ----
+  // control turns its option on, "Clear" turns it off ----
   function activateOptional(e) {
     var body = e.target.closest && e.target.closest(".optional-body");
     if (!body) return;
@@ -96,6 +96,10 @@
   }
   document.addEventListener("mousedown", activateOptional, true);
   document.addEventListener("focusin", activateOptional, true);
+  $(document).on("click", ".optional-clear", function () {
+    var sw = this.parentNode.querySelector("input[type=checkbox]");
+    if (sw && sw.checked) { sw.checked = false; $(sw).trigger("change"); }
+  });
 
   // Shiny is loaded before this script, so the handlers can be registered
   // now. Every handler must take exactly one argument, or Shiny refuses it.

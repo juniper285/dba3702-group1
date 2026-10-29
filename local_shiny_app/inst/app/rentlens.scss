@@ -151,17 +151,27 @@
 }
 .place-empty { color: $text-muted; font-size: 0.9rem; padding: 0.25rem 0; }
 
-// ---- Optional settings: greyed out until switched on ----------------------
+// ---- Optional settings: greyed out until used ----------------------------
 .optional-block {
   padding: 0.75rem 1rem 0.25rem;
   margin-bottom: 0.75rem;
   border: 1px solid $border-color;
   border-radius: $border-radius-lg;
   background: #fff;
-  .optional-head .form-check-label { font-weight: 600; }
+  .optional-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    // The on/off checkbox is hidden: using a control turns it on, "Clear" off
+    .form-check { padding-left: 0; margin-bottom: 0.25rem; }
+    .form-check-input { display: none; }
+    .form-check-label { font-weight: 600; pointer-events: none; }
+    .optional-clear { padding: 0; text-decoration: none; }
+  }
   .optional-body { transition: opacity 0.15s ease, filter 0.15s ease; }
   &:has(.optional-head input:not(:checked)) {
     background: transparent;
+    .optional-clear { visibility: hidden; }
     .optional-body { opacity: 0.4; filter: grayscale(1); cursor: pointer; }
   }
 }

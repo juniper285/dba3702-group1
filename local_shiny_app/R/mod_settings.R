@@ -104,8 +104,8 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
       uiOutput(ns("area_hint"))
     ),
     commute = tagList(
-      p(class = "text-muted", "How far are you willing to travel? These are optional: switch ",
-        "one on, or just start using it."),
+      p(class = "text-muted", "How far are you willing to travel? These are optional: just start ",
+        "using one, and press Clear to go back to any distance."),
       optional_block(
         ns("mrt_limit"), "Close to an MRT/LRT station", on = s$mrt_dist < mrt_max,
         sliderInput(ns("mrt_dist"), "Within (m)", min = 100, max = mrt_max - 100, step = 100,
@@ -126,14 +126,17 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
   )
 }
 
-#' An optional setting: a switch, and controls that stay greyed out until it
-#' is on (using a greyed control switches it on; see settings.js)
+#' An optional setting: controls that stay greyed out until they are used
 #'
-#' @param id Namespaced id of the switch.
+#' Using a greyed control turns the option on and "Clear" turns it off (see
+#' settings.js). Whether it is on is a checkbox input, hidden by the styles.
+#'
+#' @param id Namespaced id of the on/off checkbox.
 #' @noRd
 optional_block <- function(id, title, on, ...) {
   div(class = "optional-block",
-      div(class = "optional-head", input_switch(id, title, value = on)),
+      div(class = "optional-head", input_switch(id, title, value = on),
+          tags$button(type = "button", class = "btn btn-link btn-sm optional-clear", "Clear")),
       div(class = "optional-body", ...))
 }
 
