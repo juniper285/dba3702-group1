@@ -12,6 +12,7 @@ test_that("settings survive a round trip through JSON", {
   back <- settings_from_json(settings_to_json(s), choices)
   expect_equal(back$budget, s$budget)
   expect_equal(back$places$name, c("NTU", "My office"))
+  expect_equal(back$places$kind, c("other", "other"))     # no icon given: "other"
   expect_equal(back$beds, c("2", "3"))
   expect_equal(back$mrt_pick, "Novena MRT")
   expect_equal(back$period, s$period)
@@ -49,4 +50,30 @@ test_that("settings_summary() describes the settings", {
   expect_match(txt, "near NTU, SMU")
   expect_match(txt, "within 5 km of them")
   expect_match(txt, "within 500 m of an MRT/LRT")
+})
+
+test_that("place icons are kept, and unknown icons become 'other'", {
+  s <- default_settings(choices)
+  s$places <- new_places(name = c("Lab", "Club"), kind = c("study", "castle"),
+                         address = c("1 Research Link", ""), lat = c(1.30, 1.31),
+                         lng = c(103.78, 103.80))
+  back <- settings_from_json(settings_to_json(s), choices)
+  expect_equal(back$places$kind, c("study", "other"))
+  expect_equal(back$places$address, c("1 Research Link", ""))
+  expect_equal(place_icon(back$places$kind), c("graduation-cap", "location-dot"))
+})
+
+test_that("place_address() drops the building name and ends with the postal code", {
+  shop <- data.frame(address = "1 FUSIONOPOLIS WAY CHICKY FUN PLUS CONNEXIS",
+                     building = "CHICKY FUN PLUS CONNEXIS", postal = "138632")
+  expect_equal(place_address(shop), "1 Fusionopolis Way, Singapore 138632")
+  blk <- data.frame(address = "201 TAMPINES STREET 21 SINGAPORE 520201", building = "NIL",
+                    postal = "520201")
+  expect_equal(place_address(blk), "201 Tampines Street 21, Singapore 520201")
+})
+
+test_that("default_place_name() uses the icon's label, numbered if taken", {
+  expect_equal(default_place_name("work", character()), "Work")
+  expect_equal(default_place_name("work", c("Work", "Work 2")), "Work 3")
+  expect_equal(default_place_name("nope", character()), "Place")
 })
