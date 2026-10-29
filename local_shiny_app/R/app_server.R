@@ -21,6 +21,7 @@ app_server <- function(input, output, session) {
   mod_area_compare_server("area_compare", map$map_data, areas)
   mod_trends_server("trends", filters)
   mod_compare_server("compare", filters)
+  mod_properties_server("properties", filters, shortlist)
   mod_shortlist_server("shortlist", filters, shortlist)
   mod_transactions_server("transactions", filters)
 

@@ -48,3 +48,11 @@ test_that("compare_two_areas() lines up the areas by bedrooms", {
   expect_equal(s$b_n, c(1, NA, 1))
   expect_equal(s$diff[1], 200 / 3100)
 })
+
+test_that("summarise_projects() keeps the chosen order and empty projects", {
+  rents$area_sqft <- 450
+  s <- summarise_projects(rents, c("B", "Z", "A"), budget = c(2500, 4000))
+  expect_equal(s$project, c("B", "Z", "A"))
+  expect_equal(s$n, c(1, 0, 3))
+  expect_equal(s$fits, c("Below range", "No rentals", "Within range"))
+})
