@@ -60,7 +60,7 @@ mod_compare_server <- function(id, filters) {
         summarise_rent(filters$budget()) |>
         filter(n >= input$min_n) |>
         arrange(median)
-      if (input$compare_by == "Project") s <- add_distance(s, filters$destination())
+      if (input$compare_by == "Project") s <- add_distance(s, filters$places())
       s
     })
 

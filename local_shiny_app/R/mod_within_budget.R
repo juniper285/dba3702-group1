@@ -41,7 +41,7 @@ mod_within_budget_server <- function(id, filters, shortlist) {
         summarise_options() |>
         filter(median >= b[1], median <= b[2], n >= input$min_n) |>
         arrange(median) |>
-        add_distance(filters$destination())
+        add_distance(filters$places())
     })
 
     output$summary <- renderText({
@@ -55,7 +55,9 @@ mod_within_budget_server <- function(id, filters, shortlist) {
 
     output$distance_note <- renderUI({
       mrt <- if (is.null(mrt_stations())) "" else " and the nearest MRT/LRT station"
-      paste0("Distances are to ", filters$destination(), mrt, " (change it under 'Commute').")
+      places <- filters$places()$name
+      if (length(places) == 0) return(paste0("Add places that matter to see distances to them."))
+      paste0("Distances are to ", paste(places, collapse = ", "), mrt, ".")
     })
 
     output$plot <- plotly::renderPlotly({

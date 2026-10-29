@@ -21,11 +21,14 @@ test_that("add_location_mrt() gives every contract its location's station", {
   expect_true(all(is.na(add_location_mrt(d, NULL)$mrt_m)))
 })
 
-test_that("add_distance() adds the distance to the destination and walking time", {
+test_that("add_distance() adds a distance per place and the walking time", {
   coords <- data.frame(project = "A", lat = 1.2966, lng = 103.7764,
                        mrt_station = "Kent Ridge MRT", mrt_m = 400)
-  s <- add_distance(data.frame(project = c("A", "Z")), "NUS (Kent Ridge)", coords)
-  expect_equal(s$dest_km, c(0, NA))
+  places <- key_place(c("NUS (Kent Ridge)", "NTU", "Not a place"))
+  expect_equal(places$name, c("NUS (Kent Ridge)", "NTU"))
+  s <- add_distance(data.frame(project = c("A", "Z")), places, coords)
+  expect_equal(s[["To NUS (Kent Ridge) (km)"]], c(0, NA))
+  expect_equal(s[["To NTU (km)"]][1], 11.2, tolerance = 0.1)
   expect_equal(s$walk_min, c(5, NA))
   expect_false(any(c("lat", "lng") %in% names(s)))
 })
