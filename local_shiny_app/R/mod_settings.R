@@ -59,7 +59,11 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                            choiceNames = lapply(seq_len(nrow(place_kinds)), function(i) {
                              tagList(icon(place_kinds$icon[i]), place_kinds$label[i])
                            }),
-                           choiceValues = place_kinds$kind)),
+                           choiceValues = place_kinds$kind),
+              conditionalPanel(
+                "input.place_kind == 'other'", ns = ns,
+                textInput(ns("place_kind_label"), "What kind of place?", width = "100%",
+                          placeholder = "e.g. Church, Clinic, Partner's office"))),
           div(class = "d-flex gap-2 align-items-end",
               textInput(ns("place_name"), "Name", width = "100%",
                         placeholder = "e.g. My office, NUS, Mum's place"),
@@ -147,7 +151,8 @@ mod_settings_server <- function(id) {
 
     setBookmarkExclude(c("stored", "open", "open_nav", "save", "next_step", "back", "skip",
                          "finish", "start_over", names(default_settings(choices)),
-                         "place_address", "place_name", "place_kind", "add_place",
+                         "place_address", "place_name", "place_kind", "place_kind_label",
+                         "add_place",
                          "remove_place"))
 
     # What this browser saved last time ("none" on a first visit)
@@ -188,16 +193,18 @@ mod_settings_server <- function(id) {
         return()
       }
       name <- trimws(input$place_name)
-      if (!nzchar(name)) name <- default_place_name(input$place_kind, places()$name)
+      label <- place_label(input$place_kind, input$place_kind_label)
+      if (!nzchar(name)) name <- default_place_name(input$place_kind, places()$name, label)
       if (name %in% places()$name) {
         showNotification(paste0("You already have a place called '", name, "'."), type = "warning")
         return()
       }
-      places(rbind(places(), new_places(name = name, kind = input$place_kind,
+      places(rbind(places(), new_places(name = name, kind = input$place_kind, label = label,
                                         address = place_address(hit[1, ]),
                                         lat = hit$lat[1], lng = hit$lng[1])))
       updateTextInput(session, "place_address", value = "")
       updateTextInput(session, "place_name", value = "")
+      updateTextInput(session, "place_kind_label", value = "")
     })
 
     observeEvent(input$remove_place, {
@@ -216,7 +223,10 @@ mod_settings_server <- function(id) {
             div(class = "place-row",
                 div(class = "place-icon", icon(place_icon(pl$kind[i]))),
                 div(class = "flex-fill",
-                    div(class = "place-name", pl$name[i]),
+                    div(class = "place-name", pl$name[i],
+                        # the kind of place, unless the name already says it ("Work")
+                        if (!startsWith(pl$name[i], pl$label[i]))
+                          span(class = "place-kind", pl$label[i])),
                     if (nzchar(pl$address[i])) div(class = "place-address", pl$address[i])),
                 tags$a(href = "#", class = "place-remove", title = paste("Remove", pl$name[i]),
                        onclick = remove, icon("xmark")))

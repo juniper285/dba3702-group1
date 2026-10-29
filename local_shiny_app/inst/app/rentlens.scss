@@ -127,6 +127,15 @@
     border-radius: 999px; background: rgba(#7b3294, 0.1); color: #7b3294;
   }
   .place-name { font-weight: 600; }
+  .place-kind {
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(#7b3294, 0.08);
+    color: #7b3294;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
   .place-address { font-size: 0.85rem; color: $text-muted; }
   .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
 }
