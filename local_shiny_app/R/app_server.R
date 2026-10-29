@@ -7,10 +7,14 @@ app_server <- function(input, output, session) {
   # Map selections saved as Area A and Area B, compared on Market > Area A vs B
   areas <- new_saved_areas()
 
-  # Filtered data sets every tab works from
-  filters <- mod_filters_server("filters", map_sel)
+  # The renter's settings (budget, places, type of home, commute), saved in
+  # the browser
+  settings <- mod_settings_server("settings")
 
-  # The shortlist is shared: "Budget", "Map" and "Check a listing" add to it,
+  # Filtered data sets every tab works from
+  filters <- mod_filters_server("filters", settings, map_sel)
+
+  # The shortlist is shared: "Search", "Map" and "Check a listing" add to it,
   # "Shortlist" shows and edits it
   shortlist <- reactiveVal(empty_shortlist())
 
@@ -29,12 +33,9 @@ app_server <- function(input, output, session) {
   # Number of shortlisted options, shown next to "Shortlist" in the navbar
   output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")
 
-  # "Filters in use" line on the pages that follow the Budget page's filters
+  # "Filters in use" line on the pages that follow the renter's settings
   for (page in c("map", "market", "shortlist", "records")) {
     output[[paste0("filter_note_", page)]] <- renderText(filters$summary())
   }
-  observeEvent(input$edit_filters, nav_select("nav", "budget"))
-
-  setBookmarkExclude("edit_filters")
   onBookmarked(function(url) showBookmarkUrlModal(url))
 }

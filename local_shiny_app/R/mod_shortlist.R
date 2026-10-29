@@ -11,7 +11,7 @@ mod_shortlist_ui <- function(id) {
     conditionalPanel(
       "output.is_empty", ns = ns,
       card(empty_state("star", "Nothing shortlisted yet",
-                       p(HTML(paste0("On the <b>Budget</b> or <b>Map</b> page, select rows in a ",
+                       p(HTML(paste0("On the <b>Search</b> or <b>Map</b> page, select rows in a ",
                                      "table and press <b>Add to shortlist</b>. On <b>Check a ",
                                      "listing</b>, add the project you are checking.")))))
     ),
@@ -29,7 +29,7 @@ mod_shortlist_ui <- function(id) {
         DTOutput(ns("table"), fill = FALSE),
         card_footer("Figures use each option's rentals in the most recent period, ",
                     "regardless of the other filters, so your shortlist stays comparable. ",
-                    "Use 'Save search' on the Budget page to keep a link to it.")
+                    "Use 'Save search' on the Search page to keep a link to it.")
       ),
       layout_columns(
         col_widths = c(6, 6),

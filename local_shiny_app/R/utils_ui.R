@@ -51,7 +51,7 @@ page_intro <- function(title, ...) {
   div(class = "page-intro", h4(title), p(class = "text-muted mb-0", ...))
 }
 
-#' "Filters in use" line for pages that follow the Budget page's filters
+#' "Filters in use" line for pages that follow the renter's settings
 #'
 #' @param page Short page name; app_server() fills output `filter_note_<page>`.
 #' @noRd
@@ -61,8 +61,8 @@ filter_note_ui <- function(page) {
       span(class = "text-muted", "Filters:"),
       textOutput(paste0("filter_note_", page), inline = TRUE),
       tags$a(href = "#", class = "ms-auto text-nowrap",
-             onclick = "Shiny.setInputValue('edit_filters', Date.now(), {priority: 'event'}); return false;",
-             icon("pen"), " Edit on Budget page"))
+             onclick = "Shiny.setInputValue('settings-open_nav', Date.now(), {priority: 'event'}); return false;",
+             icon("pen"), " Edit my settings"))
 }
 
 #' Consistent look for every plotly chart

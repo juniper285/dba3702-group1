@@ -14,7 +14,7 @@ mod_trends_ui <- function(id) {
     plotly::plotlyOutput(ns("plot"), height = 420),
     card_footer("Shaded area = typical range (middle 50%); red band = your budget range. ",
                 "Quarters with fewer than 5 rentals are left out. To compare districts, ",
-                "pick two or more on the Budget page and switch on 'Show separately'.")
+                "pick two or more on the Search page and switch on 'Show separately'.")
   )
 }
 

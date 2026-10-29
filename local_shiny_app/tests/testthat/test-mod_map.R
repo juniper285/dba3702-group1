@@ -38,14 +38,8 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
 
 test_that("an applied map selection narrows the filters' market", {
   map_sel <- new_map_selection()
-  testServer(mod_filters_server, args = list(map_sel = map_sel), {
-    rentals <- rentals_data()
-    session$setInputs(
-      budget = c(3000, 5000), district = NULL, project = NULL,
-      beds = bed_levels, type = unique(rentals$type), area = c(0, area_max),
-      period = range(rentals$lease_date), recent = "12", destination = "NUS (Kent Ridge)",
-      mrt_pick = "", mrt_dist = mrt_max
-    )
+  testServer(mod_filters_server, args = list(settings = fake_settings(), map_sel = map_sel), {
+    session$setInputs(district = NULL, project = NULL)
     loc <- base()$loc_id[!is.na(base()$loc_id)][1]
     map_sel$ids <- loc; map_sel$label <- "One building"
     session$flushReact()

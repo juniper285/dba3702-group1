@@ -55,7 +55,7 @@ mod_map_ui <- function(id) {
       ),
       card_footer("Circle size = number of rentals; colour bins stay the same whatever the ",
                   "filters. 'Vs my budget' colours each building by whether its median rent is ",
-                  "below, within or above your budget. The map follows the Budget page filters.")
+                  "below, within or above your budget. The map follows your settings.")
     ),
     layout_columns(
       col_widths = c(7, 5),
