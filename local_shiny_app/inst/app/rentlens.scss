@@ -103,6 +103,23 @@
 }
 .modal-body .nav-pills .nav-link { font-size: 0.9rem; }
 
+// ---- Setup wizard --------------------------------------------------------
+.wizard-title { font-weight: 700; .small { font-weight: 500; } }
+.wizard-preview {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: $border-radius-lg;
+  background: rgba($primary, 0.05);
+  font-size: 0.9rem;
+  table { background: transparent; --bs-table-bg: transparent; }
+}
+.coach-popover {
+  --bs-popover-max-width: 320px;
+  --bs-popover-header-bg: #{$primary};
+  --bs-popover-header-color: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
 // ---- Sidebar filters -----------------------------------------------------
 .bslib-sidebar-layout > .sidebar {
   background: #fff;

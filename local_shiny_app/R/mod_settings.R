@@ -1,8 +1,10 @@
 #' "My settings": the renter's budget, places that matter, type of home and
 #' commute, kept in the browser (see fct_settings.R)
 #'
-#' The settings are edited in a dialog; its inputs disappear when it
-#' closes, so the values live in the `settings` reactiveVal.
+#' On a first visit a setup wizard asks for them one section at a time,
+#' with a preview of matching homes and their distances at the end; later
+#' they are edited in a dialog. Dialog inputs disappear when it closes, so
+#' the values live in the `settings` reactiveVal.
 #'
 #' @return The server returns a list:
 #'   - `settings`: reactiveVal with the current settings
@@ -151,6 +153,7 @@ mod_settings_server <- function(id) {
     restored <- FALSE       # settings came from a "Save search" link
 
     setBookmarkExclude(c("stored", "open", "open_nav", "save", "find", "address",
+                         "next_step", "back", "skip", "finish", "start_over",
                          names(default_settings(choices)), "key_places", "custom_keep",
                          "types", "beds"))
 
@@ -158,7 +161,12 @@ mod_settings_server <- function(id) {
     observeEvent(input$stored, once = TRUE, {
       if (restored) return()
       s <- settings_from_json(input$stored, choices)
-      if (is.null(s)) first_visit(TRUE) else settings(s)
+      if (is.null(s)) {
+        first_visit(TRUE)
+        open_wizard(default_settings(choices))
+      } else {
+        settings(s)
+      }
     })
 
     save <- function(s) {
@@ -207,7 +215,9 @@ mod_settings_server <- function(id) {
         title = span(icon("user"), " My settings"),
         do.call(navset_pill, c(list(id = ns("tab")), tabs)),
         footer = tagList(
-          span(class = "small text-muted me-auto", "Saved in this browser only."),
+          actionLink(ns("start_over"), "Start over", icon = icon("rotate-left"),
+                     class = "me-auto small"),
+          span(class = "small text-muted", "Saved in this browser only."),
           modalButton("Cancel"),
           actionButton(ns("save"), "Save", icon = icon("check"), class = "btn-primary")
         ),
@@ -221,6 +231,99 @@ mod_settings_server <- function(id) {
       save(read_settings_form(input, settings(), names(settings_sections), custom()))
       removeModal()
       showNotification("Settings saved.", type = "message", duration = 3)
+    })
+
+    # ---- First-visit setup wizard: one section per step ----
+    step  <- reactiveVal(1)
+    draft <- reactiveVal(NULL)    # settings filled in so far
+    n_steps <- length(settings_sections)
+
+    show_step <- function() {
+      k <- step()
+      section <- names(settings_sections)[k]
+      showModal(modalDialog(
+        title = div(class = "wizard-title",
+                    div(class = "small text-muted", sprintf("Set up your search · step %d of %d", k, n_steps)),
+                    settings_sections[[section]]),
+        div(class = "progress mb-3", style = "height: 4px;",
+            div(class = "progress-bar", style = sprintf("width: %d%%;", round(100 * k / n_steps)))),
+        settings_section_ui(ns, section, draft(), choices, custom()),
+        if (section == "commute") uiOutput(ns("preview")),
+        footer = tagList(
+          actionLink(ns("skip"), "Skip setup", class = "me-auto small text-muted"),
+          if (k > 1) actionButton(ns("back"), "Back", icon = icon("arrow-left"),
+                                  class = "btn-outline-secondary"),
+          if (k < n_steps) actionButton(ns("next_step"), "Next", class = "btn-primary")
+          else actionButton(ns("finish"), "Show my options", icon = icon("magnifying-glass"),
+                            class = "btn-primary")
+        ),
+        size = "l", easyClose = FALSE
+      ))
+    }
+    open_wizard <- function(s) {
+      draft(s)
+      custom(custom_places(s))
+      step(1)
+      show_step()
+    }
+    # Keep what was entered on this step before moving on
+    keep_step <- function() {
+      draft(read_settings_form(input, draft(), names(settings_sections)[step()], custom()))
+    }
+    observeEvent(input$next_step, { keep_step(); step(step() + 1); show_step() })
+    observeEvent(input$back,      { keep_step(); step(step() - 1); show_step() })
+    observeEvent(input$skip, {
+      keep_step()
+      save(draft())
+      removeModal()
+    })
+    observeEvent(input$finish, {
+      keep_step()
+      save(draft())
+      removeModal()
+      # Steps 6 and 7: the list of options, and how to shortlist them
+      nav_select("nav", "budget", session = session$rootScope())
+      session$sendCustomMessage("rentlens-coach", list(
+        selector = "#within_budget-add_short",
+        title = "Your options",
+        text = paste("The list below shows homes that fit your settings, with the distance",
+                     "to each of your places. Tick the rows you like, then press",
+                     "'Add to shortlist' to save them.")))
+    })
+    observeEvent(input$start_over, {
+      session$sendCustomMessage("rentlens-clear-settings", TRUE)
+      open_wizard(default_settings(choices))
+    })
+
+    # Last step: a preview of matching homes and how far they are
+    output$preview <- renderUI({
+      s <- read_settings_form(input, draft(), "commute", custom())
+      near <- if (nzchar(s$mrt_pick)) station_location(s$mrt_pick)
+      d <- filter_market(rentals_data(), s$districts, s$beds, s$types, s$area, s$period,
+                         near, s$mrt_dist, s$places, s$place_km)
+      d <- latest_months(d, s$recent)
+      opts <- if (nrow(d)) summarise_options(d) |> filter(median >= s$budget[1], median <= s$budget[2])
+      if (is.null(opts) || nrow(opts) == 0) {
+        return(div(class = "wizard-preview text-muted",
+                   "No homes in your budget match these distances yet. Try a longer distance."))
+      }
+      opts <- add_distance(opts, s$places)
+      dist_cols <- place_column(s$places$name)
+      opts$nearest <- if (length(dist_cols)) do.call(pmin, c(unname(as.list(opts[dist_cols])), na.rm = TRUE)) else opts$walk_min
+      top <- utils::head(opts[order(opts$nearest, opts$walk_min), ], 5)
+      div(class = "wizard-preview",
+          div(class = "section-title", sprintf("%s options in your budget · the closest:",
+                                               format(nrow(opts), big.mark = ","))),
+          tags$table(class = "table table-sm mb-0",
+            tags$thead(tags$tr(tags$th("Home"), tags$th("Rent"), tags$th("Walk to MRT"),
+                               lapply(s$places$name, tags$th))),
+            tags$tbody(lapply(seq_len(nrow(top)), function(i) {
+              x <- top[i, ]
+              tags$tr(tags$td(paste0(x$project, " (", x$bed_group, " BR)")),
+                      tags$td(money(x$median)),
+                      tags$td(if (is.na(x$walk_min)) "-" else paste(x$walk_min, "min")),
+                      lapply(dist_cols, function(col) tags$td(paste(x[[col]], "km"))))
+            }))))
     })
 
     output$summary <- renderUI({
