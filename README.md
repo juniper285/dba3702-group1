@@ -20,6 +20,13 @@ shiny::runApp("sg_rental_map")
 
 ## Data
 
+The rental contracts come from URA's
+[Data Service API](https://eservice.ura.gov.sg/maps/api/#introduction)
+(private residential rental contracts; needs a free URA access key). For every
+data source the apps use (URA, LTA MRT/LRT stations, MOE schools, OneMap) and
+the code that pulls each one, see
+[local_shiny_app/README.md](local_shiny_app/README.md#data-sources).
+
 `sg_rental_map/data/rentals.rds` is a cleaned, fast-loading copy of
 `URA_Union_Cleaned_with_Address.xlsx`. To refresh it:
 
