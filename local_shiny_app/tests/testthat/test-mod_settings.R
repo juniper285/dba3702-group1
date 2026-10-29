@@ -76,10 +76,25 @@ test_that("places are removed one at a time and empty addresses are refused", {
     session$setInputs(remove_place = "Gym")
     expect_equal(places()$name, "Office")
 
-    session$setInputs(place_address = "  ", place_name = "", place_kind = "work", add_place = 1)
+    session$setInputs(place_search = "  ", place_name = "", place_kind = "work", add_place = 1)
     expect_equal(nrow(places()), 1)          # nothing looked up, nothing added
 
     session$setInputs(save = 1)
     expect_equal(settings()$places$name, "Office")
+  })
+})
+
+test_that("a picked suggestion is added without another lookup", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    pick <- jsonlite::toJSON(list(name = "KENT RIDGE HILL RESIDENCES", building = "KENT RIDGE HILL RESIDENCES",
+                                  address = "50 SOUTH BUONA VISTA ROAD KENT RIDGE HILL RESIDENCES SINGAPORE 118167",
+                                  postal = "118167", lat = 1.2905, lng = 103.7856), auto_unbox = TRUE)
+    session$setInputs(place_search = as.character(pick), place_name = "", place_kind = "home",
+                      place_kind_label = "", add_place = 1)
+    expect_equal(places()$name, "Kent Ridge Hill Residences")
+    expect_equal(places()$address, "50 South Buona Vista Road, Singapore 118167")
+    expect_equal(places()$kind, "home")
   })
 })

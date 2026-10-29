@@ -52,8 +52,18 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
       p(class = "text-muted", "Add the places you travel to most, one at a time. Every list ",
         "shows the distance from each home to them."),
       div(class = "place-form",
-          textInput(ns("place_address"), "Address or postal code", width = "100%",
-                    placeholder = "e.g. 21 Lower Kent Ridge Road or 119077"),
+          selectizeInput(
+            ns("place_search"), "Search for a place, address or postal code", choices = NULL,
+            width = "100%",
+            options = list(
+              placeholder = "e.g. NUS, Changi Airport, 21 Lower Kent Ridge Road, 119077",
+              valueField = "value", labelField = "label", searchField = c("label", "detail"),
+              create = TRUE, createOnBlur = TRUE, persist = FALSE, loadThrottle = 300,
+              # Suggestions come from OneMap as you type (settings.js)
+              load = I("function (query, callback) { RentLens.searchPlaces.call(this, query, callback); }"),
+              score = I("function () { return function () { return 1; }; }"),  # keep OneMap's order
+              render = I("{ option: RentLens.renderPlace, option_create: RentLens.renderTyped }")
+            )),
           div(class = "chips place-kinds",
               radioButtons(ns("place_kind"), "Icon", inline = TRUE, selected = "work",
                            choiceNames = lapply(seq_len(nrow(place_kinds)), function(i) {
@@ -151,7 +161,7 @@ mod_settings_server <- function(id) {
 
     setBookmarkExclude(c("stored", "open", "open_nav", "save", "next_step", "back", "skip",
                          "finish", "start_over", names(default_settings(choices)),
-                         "place_address", "place_name", "place_kind", "place_kind_label",
+                         "place_search", "place_name", "place_kind", "place_kind_label",
                          "add_place",
                          "remove_place"))
 
@@ -178,23 +188,27 @@ mod_settings_server <- function(id) {
     places <- reactiveVal(new_places())
 
     observeEvent(input$add_place, {
-      address <- trimws(input$place_address)
-      if (!nzchar(address)) {
-        showNotification("Type an address or postal code first.", type = "warning")
+      if (!nzchar(trimws(if (is.null(input$place_search)) "" else input$place_search))) {
+        showNotification("Search for a place first.", type = "warning")
         return()
       }
       if (nrow(places()) >= max_places) {
         showNotification(paste("You can add up to", max_places, "places."), type = "warning")
         return()
       }
-      hit <- onemap_search(address)
+      hit <- chosen_place(input$place_search)
       if (nrow(hit) == 0) {
-        showNotification("No address found. Try a postal code or a fuller address.", type = "warning")
+        showNotification("No place found. Pick one from the suggestions, or try a postal code.",
+                         type = "warning")
         return()
       }
-      name <- trimws(input$place_name)
       label <- place_label(input$place_kind, input$place_kind_label)
-      if (!nzchar(name)) name <- default_place_name(input$place_kind, places()$name, label)
+      name <- trimws(input$place_name)
+      if (!nzchar(name)) {
+        # A picked suggestion is named after the place; typed text after its kind
+        name <- if (startsWith(trimws(input$place_search), "{")) tools::toTitleCase(tolower(hit$name))
+                else default_place_name(input$place_kind, places()$name, label)
+      }
       if (name %in% places()$name) {
         showNotification(paste0("You already have a place called '", name, "'."), type = "warning")
         return()
@@ -202,7 +216,7 @@ mod_settings_server <- function(id) {
       places(rbind(places(), new_places(name = name, kind = input$place_kind, label = label,
                                         address = place_address(hit[1, ]),
                                         lat = hit$lat[1], lng = hit$lng[1])))
-      updateTextInput(session, "place_address", value = "")
+      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
       updateTextInput(session, "place_name", value = "")
       updateTextInput(session, "place_kind_label", value = "")
     })

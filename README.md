@@ -53,6 +53,7 @@ Rebuild scripts live in `local_shiny_app/data-raw/` and write to
 | Schools | [MOE General information of schools](https://data.gov.sg/datasets/d_688b934f82c1059ed0a6993d2a829089/view), data.gov.sg, geocoded with the [OneMap Search API](https://www.onemap.gov.sg/apidocs/) | `local_shiny_app/data-raw/schools.R` | `local_shiny_app/inst/extdata/schools.csv` |
 | Key places (universities, business districts, ...) | typed in by hand | `destination_groups` in `local_shiny_app/R/fct_location.R` | code |
 | Address lookup ("Check a listing") | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live | `onemap_search()` in `local_shiny_app/R/fct_listing.R` | cached per R session |
+| Place suggestions ("Places that matter" in My settings) | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live, called from the browser as you type | `searchPlaces()` in `local_shiny_app/inst/app/www/settings.js` | not stored; the chosen place is saved in the browser with the settings |
 | Basemaps | Esri World Gray Canvas and World Imagery; [OneMap](https://www.onemap.gov.sg/) tiles (Singapore Land Authority) | `base_map()` in `local_shiny_app/R/fct_map.R` | loaded live |
 | Map place search | OpenStreetMap Nominatim, via `leaflet.extras::addSearchOSM()` | `base_map()` | live |
 

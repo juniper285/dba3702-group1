@@ -70,6 +70,9 @@ test_that("place_address() drops the building name and ends with the postal code
   blk <- data.frame(address = "201 TAMPINES STREET 21 SINGAPORE 520201", building = "NIL",
                     postal = "520201")
   expect_equal(place_address(blk), "201 Tampines Street 21, Singapore 520201")
+  only_name <- data.frame(address = "CHANGI AIRPORT AIRCRAFT FLYOVER",
+                          building = "CHANGI AIRPORT AIRCRAFT FLYOVER", postal = "NIL")
+  expect_equal(place_address(only_name), "Changi Airport Aircraft Flyover")
 })
 
 test_that("default_place_name() uses the icon's label, numbered if taken", {
@@ -89,4 +92,18 @@ test_that("'Other' places keep the kind of place the renter typed", {
                          lng = c(103.80, 103.85))
   back <- settings_from_json(settings_to_json(s), choices)
   expect_equal(back$places$label, c("Work", "Church"))
+})
+
+test_that("chosen_place() reads a picked suggestion, or looks up typed text", {
+  pick <- '{"name":"NUS","address":"21 LOWER KENT RIDGE ROAD SINGAPORE 119077","postal":"119077","lat":1.29,"lng":103.77}'
+  p <- chosen_place(pick, search = function(q) stop("should not search"))
+  expect_equal(p$name, "NUS")
+  expect_equal(p$lat, 1.29)
+
+  fake <- function(q) data.frame(address = "1 MAIN ROAD", building = "NIL", postal = "NIL",
+                                 lat = 1.3, lng = 103.8)
+  typed <- chosen_place("1 main road", search = fake)
+  expect_equal(typed$name, "1 MAIN ROAD")
+  expect_equal(nrow(chosen_place("", search = fake)), 0)
+  expect_equal(nrow(chosen_place("nowhere", search = function(q) data.frame())), 0)
 })
