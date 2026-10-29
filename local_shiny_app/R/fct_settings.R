@@ -38,6 +38,31 @@ place_label <- function(kind, custom = "") {
   label
 }
 
+#' The place chosen in the place search box, as one onemap_search() row
+#'
+#' A suggestion carries its OneMap result as JSON; anything else is text the
+#' renter typed without picking a suggestion, which is looked up with
+#' onemap_search() (first match).
+#' @return Data frame with `name`, `address`, `building`, `postal`, `lat`,
+#'   `lng` (no rows if nothing was found).
+#' @noRd
+chosen_place <- function(value, search = onemap_search) {
+  value <- trimws(if (is.null(value)) "" else value)
+  if (!nzchar(value)) return(data.frame())
+  x <- if (startsWith(value, "{")) tryCatch(jsonlite::fromJSON(value), error = function(e) NULL)
+  if (is.list(x) && all(c("name", "address", "lat", "lng") %in% names(x))) {
+    return(data.frame(name = as.character(x$name), address = as.character(x$address),
+                      building = if (is.null(x$building)) "NIL" else as.character(x$building),
+                      postal = if (is.null(x$postal)) "NIL" else as.character(x$postal),
+                      lat = as.numeric(x$lat), lng = as.numeric(x$lng)))
+  }
+  hit <- search(value)
+  if (nrow(hit) == 0) return(data.frame())
+  hit <- hit[1, ]
+  hit$name <- if (nzchar(hit$building) && hit$building != "NIL") hit$building else hit$address
+  hit
+}
+
 #' Street address of a OneMap search result, e.g. "1 Fusionopolis Way, Singapore 138632"
 #'
 #' OneMap's ADDRESS ends with the building name, which can be a shop inside
@@ -48,6 +73,8 @@ place_address <- function(hit) {
   a <- hit$address
   if (nzchar(hit$building) && hit$building != "NIL") a <- sub(hit$building, "", a, fixed = TRUE)
   a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(a)))
+  # Some places' address is just their name: keep it rather than nothing
+  if (!nzchar(a)) a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(hit$address)))
   a <- tools::toTitleCase(tolower(a))
   if (grepl("^\\d{6}$", hit$postal)) paste0(a, ", Singapore ", hit$postal) else a
 }

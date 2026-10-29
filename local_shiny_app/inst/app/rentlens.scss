@@ -139,6 +139,11 @@
   .place-address { font-size: 0.85rem; color: $text-muted; }
   .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
 }
+.place-option {
+  padding: 0.15rem 0;
+  .place-option-name { font-weight: 600; }
+  .place-option-detail { font-size: 0.8rem; color: $text-muted; }
+}
 .place-empty { color: $text-muted; font-size: 0.9rem; padding: 0.25rem 0; }
 
 // ---- Setup wizard --------------------------------------------------------
