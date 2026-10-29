@@ -29,7 +29,8 @@ mod_transactions_server <- function(id, filters) {
                   Project = project, Street = street, District = district,
                   Type = type, Bedrooms = bed_group,
                   `Floor area (sqft)` = area_band,
-                  `Monthly rent` = rent, `S$ psf` = round(psf, 2))
+                  `Monthly rent` = rent, `S$ psf` = round(psf, 2),
+                  `Nearest MRT/LRT` = mrt_station)
     })
 
     output$table <- renderDT({

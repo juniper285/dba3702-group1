@@ -54,7 +54,7 @@ mod_within_budget_server <- function(id, filters, shortlist) {
     })
 
     output$distance_note <- renderUI({
-      mrt <- if ("mrt_km" %in% names(project_coords())) " and the nearest MRT station" else ""
+      mrt <- if (is.null(mrt_stations())) "" else " and the nearest MRT/LRT station"
       paste0("Distances are to ", filters$destination(), mrt, " (change it under 'Commute').")
     })
 
