@@ -89,8 +89,8 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                                     plugins = list("remove_button"))),
       selectInput(ns("recent"), "Use rentals from the", choices = recent_choices,
                   selected = s$recent),
-      helpText(sprintf("Rentals up to %s, the latest in the data.",
-                       format(choices$dates[2], "%b %Y")))
+      helpText(sprintf("Rental data available from %s to %s.",
+                       format(choices$dates[1], "%b %Y"), format(choices$dates[2], "%b %Y")))
     ),
     home = tagList(
       p(class = "text-muted", "What kind of home are you after?"),
