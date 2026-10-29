@@ -29,3 +29,10 @@ test_that("add_distance() adds the distance to the destination and walking time"
   expect_equal(s$walk_min, c(5, NA))
   expect_false(any(c("lat", "lng") %in% names(s)))
 })
+
+test_that("every key place has a group and sits in Singapore", {
+  expect_equal(nrow(key_places), length(destinations))
+  expect_true(all(unlist(destination_choices) %in% names(destinations)))
+  expect_true(all(key_places$lat > 1.2 & key_places$lat < 1.5))
+  expect_true(all(key_places$lng > 103.6 & key_places$lng < 104.1))
+})

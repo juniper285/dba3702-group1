@@ -51,7 +51,8 @@ mod_filters_ui <- function(id) {
       ),
       accordion_panel(
         "Commute", icon = icon("building-columns"),
-        selectInput(ns("destination"), "Your university or workplace", names(destinations)),
+        selectInput(ns("destination"), "Your university, workplace or key place",
+                    destination_choices, selected = filter_defaults$destination),
         helpText("Distances are straight-line estimates from each project.")
       )
     ),
@@ -65,7 +66,7 @@ mod_filters_ui <- function(id) {
 }
 
 # Starting values of the filters (also used by the Reset button)
-filter_defaults <- list(budget = c(3000, 5000), recent = 12)
+filter_defaults <- list(budget = c(3000, 5000), recent = 12, destination = "NUS (Kent Ridge)")
 
 #' @noRd
 mod_filters_server <- function(id) {
@@ -91,7 +92,7 @@ mod_filters_server <- function(id) {
       updateDateRangeInput(session, "period", start = min(rentals$lease_date),
                            end = max(rentals$lease_date))
       updateSelectInput(session, "recent", selected = filter_defaults$recent)
-      updateSelectInput(session, "destination", selected = names(destinations)[1])
+      updateSelectInput(session, "destination", selected = filter_defaults$destination)
     })
 
     market <- reactive({
