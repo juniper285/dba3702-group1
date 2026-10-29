@@ -1,6 +1,7 @@
 # ---- Map building blocks -----------------------------------------------
 
-metric_choices <- c("Median S$ psf per month" = "psf", "Median monthly rent" = "rent")
+metric_choices <- c("Median S$ psf per month" = "psf", "Median monthly rent" = "rent",
+                    "Median rent vs my budget" = "budget")
 
 # Fixed colour bins (from the full dataset) so colours mean the same thing
 # whatever the filters are
@@ -9,9 +10,25 @@ map_bins <- list(
   rent = c(0, 2500, 3000, 3500, 4000, 5000, 6000, 8000, 12000, Inf)
 )
 
-#' Colour palette for a map metric ("psf" or "rent")
+budget_levels <- c("Below my budget", "Within my budget", "Above my budget")
+
+#' Colour palette for a map metric ("psf", "rent" or "budget")
 #' @noRd
-map_palette <- function(metric) colorBin("RdYlBu", bins = map_bins[[metric]], reverse = TRUE)
+map_palette <- function(metric) {
+  if (metric == "budget") {
+    colorFactor(c("#4575b4", "#1a9850", "#d73027"), levels = budget_levels)
+  } else {
+    colorBin("RdYlBu", bins = map_bins[[metric]], reverse = TRUE)
+  }
+}
+
+#' Where each rent sits against a budget range, as a factor of budget_levels
+#' @noRd
+budget_fit <- function(rent, budget) {
+  factor(ifelse(rent < budget[1], budget_levels[1],
+                ifelse(rent > budget[2], budget_levels[3], budget_levels[2])),
+         levels = budget_levels)
+}
 
 #' One row per map location (loc_id, lat, lng)
 #' @noRd
