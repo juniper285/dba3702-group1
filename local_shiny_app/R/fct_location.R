@@ -173,7 +173,7 @@ key_place <- function(names) {
 
 #' Name of the distance column for a place, e.g. "To NTU (km)"
 #' @noRd
-place_column <- function(name) paste0("To ", name, " (km)")
+place_column <- function(name) paste0("To ", name, " (km)", recycle0 = TRUE)   # none for no places
 
 #' Add distance columns to a project-level table
 #'

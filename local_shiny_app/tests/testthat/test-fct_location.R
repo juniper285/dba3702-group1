@@ -39,3 +39,10 @@ test_that("every key place has a group and sits in Singapore", {
   expect_true(all(key_places$lat > 1.2 & key_places$lat < 1.5))
   expect_true(all(key_places$lng > 103.6 & key_places$lng < 104.1))
 })
+
+test_that("no places means no distance columns", {
+  expect_equal(place_column(character()), character())
+  coords <- data.frame(project = "A", lat = 1.3, lng = 103.8, mrt_station = "X", mrt_m = 80)
+  s <- add_distance(data.frame(project = "A"), new_places(), coords)
+  expect_equal(names(s), c("project", "mrt_station", "mrt_m", "walk_min"))
+})
