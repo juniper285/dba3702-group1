@@ -29,7 +29,8 @@ listing_link <- function(project) {
 # Friendly column names for tables
 nice_names <- c(
   project = "Project", district = "District", bed_group = "Bedrooms",
-  size = "Typical size (sqft)", median = "Median rent", p25 = "25th percentile",
+  size = "Typical size (sqft)", median = "Median rent", average = "Average rent",
+  p25 = "25th percentile",
   p75 = "75th percentile", psf = "Median S$ psf", n = "Recent rentals",
   within = "Share within budget", last = "Last rented", fits = "Budget fit",
   dest_km = "Distance to destination (km)", mrt_station = "Nearest MRT/LRT",
@@ -47,7 +48,8 @@ prettify <- function(s) {
 #' Format the money / percentage columns of a prettify()-ed table
 #' @noRd
 format_money_cols <- function(dt, s) {
-  money_cols <- intersect(c("Median rent", "25th percentile", "75th percentile"), names(s))
+  money_cols <- intersect(c("Median rent", "Average rent", "25th percentile", "75th percentile"),
+                          names(s))
   dt <- formatCurrency(dt, money_cols, "S$", digits = 0)
   if ("Median S$ psf" %in% names(s)) dt <- formatCurrency(dt, "Median S$ psf", "S$", digits = 2)
   if ("Share within budget" %in% names(s)) dt <- formatPercentage(dt, "Share within budget", digits = 0)

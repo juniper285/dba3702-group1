@@ -8,7 +8,7 @@ mod_budget_check_ui <- function(id) {
     uiOutput(ns("verdict")),
     layout_columns(
       col_widths = c(4, 4, 4), class = "mt-3",
-      kpi("Median rent", textOutput(ns("median")), "of comparable recent rentals",
+      kpi("Median rent", textOutput(ns("median")), textOutput(ns("average"), inline = TRUE),
           icon = "coins"),
       kpi("Typical range", textOutput(ns("range")), "middle 50% of rents",
           icon = "arrows-left-right"),
@@ -34,6 +34,7 @@ mod_budget_check_server <- function(id, filters) {
     budget <- filters$budget
 
     output$median <- renderText(money(median(comparables()$rent)))
+    output$average <- renderText(paste("average", money(mean(comparables()$rent))))
 
     output$range <- renderText({
       q <- quantile(comparables()$rent, c(0.25, 0.75))

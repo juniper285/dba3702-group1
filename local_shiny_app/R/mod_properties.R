@@ -104,7 +104,7 @@ mod_properties_server <- function(id, filters, shortlist) {
           card_header(style = paste0("background:", cols[[x$project]], "; color: #fff;"), x$project),
           if (x$n == 0) p(class = "text-muted", "No rentals for these filters.") else tagList(
             div(class = "kpi-value", money(x$median)),
-            p(class = "text-muted", "median monthly rent"),
+            p(class = "text-muted", "median monthly rent (average ", money(x$average), ")"),
             p(strong("Typical range: "), money(x$p25), " - ", money(x$p75), br(),
               strong("Rent per sqft: "), sprintf("S$%.2f", x$psf), br(),
               strong("Typical size: "), format(round(x$sqft), big.mark = ","), " sqft (estimated)", br(),
