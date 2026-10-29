@@ -20,8 +20,7 @@ test_that("saving the dialog stores every section", {
     places(new_places(name = c("NTU", "SMU"), kind = c("study", "work"), address = "",
                       lat = c(1.3483, 1.2963), lng = c(103.6831, 103.8502)))
     session$setInputs(budget = c(2500, 3500),
-                      districts = "D22 Jurong, Boon Lay", period = default_settings()$period,
-                      recent = "24", beds = c("1", "2"), types = "Non-Landed Properties",
+                      districts = "D22 Jurong, Boon Lay", recent = "24", beds = c("1", "2"), types = "Non-Landed Properties",
                       area = c(400, 1200), mrt_dist = 600, mrt_pick = "", place_km = 10)
     session$setInputs(save = 1)
     s <- settings()
@@ -30,6 +29,7 @@ test_that("saving the dialog stores every section", {
     expect_equal(s$places$kind, c("study", "work"))
     expect_equal(s$districts, "D22 Jurong, Boon Lay")
     expect_equal(s$recent, 24)
+    expect_equal(s$period, period_for(24, settings_choices()$dates))
     expect_equal(s$beds, c("1", "2"))
     expect_equal(s$mrt_dist, 600)
     expect_equal(s$place_km, 10)
@@ -47,7 +47,7 @@ test_that("the first-visit wizard walks through every section and saves at the e
     places(new_places(name = "SMU", kind = "study", address = "81 Victoria Street",
                       lat = 1.2963, lng = 103.8502))
     session$setInputs(next_step = 2)
-    session$setInputs(districts = NULL, period = default_settings()$period, recent = "12",
+    session$setInputs(districts = NULL, recent = "12",
                       next_step = 3)
     session$setInputs(beds = "1", types = "Non-Landed Properties", area = c(0, area_max),
                       next_step = 4)
