@@ -1,4 +1,4 @@
-# ---- Distances to MRT stations and destinations ------------------------
+# ---- Distances to MRT/LRT stations and destinations ------------------------
 
 # Preferred destinations (add your own: "Name" = c(latitude, longitude))
 destinations <- list(
@@ -20,39 +20,70 @@ haversine_km <- function(lat1, lng1, lat2, lng2) {
   6371 * 2 * asin(sqrt(a))
 }
 
-#' Add each project's nearest MRT station and its distance
+walk_m_per_min <- 80   # walking speed for the "minutes to MRT" estimates
+
+#' MRT/LRT stations (inst/extdata/mrt_stations.csv: station, lat, lng, kind)
 #'
-#' @param coords Data frame with columns project, lat, lng.
-#' @param mrt Data frame with columns station, lat, lng.
+#' @return The stations, or NULL if the file is missing.
 #' @noRd
-add_nearest_mrt <- function(coords, mrt) {
-  coords$mrt_station <- NA_character_
-  coords$mrt_km      <- NA_real_
-  for (i in seq_len(nrow(coords))) {
-    d <- haversine_km(coords$lat[i], coords$lng[i], mrt$lat, mrt$lng)
-    if (all(is.na(d))) next
-    j <- which.min(d)
-    coords$mrt_station[i] <- mrt$station[j]
-    coords$mrt_km[i]      <- round(d[j], 1)
-  }
-  coords
+mrt_stations <- function() {
+  cached("mrt", {
+    f <- app_sys("extdata", "mrt_stations.csv")
+    if (nzchar(f)) read.csv(f) else NULL
+  })
 }
 
-#' One location per project (median of its geocoded addresses)
+#' Nearest MRT/LRT station to each point (straight line)
 #'
-#' Nearest-MRT columns are added when inst/extdata/mrt_stations.csv exists
-#' (columns station, lat, lng).
+#' @param mrt Data frame with columns station, lat, lng.
+#' @return Data frame with `mrt_station` and `mrt_m` (metres), one row per point.
+#' @noRd
+nearest_mrt <- function(lat, lng, mrt) {
+  best <- rep(Inf, length(lat))
+  station <- rep(NA_character_, length(lat))
+  for (j in seq_len(nrow(mrt))) {
+    d <- haversine_km(lat, lng, mrt$lat[j], mrt$lng[j]) * 1000
+    closer <- !is.na(d) & d < best
+    best[closer] <- d[closer]
+    station[closer] <- mrt$station[j]
+  }
+  data.frame(mrt_station = station, mrt_m = ifelse(is.finite(best), round(best), NA_real_))
+}
+
+#' Estimated walking time in minutes for a straight-line distance in metres
+#' @noRd
+walk_minutes <- function(m) round(m / walk_m_per_min)
+
+#' Add each contract's nearest MRT/LRT station (`mrt_station`, `mrt_m`)
+#'
+#' Worked out once per map location. Both columns are NA when the contract
+#' has no coordinates or `mrt` is NULL.
+#' @noRd
+add_location_mrt <- function(d, mrt) {
+  d$mrt_station <- NA_character_
+  d$mrt_m <- NA_real_
+  if (is.null(mrt)) return(d)
+  first <- !is.na(d$loc_id) & !duplicated(d$loc_id)
+  near <- nearest_mrt(d$lat[first], d$lng[first], mrt)
+  i <- match(d$loc_id, d$loc_id[first])
+  d$mrt_station <- near$mrt_station[i]
+  d$mrt_m <- near$mrt_m[i]
+  d
+}
+
+#' One location per project (the location with the most contracts), with
+#' its nearest MRT/LRT station
 #' @noRd
 project_coords <- function() {
   cached("coords", {
-    coords <- rentals_data() |>
-      filter(!is.na(lat)) |>
+    rentals_data() |>
+      filter(!is.na(loc_id)) |>
+      count(project, loc_id, lat, lng, mrt_station, mrt_m) |>
       group_by(project) |>
-      summarise(lat = median(lat), lng = median(lng), .groups = "drop") |>
+      slice_max(n, n = 1, with_ties = FALSE) |>
+      ungroup() |>
+      select(project, lat, lng, mrt_station, mrt_m) |>
       as.data.frame()
-    mrt_file <- app_sys("extdata", "mrt_stations.csv")
-    if (nzchar(mrt_file)) coords <- add_nearest_mrt(coords, read.csv(mrt_file))
-    coords
   })
 }
 
@@ -62,9 +93,10 @@ project_coords <- function() {
 #' @param destination A name from `destinations`.
 #' @noRd
 add_distance <- function(s, destination, coords = project_coords()) {
-  keep <- intersect(c("project", "lat", "lng", "mrt_station", "mrt_km"), names(coords))
+  keep <- intersect(c("project", "lat", "lng", "mrt_station", "mrt_m"), names(coords))
   s <- left_join(s, coords[, keep], by = "project")
   dest <- destinations[[destination]]
   s$dest_km <- round(haversine_km(s$lat, s$lng, dest[1], dest[2]), 1)
+  if ("mrt_m" %in% names(s)) s$walk_min <- walk_minutes(s$mrt_m)
   select(s, -lat, -lng)
 }

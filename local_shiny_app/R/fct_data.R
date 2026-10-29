@@ -33,10 +33,14 @@ cached <- function(name, expr) {
 
 #' All rental contracts, ready for the app
 #'
-#' Reads inst/extdata/rentals.rds (built by data-raw/rentals.R) on first use.
+#' Reads inst/extdata/rentals.rds (built by data-raw/rentals.R) on first use
+#' and adds each contract's nearest MRT/LRT station.
 #' @noRd
 rentals_data <- function() {
-  cached("rentals", prepare_rentals(readRDS(app_sys("extdata", "rentals.rds"))))
+  cached("rentals", {
+    prepare_rentals(readRDS(app_sys("extdata", "rentals.rds"))) |>
+      add_location_mrt(mrt_stations())
+  })
 }
 
 #' Add the columns the app uses to the raw contracts
