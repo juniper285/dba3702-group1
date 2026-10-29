@@ -214,7 +214,7 @@ settings_summary <- function(s, choices = settings_choices()) {
     else paste(paste(s$beds, collapse = ", "), "bedrooms"),
     if (!setequal(s$types, choices$types)) paste(s$types, collapse = ", "),
     if (s$area[1] > 0 || s$area[2] < area_max)
-      paste0(format(s$area[1], big.mark = ","), "-", format(s$area[2], big.mark = ","), " sqft"),
+      area_text(s$area),
     if (length(s$districts) == 0) "anywhere in Singapore"
     else if (length(s$districts) <= 2) paste(sub(" .*", "", s$districts), collapse = ", ")
     else paste(length(s$districts), "districts"),

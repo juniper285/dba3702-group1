@@ -99,9 +99,9 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                              selected = s$beds, inline = TRUE),
           checkboxGroupInput(ns("types"), "Property type", choices = choices$types,
                              selected = s$types, inline = TRUE)),
-      sliderInput(ns("area"), "Floor area (sqft)", min = 0, max = area_max,
+      sliderInput(ns("area"), "Floor area (sq ft)", min = 0, max = area_max,
                   value = s$area, step = 100, width = "100%"),
-      helpText("Top of the slider = 4,000 sqft and above.")
+      uiOutput(ns("area_hint"))
     ),
     commute = tagList(
       p(class = "text-muted", "How far are you willing to travel?"),
@@ -256,6 +256,13 @@ mod_settings_server <- function(id) {
       p(class = "small text-muted", icon("circle-info"),
         sprintf(" Half of last year's rentals were between %s and %s; %s%% fall inside your range.",
                 money(q[1]), money(q[2]), share))
+    })
+
+    # Floor area in both units (the data is in square feet)
+    output$area_hint <- renderUI({
+      req(input$area)
+      p(class = "small text-muted", icon("ruler-combined"), " ", area_text(input$area),
+        if (input$area[2] >= area_max) ". The top of the slider means 4,000 sq ft (372 m\u00B2) and above.")
     })
 
     # ---- The settings dialog ----

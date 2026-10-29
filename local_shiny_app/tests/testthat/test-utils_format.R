@@ -17,3 +17,8 @@ test_that("dt_bookmark_inputs() lists every DataTable input", {
   ids <- dt_bookmark_inputs(c("a", "b"))
   expect_true(all(c("a_rows_selected", "b_rows_selected", "a_state") %in% ids))
 })
+
+test_that("area_text() gives both square feet and square metres", {
+  expect_equal(area_text(c(500, 1200)), "500 - 1,200 sq ft (46 - 111 m²)")
+  expect_equal(area_text(c(0, area_max)), "0 - 4,000+ sq ft (0 - 372+ m²)")
+})
