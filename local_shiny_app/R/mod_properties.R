@@ -26,7 +26,7 @@ mod_properties_ui <- function(id) {
         pick("a", "Property A"), pick("b", "Property B"), pick("c", "Property C"),
         selectInput(ns("bed"), "Bedrooms", choices = c("All", bed_levels))
       ),
-      card_footer("Uses the time period and budget from the Budget page filters; ",
+      card_footer("Uses the time period and budget from My settings; ",
                   "all three use the bedroom choice above.")
     ),
     uiOutput(ns("cards")),

@@ -76,9 +76,12 @@ prepare_rentals <- function(d) {
 #' @param mrt_dist Metres. With `near`: keep buildings within this distance
 #'   of that station. Without: keep buildings within this distance of their
 #'   nearest station (`mrt_max` or more = any distance).
+#' @param places,place_km Keep buildings within `place_km` km of at least one
+#'   of `places` (name, lat, lng); `place_km_max` or no places = any distance.
 #' @noRd
 filter_market <- function(d, districts, beds, types, area, period,
-                          near = NULL, mrt_dist = mrt_max) {
+                          near = NULL, mrt_dist = mrt_max,
+                          places = NULL, place_km = place_km_max) {
   if (length(districts)) d <- d[d$district %in% districts, ]
   # which() drops rows with no floor area instead of returning NA rows
   d <- d[which(d$bed_group %in% beds &
@@ -91,6 +94,12 @@ filter_market <- function(d, districts, beds, types, area, period,
     d <- d[which(haversine_km(d$lat, d$lng, near[1], near[2]) * 1000 <= mrt_dist), ]
   } else if (mrt_dist < mrt_max) {
     d <- d[which(d$mrt_m <= mrt_dist), ]
+  }
+  if (!is.null(places) && nrow(places) > 0 && place_km < place_km_max) {
+    close <- Reduce(`|`, lapply(seq_len(nrow(places)), function(i) {
+      haversine_km(d$lat, d$lng, places$lat[i], places$lng[i]) <= place_km
+    }))
+    d <- d[which(close), ]
   }
   d
 }

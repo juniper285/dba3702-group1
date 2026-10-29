@@ -5,7 +5,7 @@
 #' project, nearby, in the same district and in the same region.
 #'
 #' Uses all rentals of the chosen bedroom count and property type in the
-#' Budget page's "most recent" period; the other filters are ignored so
+#' settings' "most recent" period; the other filters are ignored so
 #' every level compares like with like.
 #'
 #' @param filters The list returned by mod_filters_server().

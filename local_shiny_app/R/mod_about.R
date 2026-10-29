@@ -13,10 +13,10 @@ mod_about_ui <- function(id) {
       card(
         card_header(icon("book-open"), " How to read RentLens"),
         p(strong("Comparable rentals"), " are the transactions matching your filters ",
-          "within the most recent period you choose in the Budget page filters."),
+          "within the most recent period you choose in My settings."),
         p(strong("Typical range"), " is the 25th to 75th percentile: half of ",
           "comparable rentals fall inside it."),
-        p(strong("Options within your budget"), " (Budget page) lists each project and ",
+        p(strong("Options within your budget"), " (Search page) lists each project and ",
           "bedroom type whose median recent rent falls inside your budget range."),
         p(strong("Check a listing"), " compares an asking rent with past rentals of the same ",
           "bedroom count and property type in the same project, within a radius, in the same ",

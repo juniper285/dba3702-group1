@@ -1,13 +1,10 @@
-test_that("filters narrow the market and the selection", {
-  testServer(mod_filters_server, {
-    rentals <- rentals_data()
-    session$setInputs(
-      budget = c(3000, 5000), district = "D10 Bukit Timah, Holland, Tanglin", project = NULL,
-      beds = bed_levels, type = unique(rentals$type), area = c(0, area_max),
-      period = range(rentals$lease_date), recent = "12", destination = names(destinations)[1]
-    )
+test_that("settings and quick filters narrow the market and the selection", {
+  d10 <- "D10 Bukit Timah, Holland, Tanglin"
+  settings <- fake_settings(districts = d10)
+  testServer(mod_filters_server, args = list(settings = settings), {
+    session$setInputs(district = d10, project = NULL)
     expect_gt(nrow(market()), 0)
-    expect_true(all(market()$district == "D10 Bukit Timah, Holland, Tanglin"))
+    expect_true(all(market()$district == d10))
 
     one <- market()$project[1]
     session$setInputs(project = one)
@@ -17,16 +14,20 @@ test_that("filters narrow the market and the selection", {
   })
 })
 
-test_that("picking a station keeps rentals near it and starts from a 500 m walk", {
-  testServer(mod_filters_server, {
-    rentals <- rentals_data()
-    session$setInputs(
-      budget = c(3000, 5000), district = NULL, project = NULL,
-      beds = bed_levels, type = unique(rentals$type), area = c(0, area_max),
-      period = range(rentals$lease_date), recent = "12", destination = "NUS (Kent Ridge)",
-      mrt_pick = "", mrt_dist = mrt_max
-    )
-    session$setInputs(mrt_pick = "Novena MRT", mrt_dist = 500)
+test_that("changing the quick District filter saves it to the settings", {
+  settings <- fake_settings()
+  testServer(mod_filters_server, args = list(settings = settings), {
+    session$setInputs(district = NULL, project = NULL)
+    session$setInputs(district = "D09 Orchard, River Valley")
+    expect_equal(settings$settings()$districts, "D09 Orchard, River Valley")
+    expect_true(all(market()$district == "D09 Orchard, River Valley"))
+  })
+})
+
+test_that("a station in the settings keeps rentals near it", {
+  settings <- fake_settings(mrt_pick = "Novena MRT", mrt_dist = 500)
+  testServer(mod_filters_server, args = list(settings = settings), {
+    session$setInputs(district = NULL, project = NULL)
     st <- station_location("Novena MRT")
     expect_gt(nrow(market()), 0)
     expect_true(all(haversine_km(market()$lat, market()$lng, st[1], st[2]) <= 0.5))

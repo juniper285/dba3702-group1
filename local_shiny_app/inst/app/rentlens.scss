@@ -71,14 +71,37 @@
   a { text-decoration: none; font-weight: 500; }
 }
 
-// The Budget page's filter sidebar sits flush with the page
-.budget-layout {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  margin: -1rem;
-  > .main { padding: 1rem 1.5rem; }
+// ---- My settings summary and quick filters (Search page) -----------------
+.settings-summary {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-lg;
+  background: #fff;
+  .settings-icon {
+    width: 2.5rem; height: 2.5rem; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 999px; background: rgba($primary, 0.1); color: $primary;
+  }
 }
+.settings-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.settings-chip {
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: rgba($primary, 0.08);
+  font-size: 0.85rem;
+}
+.quick-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  .shiny-input-container { width: 100% !important; }
+}
+.modal-body .nav-pills .nav-link { font-size: 0.9rem; }
 
 // ---- Sidebar filters -----------------------------------------------------
 .bslib-sidebar-layout > .sidebar {
@@ -215,6 +238,8 @@ table.dataTable {
 
 // ---- Small screens -------------------------------------------------------
 @media (max-width: 576px) {
+  .quick-filters { grid-template-columns: 1fr; }
+  .settings-summary { flex-direction: column; align-items: flex-start; }
   .kpi .kpi-value { font-size: 1.3rem; }
   .verdict { flex-direction: column; gap: 0.5rem; }
 }

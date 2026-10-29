@@ -1,4 +1,5 @@
-#' The app's page: one page per task; the filters sit on the Budget page
+#' The app's page: one page per task; the renter's settings and quick
+#' filters sit on the Search page
 #'
 #' A function of `request` so that "Save this search" links can restore it.
 #' @noRd
@@ -10,20 +11,20 @@ app_ui <- function(request) {
     theme = app_theme(),
     fillable = FALSE,   # let each page scroll instead of squeezing content to fit
     navbar_options = navbar_options(theme = "light"),
+    header = settings_dependency(),   # loads and saves My settings in the browser
 
-    # The filters live on the Budget page; Map, Market, Shortlist and Rental
-    # records follow them too and say so with filter_note_ui()
+    # The Search page shows the renter's settings and quick filters; Map,
+    # Market, Shortlist and Rental records follow them too and say so with
+    # filter_note_ui()
     nav_panel(
-      "Budget", value = "budget", icon = icon("wallet"),
-      layout_sidebar(
-        fillable = FALSE, class = "budget-layout",
-        sidebar = sidebar(width = 300, mod_filters_ui("filters")),
-        page_intro("What does your budget get you?",
-                   "Set your budget and filters on the left. The Map, Market, Shortlist ",
-                   "and Rental records pages use the same filters."),
-        mod_budget_check_ui("budget_check"),
-        mod_within_budget_ui("within_budget")
-      )
+      "Search", value = "budget", icon = icon("wallet"),
+      page_intro("What does your budget get you?",
+                 "Results follow your settings. Change them any time with 'Edit my settings'; ",
+                 "the Map, Market, Shortlist and Rental records pages use them too."),
+      mod_settings_summary_ui("settings"),
+      mod_filters_ui("filters"),
+      mod_budget_check_ui("budget_check"),
+      mod_within_budget_ui("within_budget")
     ),
     nav_panel("Map", value = "map", icon = icon("map-location-dot"),
               filter_note_ui("map"), mod_map_ui("map")),
@@ -51,6 +52,7 @@ app_ui <- function(request) {
       mod_shortlist_ui("shortlist")
     ),
     nav_spacer(),
+    mod_settings_nav_ui("settings"),
     nav_menu(
       "More", icon = icon("ellipsis"), align = "right",
       nav_panel("Rental records", value = "records", icon = icon("table"),

@@ -45,3 +45,15 @@ test_that("filter_market() keeps buildings near an MRT/LRT station", {
   expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
                                   near = station, mrt_dist = 100)), 0)
 })
+
+test_that("filter_market() keeps buildings near one of my places", {
+  d <- prepare_rentals(raw)
+  d$area_sqft <- 500
+  period <- as.Date(c("2024-01-01", "2024-12-31"))
+  places <- data.frame(name = c("Far", "Near"), lat = c(1.45, 1.305), lng = c(103.8, 103.8))
+  near <- filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
+                        places = places, place_km = 1)
+  expect_equal(nrow(near), 2)               # about 0.56 km from "Near"
+  expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
+                                  places = places[1, ], place_km = 1)), 0)
+})

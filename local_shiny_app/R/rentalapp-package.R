@@ -13,7 +13,7 @@
 #' @importFrom leaflet.extras removeDrawToolbar editToolbarOptions
 #' @importFrom sf st_as_sf st_buffer st_sfc st_point st_polygon st_intersects
 #' @importFrom stats median quantile reorder
-#' @importFrom utils head read.csv write.csv
+#' @importFrom utils head read.csv write.csv modifyList
 NULL
 
 # Column names used inside dplyr calls
