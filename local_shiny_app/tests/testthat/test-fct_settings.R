@@ -77,3 +77,16 @@ test_that("default_place_name() uses the icon's label, numbered if taken", {
   expect_equal(default_place_name("work", c("Work", "Work 2")), "Work 3")
   expect_equal(default_place_name("nope", character()), "Place")
 })
+
+test_that("'Other' places keep the kind of place the renter typed", {
+  expect_equal(place_label(c("work", "other", "other"), c("ignored", "  church  ", "")),
+               c("Work", "Church", "Other"))
+  expect_equal(default_place_name("other", "Church", label = "Church"), "Church 2")
+
+  s <- default_settings(choices)
+  s$places <- new_places(name = c("Office", "St Andrew's"), kind = c("work", "other"),
+                         label = c("Work", "Church"), address = "", lat = c(1.30, 1.29),
+                         lng = c(103.80, 103.85))
+  back <- settings_from_json(settings_to_json(s), choices)
+  expect_equal(back$places$label, c("Work", "Church"))
+})

@@ -16,11 +16,26 @@ place_kinds <- data.frame(
   map_icon = c("briefcase", "graduation-cap", "home", "heart", "bicycle", "map-marker")
 )
 
-#' A table of places (name, kind, address, lat, lng); no rows by default
+#' A table of places (name, kind, label, address, lat, lng); no rows by default
+#'
+#' `label` is the kind of place in words: the icon's label ("Work"), or what
+#' the renter typed for "Other" ("Church").
 #' @noRd
 new_places <- function(name = character(), kind = character(), address = character(),
-                       lat = numeric(), lng = numeric()) {
-  data.frame(name = name, kind = kind, address = address, lat = lat, lng = lng)
+                       lat = numeric(), lng = numeric(), label = place_label(kind)) {
+  data.frame(name = name, kind = kind, label = label, address = address, lat = lat, lng = lng)
+}
+
+#' The kind of place in words: the icon's label, or `custom` (cleaned up)
+#' for "Other" when one was typed
+#' @noRd
+place_label <- function(kind, custom = "") {
+  label <- place_kinds$label[match(kind, place_kinds$kind)]
+  label[is.na(label)] <- "Other"
+  custom <- substr(gsub("\\s+", " ", trimws(rep_len(as.character(custom), length(kind)))), 1, 30)
+  own <- kind == "other" & !is.na(custom) & nzchar(custom)
+  label[own] <- paste0(toupper(substr(custom[own], 1, 1)), substring(custom[own], 2))
+  label
 }
 
 #' Street address of a OneMap search result, e.g. "1 Fusionopolis Way, Singapore 138632"
@@ -37,12 +52,11 @@ place_address <- function(hit) {
   if (grepl("^\\d{6}$", hit$postal)) paste0(a, ", Singapore ", hit$postal) else a
 }
 
-#' A name for a new place when none was typed: its icon's label, numbered
-#' if taken ("Work", "Work 2", ...)
+#' A name for a new place when none was typed: its label, numbered if
+#' taken ("Work", "Work 2", "Church", ...)
 #' @noRd
-default_place_name <- function(kind, taken) {
-  base <- place_kinds$label[match(kind, place_kinds$kind)]
-  if (is.na(base)) base <- "Place"
+default_place_name <- function(kind, taken, label = place_label(kind)) {
+  base <- if (kind %in% place_kinds$kind) label else "Place"
   name <- base; i <- 1
   while (name %in% taken) { i <- i + 1; name <- paste(base, i) }
   name
@@ -138,8 +152,9 @@ settings_from_json <- function(json, choices = settings_choices()) {
   pl <- x$places
   if (is.data.frame(pl) && all(c("name", "lat", "lng") %in% names(pl))) {
     kind <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
-    pl <- new_places(name = as.character(pl$name),
-                     kind = ifelse(kind %in% place_kinds$kind, kind, "other"),
+    kind <- ifelse(kind %in% place_kinds$kind, kind, "other")
+    pl <- new_places(name = as.character(pl$name), kind = kind,
+                     label = place_label(kind, if (is.null(pl$label)) "" else pl$label),
                      address = if (is.null(pl$address)) "" else as.character(pl$address),
                      lat = as.numeric(pl$lat), lng = as.numeric(pl$lng))
     pl <- pl[!is.na(pl$lat) & !is.na(pl$lng) & nzchar(pl$name) &
