@@ -15,7 +15,7 @@ Run these from `local_shiny_app/`:
 
 ```r
 source("dev/run_dev.R")                 # load the package and launch the app
-source("dev/check.R")                   # roxygenise() + test_local(); run before every commit
+source("dev/check.R")                   # roxygenise() + test_local() + writeManifest(); run before every commit
 testthat::test_local(filter = "mod_settings")   # just one test file
 ```
 
@@ -54,6 +54,7 @@ Rscript -e 'pkgload::load_all(); run_app(options = list(port = 4321))'   # app a
 |------|------------|
 | `app.R` | Entry point (`shiny::runApp("local_shiny_app")`). It runs `pkgload::load_all()` and then `run_app()` |
 | `DESCRIPTION` | Package metadata and the dependency list. Add new packages under `Imports:` |
+| `manifest.json` | **Generated** by `rsconnect::writeManifest(appPrimaryDoc = "app.R")`. Lists the packages Posit Connect Cloud installs; the app redeploys from `main` on every push. Regenerate and commit it whenever a dependency changes (`dev/check.R` does it) |
 | `NAMESPACE` | **Generated** by roxygen2 from `@import`/`@importFrom` tags. Never edit it by hand |
 | `.Rbuildignore` | Files left out of the package build |
 | `R/_disable_autoload.R` | Stops Shiny from sourcing `R/` itself; the package loader does it instead |
@@ -135,7 +136,7 @@ What `inst/app/www/settings.js` does:
 | `data-raw/mrt_stations.R` | data.gov.sg LTA station exits → `mrt_stations.csv` |
 | `data-raw/schools.R` | data.gov.sg MOE schools + OneMap geocoding → `schools.csv` (about a minute) |
 | `dev/run_dev.R` | Development launcher |
-| `dev/check.R` | `roxygenise()` + `test_local()` |
+| `dev/check.R` | `roxygenise()` + `test_local()` + `rsconnect::writeManifest()` |
 | `tests/testthat/test-<file>.R` | One test file per `R/` file: unit tests for `fct_`/`utils_`, and `testServer()` tests for modules. `test-app_ui.R` renders the whole UI |
 | `tests/testthat/helper-settings.R` | `fake_settings(...)`, a stand-in for `mod_settings_server()` in module tests |
 
@@ -157,7 +158,7 @@ What `inst/app/www/settings.js` does:
   1. Write the pull script in `data-raw/` and write its output to `inst/extdata/`.
   2. Add a loader in a `fct_` file.
   3. Add a row and code snippet to the root README's **Data sources**.
-- **A new package function you call:** add an `@importFrom pkg fn` tag (or use `pkg::fn`), list the package in `DESCRIPTION`, then run `roxygen2::roxygenise()`.
+- **A new package function you call:** add an `@importFrom pkg fn` tag (or use `pkg::fn`), list the package in `DESCRIPTION`, then run `roxygen2::roxygenise()` and regenerate `manifest.json` (or the deployed app will fail to start).
 
 ## Gotchas (each one has bitten before)
 

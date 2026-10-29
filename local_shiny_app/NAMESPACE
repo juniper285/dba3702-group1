@@ -59,6 +59,7 @@ importFrom(stats,
 )
 importFrom(utils,
   head,
+  modifyList,
   read.csv,
   write.csv
 )

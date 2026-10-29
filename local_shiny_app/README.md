@@ -38,6 +38,7 @@ local_shiny_app/
 ├── inst/extdata/          rentals.rds, mrt_stations.csv, schools.csv (see ../README.md)
 ├── data-raw/             scripts that rebuild inst/extdata/ from the source data
 ├── dev/                   developer scripts (run_dev.R, check.R)
+├── manifest.json          packages for Posit Connect Cloud (rsconnect::writeManifest())
 ├── tests/testthat/        unit tests for fct_/utils_ and module tests (testServer)
 └── man/                   generated documentation
 ```
@@ -89,6 +90,22 @@ local_shiny_app/
 | `mod_`   | a Shiny module: `mod_x_ui()` + `mod_x_server()` | `mod_map.R`       |
 | `fct_`   | app logic with no Shiny inputs/outputs  | `budget_verdict()`         |
 | `utils_` | generic helpers                         | `money()`                  |
+
+## Deploying (Posit Connect Cloud)
+
+The app is published on [Posit Connect Cloud](https://connect.posit.cloud) from
+GitHub: every push to `main` redeploys it automatically.
+
+- Connect Cloud installs the packages listed in `manifest.json` (next to
+  `app.R`). After adding or updating a package, regenerate it and commit it:
+  `rsconnect::writeManifest(appPrimaryDoc = "app.R")` (also run by
+  `dev/check.R`).
+- One-time setup: on connect.posit.cloud, sign in with GitHub, **Publish** →
+  **Shiny**, repo `juniper285/dba3702-group1`, branch `main`, primary file
+  `local_shiny_app/app.R`, "Automatically publish on push" on. The free plan
+  needs the repo to be public.
+- Nothing is written on the server: settings live in each visitor's browser,
+  and OneMap/data.gov.sg need no keys.
 
 ## Data sources
 
