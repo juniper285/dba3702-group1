@@ -91,11 +91,11 @@ test_that("a picked suggestion is added without another lookup", {
     pick <- jsonlite::toJSON(list(name = "KENT RIDGE HILL RESIDENCES", building = "KENT RIDGE HILL RESIDENCES",
                                   address = "50 SOUTH BUONA VISTA ROAD KENT RIDGE HILL RESIDENCES SINGAPORE 118167",
                                   postal = "118167", lat = 1.2905, lng = 103.7856), auto_unbox = TRUE)
-    session$setInputs(place_search = as.character(pick), place_name = "", place_kind = "home",
+    session$setInputs(place_search = as.character(pick), place_name = "", place_kind = "family",
                       place_kind_label = "", add_place = 1)
     expect_equal(places()$name, "Kent Ridge Hill Residences")
     expect_equal(places()$address, "50 South Buona Vista Road, Singapore 118167")
-    expect_equal(places()$kind, "home")
+    expect_equal(places()$kind, "family")
   })
 })
 

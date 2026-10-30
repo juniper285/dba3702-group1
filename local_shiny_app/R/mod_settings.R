@@ -231,7 +231,7 @@ mod_settings_server <- function(id) {
       name <- trimws(input$place_name)
       if (!nzchar(name)) {
         # A picked suggestion is named after the place; typed text after its kind
-        name <- if (startsWith(trimws(input$place_search), "{")) tools::toTitleCase(tolower(hit$name))
+        name <- if (startsWith(trimws(input$place_search), "{")) title_case_place(hit$name)
                 else default_place_name(input$place_kind, places()$name, label)
       }
       if (name %in% places()$name) {

@@ -25,11 +25,52 @@ period_for <- function(months, dates) {
 # Icons a renter can give a place: `icon` for the app (Font Awesome 6),
 # `map_icon` for the map's pins (leaflet's Font Awesome 4 names)
 place_kinds <- data.frame(
-  kind     = c("work", "study", "home", "family", "leisure", "other"),
-  label    = c("Work", "School", "Home", "Family", "Leisure", "Other"),
-  icon     = c("briefcase", "graduation-cap", "house", "heart", "dumbbell", "location-dot"),
-  map_icon = c("briefcase", "graduation-cap", "home", "heart", "bicycle", "map-marker")
+  kind     = c("work", "study", "family", "leisure", "other"),
+  label    = c("Work", "School", "Family", "Leisure", "Other"),
+  icon     = c("briefcase", "graduation-cap", "heart", "dumbbell", "location-dot"),
+  map_icon = c("briefcase", "graduation-cap", "heart", "bicycle", "map-marker")
 )
+
+# Words OneMap writes in capitals that should stay that way, and short
+# words with no vowels that are street abbreviations rather than acronyms.
+# settings.js keeps a copy of both lists for its place suggestions.
+place_acronyms <- c("NUS", "NTU", "SMU", "SUTD", "SIT", "SUSS", "SIM", "NIE", "ITE", "NAFA",
+                    "ACS", "SJI", "CHIJ", "SCGS", "MGS", "RI", "RGS", "HCI", "SOTA",
+                    "NUH", "SGH", "CGH", "KTPH", "MOE", "HDB", "URA", "LTA", "MRT", "LRT",
+                    "CBD", "MBS", "ECP", "PIE", "AYE", "CTE", "BKE", "KPE", "TPE", "SLE",
+                    "UOB", "OCBC", "DBS", "POSB", "IMM", "JEM", "NEX", "ION", "YMCA", "YWCA")
+place_abbrevs <- c("ST", "RD", "DR", "PL", "CL", "CT", "LN", "GR", "SQ", "WK", "PK", "BT",
+                   "TG", "MT", "STH", "NTH", "BLK", "BLVD", "JLN", "LOR", "LRG", "GDN",
+                   "GDNS", "HTS", "CTR", "CRES", "TCE", "HWY", "WLK", "PKWY", "XPWY", "MKT")
+place_small_words <- c("of", "and", "the", "at", "in", "on", "by", "for", "to")
+
+#' Title case for OneMap's all-capitals names and addresses, keeping acronyms
+#'
+#' "NUS (RIDGE VIEW RESIDENTIAL COLLEGE (RVRC))" becomes "NUS (Ridge View
+#' Residential College (RVRC))". A word stays in capitals when it is a known
+#' acronym, has a digit ("10A"), or is 2-5 letters with no vowel (RVRC, KKH),
+#' unless it is a street abbreviation ("St", "Rd").
+#' @noRd
+title_case_place <- function(x) {
+  vapply(as.character(x), function(s) {
+    parts <- regmatches(s, gregexpr("[A-Za-z0-9]+|[^A-Za-z0-9]+", s))[[1]]
+    first <- TRUE
+    for (i in seq_along(parts)) {
+      w <- parts[i]
+      if (!grepl("[A-Za-z0-9]", w)) next
+      up <- toupper(w); low <- tolower(w)
+      prev <- if (i > 1) parts[i - 1] else ""
+      parts[i] <-
+        if (grepl("[0-9]", w) || up %in% place_acronyms ||
+            (nchar(w) %in% 2:5 && !grepl("[AEIOUY]", up) && !up %in% place_abbrevs)) up
+        else if (endsWith(prev, "'")) low                          # "Andrew's"
+        else if (!first && low %in% place_small_words) low
+        else paste0(toupper(substr(w, 1, 1)), substring(low, 2))
+      first <- FALSE
+    }
+    paste(parts, collapse = "")
+  }, "", USE.NAMES = FALSE)
+}
 
 #' A table of places (name, kind, label, address, lat, lng); no rows by default
 #'
@@ -90,7 +131,7 @@ place_address <- function(hit) {
   a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(a)))
   # Some places' address is just their name: keep it rather than nothing
   if (!nzchar(a)) a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(hit$address)))
-  a <- tools::toTitleCase(tolower(a))
+  a <- title_case_place(a)
   if (grepl("^\\d{6}$", hit$postal)) paste0(a, ", Singapore ", hit$postal) else a
 }
 
@@ -189,10 +230,12 @@ settings_from_json <- function(json, choices = settings_choices()) {
   # Places: name + a location in Singapore (kind and address are optional)
   pl <- x$places
   if (is.data.frame(pl) && all(c("name", "lat", "lng") %in% names(pl))) {
-    kind <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
-    kind <- ifelse(kind %in% place_kinds$kind, kind, "other")
+    saved <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
+    kind <- ifelse(saved %in% place_kinds$kind, saved, "other")
+    # Places saved with the old "home" icon keep "Home" as their label
+    custom <- if (is.null(pl$label)) ifelse(saved == "home", "Home", "") else pl$label
     pl <- new_places(name = as.character(pl$name), kind = kind,
-                     label = place_label(kind, if (is.null(pl$label)) "" else pl$label),
+                     label = place_label(kind, custom),
                      address = if (is.null(pl$address)) "" else as.character(pl$address),
                      lat = as.numeric(pl$lat), lng = as.numeric(pl$lng))
     pl <- pl[!is.na(pl$lat) & !is.na(pl$lng) & nzchar(pl$name) &

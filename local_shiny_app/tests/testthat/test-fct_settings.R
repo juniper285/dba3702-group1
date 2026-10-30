@@ -118,3 +118,20 @@ test_that("period_for() covers the last N months of data, at most all of it", {
   expect_equal(latest_months(d, 12)$lease_date,
                d$lease_date[d$lease_date >= p[1] & d$lease_date <= p[2]])
 })
+
+test_that("title_case_place() keeps acronyms in capitals", {
+  expect_equal(title_case_place("NUS (RIDGE VIEW RESIDENTIAL COLLEGE (RVRC))"),
+               "NUS (Ridge View Residential College (RVRC))")
+  expect_equal(title_case_place("10A JLN BT MERAH"), "10A Jln Bt Merah")
+  expect_equal(title_case_place("ST ANDREW'S CATHEDRAL"), "St Andrew's Cathedral")
+  expect_equal(title_case_place("BANK OF SINGAPORE"), "Bank of Singapore")
+  expect_equal(title_case_place("KKH"), "KKH")
+})
+
+test_that("places saved with the old 'home' icon become 'Other', labelled Home", {
+  json <- '{"places": [{"name": "Flat", "kind": "home", "lat": 1.30, "lng": 103.80}]}'
+  s <- settings_from_json(json, choices)
+  expect_equal(s$places$kind, "other")
+  expect_equal(s$places$label, "Home")
+  expect_false("home" %in% place_kinds$kind)
+})

@@ -38,8 +38,29 @@
 
   // ---- Place search: suggestions from the OneMap Search API (no key needed;
   // it allows calls from any web page) ----
+  // Title case that keeps acronyms ("NUS (Ridge View Residential College
+  // (RVRC))"); same rule and word lists as title_case_place() in R
+  var ACRONYMS = ["NUS", "NTU", "SMU", "SUTD", "SIT", "SUSS", "SIM", "NIE", "ITE", "NAFA",
+                  "ACS", "SJI", "CHIJ", "SCGS", "MGS", "RI", "RGS", "HCI", "SOTA",
+                  "NUH", "SGH", "CGH", "KTPH", "MOE", "HDB", "URA", "LTA", "MRT", "LRT",
+                  "CBD", "MBS", "ECP", "PIE", "AYE", "CTE", "BKE", "KPE", "TPE", "SLE",
+                  "UOB", "OCBC", "DBS", "POSB", "IMM", "JEM", "NEX", "ION", "YMCA", "YWCA"];
+  var ABBREVS = ["ST", "RD", "DR", "PL", "CL", "CT", "LN", "GR", "SQ", "WK", "PK", "BT",
+                 "TG", "MT", "STH", "NTH", "BLK", "BLVD", "JLN", "LOR", "LRG", "GDN",
+                 "GDNS", "HTS", "CTR", "CRES", "TCE", "HWY", "WLK", "PKWY", "XPWY", "MKT"];
+  var SMALL = ["of", "and", "the", "at", "in", "on", "by", "for", "to"];
   function titleCase(s) {
-    return s.toLowerCase().replace(/\b([a-z])/g, function (c) { return c.toUpperCase(); });
+    var first = true;
+    return s.replace(/[A-Za-z0-9]+/g, function (w, at) {
+      var up = w.toUpperCase(), low = w.toLowerCase(), out;
+      if (/[0-9]/.test(w) || ACRONYMS.indexOf(up) >= 0 ||
+          (w.length >= 2 && w.length <= 5 && !/[AEIOUY]/.test(up) && ABBREVS.indexOf(up) < 0)) out = up;
+      else if (at > 0 && s.charAt(at - 1) === "'") out = low;
+      else if (!first && SMALL.indexOf(low) >= 0) out = low;
+      else out = up.charAt(0) + low.slice(1);
+      first = false;
+      return out;
+    });
   }
   // Street address without the building name (which can repeat the place
   // or name a shop inside it), ending with the postal code; same as
