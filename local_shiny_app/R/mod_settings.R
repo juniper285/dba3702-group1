@@ -48,6 +48,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
       p(class = "text-muted", "Add the places you travel to most, one at a time. Every list ",
         "shows the distance from each home to them."),
       div(class = "place-form",
+          uiOutput(ns("place_editing")),
           selectizeInput(
             ns("place_search"), "Search for a place, address or postal code", choices = NULL,
             width = "100%",
@@ -60,6 +61,9 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
               score = I("function () { return function () { return 1; }; }"),  # keep OneMap's order
               render = I("{ option: RentLens.renderPlace, option_create: RentLens.renderTyped }")
             )),
+          # OneMap matches from the start of an address, which begins with the block number
+          div(class = "place-search-tip", icon("lightbulb"),
+              " Tip: start with the block number, e.g. 105 Jurong East Street 13, or use the postal code."),
           div(class = "chips place-kinds",
               radioButtons(ns("place_kind"), "Icon", inline = TRUE, selected = "work",
                            choiceNames = lapply(seq_len(nrow(place_kinds)), function(i) {
@@ -68,7 +72,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                            choiceValues = place_kinds$kind),
               conditionalPanel(
                 "input.place_kind == 'other'", ns = ns,
-                textInput(ns("place_kind_label"), "What kind of place?", width = "100%",
+                textInput(ns("place_kind_label"), "Type of place", width = "100%",
                           placeholder = "e.g. Church, Clinic, Partner's office"))),
           div(class = "d-flex gap-2 align-items-end",
               textInput(ns("place_name"), "Name", width = "100%",
@@ -183,7 +187,7 @@ mod_settings_server <- function(id) {
                          "finish", "start_over", names(default_settings(choices)),
                          "place_search", "place_name", "place_kind", "place_kind_label",
                          "mrt_limit", "station_on", "place_limit",
-                         "add_place",
+                         "add_place", "edit_place", "cancel_edit",
                          "remove_place"))
 
     # What this browser saved last time ("none" on a first visit)
@@ -207,43 +211,91 @@ mod_settings_server <- function(id) {
     # ---- Places that matter: added one at a time ----
     # The list being edited (kept while the dialog or wizard is open)
     places <- reactiveVal(new_places())
+    # Name of the place loaded into the form for editing (NULL when adding)
+    editing <- reactiveVal(NULL)
+
+    clear_place_form <- function() {
+      editing(NULL)
+      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
+      updateTextInput(session, "place_name", value = "")
+      updateTextInput(session, "place_kind_label", value = "")
+      updateActionButton(session, "add_place", label = "Add place", icon = icon("plus"))
+    }
 
     observeEvent(input$add_place, {
-      if (!nzchar(trimws(if (is.null(input$place_search)) "" else input$place_search))) {
+      search <- trimws(if (is.null(input$place_search)) "" else input$place_search)
+      old <- places()[places()$name %in% editing(), ]
+      others <- places()[!places()$name %in% editing(), ]
+      if (!nzchar(search) && nrow(old) == 0) {
         showNotification("Search for a place first.", type = "warning")
         return()
       }
-      if (nrow(places()) >= max_places) {
+      if (nrow(old) == 0 && nrow(places()) >= max_places) {
         showNotification(paste("You can add up to", max_places, "places."), type = "warning")
         return()
       }
-      hit <- chosen_place(input$place_search)
-      if (nrow(hit) == 0) {
-        showNotification("No place found. Pick one from the suggestions, or try a postal code.",
-                         type = "warning")
-        return()
+      # When editing, an empty search keeps the place where it was
+      if (nzchar(search)) {
+        hit <- chosen_place(search)
+        if (nrow(hit) == 0) {
+          showNotification("No place found. Pick one from the suggestions, or try a postal code.",
+                           type = "warning")
+          return()
+        }
+        where <- list(address = place_address(hit[1, ]), lat = hit$lat[1], lng = hit$lng[1])
+      } else {
+        where <- list(address = old$address, lat = old$lat, lng = old$lng)
       }
       label <- place_label(input$place_kind, input$place_kind_label)
       name <- trimws(input$place_name)
       if (!nzchar(name)) {
         # A picked suggestion is named after the place; typed text after its kind
-        name <- if (startsWith(trimws(input$place_search), "{")) title_case_place(hit$name)
-                else default_place_name(input$place_kind, places()$name, label)
+        name <- if (startsWith(search, "{")) title_case_place(hit$name)
+                else if (nrow(old) == 1) old$name
+                else default_place_name(input$place_kind, others$name, label)
       }
-      if (name %in% places()$name) {
+      if (name %in% others$name) {
         showNotification(paste0("You already have a place called '", name, "'."), type = "warning")
         return()
       }
-      places(rbind(places(), new_places(name = name, kind = input$place_kind, label = label,
-                                        address = place_address(hit[1, ]),
-                                        lat = hit$lat[1], lng = hit$lng[1])))
-      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
-      updateTextInput(session, "place_name", value = "")
-      updateTextInput(session, "place_kind_label", value = "")
+      new <- new_places(name = name, kind = input$place_kind, label = label,
+                        address = where$address, lat = where$lat, lng = where$lng)
+      if (nrow(old) == 1) {
+        pl <- places()
+        pl[pl$name == old$name, ] <- new     # keep its place in the list
+        places(pl)
+      } else {
+        places(rbind(places(), new))
+      }
+      clear_place_form()
     })
 
     observeEvent(input$remove_place, {
       places(places()[places()$name != input$remove_place, ])
+      if (identical(editing(), input$remove_place)) clear_place_form()
+    })
+
+    # Editing loads the place into the form above; "Save changes" puts it back
+    observeEvent(input$edit_place, {
+      p <- places()[places()$name == input$edit_place, ]
+      req(nrow(p) == 1)
+      editing(p$name)
+      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
+      updateRadioButtons(session, "place_kind", selected = p$kind)
+      updateTextInput(session, "place_kind_label", value = if (p$kind == "other") p$label else "")
+      updateTextInput(session, "place_name", value = p$name)
+      updateActionButton(session, "add_place", label = "Save changes", icon = icon("check"))
+    })
+
+    observeEvent(input$cancel_edit, clear_place_form())
+
+    output$place_editing <- renderUI({
+      p <- places()[places()$name %in% editing(), ]
+      if (nrow(p) == 0) return(NULL)
+      where <- if (nzchar(p$address)) p$address else "its location"
+      div(class = "place-editing", icon("pen"), " Editing ", strong(p$name, .noWS = "after"),
+          paste0(". Search again to move it, or leave the search empty to keep ", where, "."),
+          actionLink(ns("cancel_edit"), "Cancel"))
     })
 
     output$place_list <- renderUI({
@@ -253,9 +305,11 @@ mod_settings_server <- function(id) {
       }
       div(class = "place-list",
           lapply(seq_len(nrow(pl)), function(i) {
-            remove <- sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'}); return false;",
-                              ns("remove_place"), jsonlite::toJSON(pl$name[i], auto_unbox = TRUE))
-            div(class = "place-row",
+            send <- function(id) {
+              sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'}); return false;",
+                      ns(id), jsonlite::toJSON(pl$name[i], auto_unbox = TRUE))
+            }
+            div(class = paste("place-row", if (identical(editing(), pl$name[i])) "is-editing"),
                 div(class = "place-icon", icon(place_icon(pl$kind[i]))),
                 div(class = "flex-fill",
                     div(class = "place-name", pl$name[i],
@@ -263,8 +317,10 @@ mod_settings_server <- function(id) {
                         if (!startsWith(pl$name[i], pl$label[i]))
                           span(class = "place-kind", pl$label[i])),
                     if (nzchar(pl$address[i])) div(class = "place-address", pl$address[i])),
+                tags$a(href = "#", class = "place-edit", title = paste("Edit", pl$name[i]),
+                       onclick = send("edit_place"), icon("pen")),
                 tags$a(href = "#", class = "place-remove", title = paste("Remove", pl$name[i]),
-                       onclick = remove, icon("xmark")))
+                       onclick = send("remove_place"), icon("xmark")))
           }))
     })
 
@@ -290,6 +346,7 @@ mod_settings_server <- function(id) {
     open_dialog <- function() {
       s <- settings()
       places(s$places)
+      editing(NULL)
       tabs <- lapply(names(settings_sections), function(k) {
         nav_panel(settings_sections[[k]], div(class = "pt-3", settings_section_ui(ns, k, s, choices)))
       })
@@ -345,6 +402,7 @@ mod_settings_server <- function(id) {
     open_wizard <- function(s) {
       draft(s)
       places(s$places)
+      editing(NULL)
       step(1)
       show_step()
     }

@@ -112,9 +112,15 @@
   align-items: end;
   .shiny-input-container { width: 100% !important; }
 }
-.modal-body .nav-pills .nav-link { font-size: 0.9rem; }
+.modal-body .nav-pills .nav-link { font-size: 0.875rem; }
 
 // ---- Places that matter ---------------------------------------------------
+.place-search-tip {
+  font-size: 0.875rem;
+  color: $text-muted;
+  margin: -0.5rem 0 1rem;   // close under the search box, the usual gap below
+  svg { color: $warning; }
+}
 .place-form {
   padding: 0.9rem 1rem 0.25rem;
   border: 1px solid $border-color;
@@ -147,15 +153,24 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
-  .place-address { font-size: 0.85rem; color: $text-muted; }
+  .place-address { font-size: 0.875rem; color: $text-muted; }
+  .place-edit { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $primary; } }
   .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
+  &.is-editing { border-color: $primary; box-shadow: 0 0 0 1px $primary; }
+}
+.place-editing {
+  font-size: 0.875rem;
+  color: $text-muted;
+  margin-bottom: 0.75rem;
+  svg { color: $primary; }
 }
 .place-option {
   padding: 0.15rem 0;
   .place-option-name { font-weight: 600; }
-  .place-option-detail { font-size: 0.8rem; color: $text-muted; }
+  .place-option-detail { font-size: 0.875rem; color: $text-muted; }
+  .place-option-detail.is-road { color: $warning; font-style: italic; }
 }
-.place-empty { color: $text-muted; font-size: 0.9rem; padding: 0.25rem 0; }
+.place-empty { color: $text-muted; font-size: 0.875rem; padding: 0.25rem 0; }
 
 // ---- Optional settings: greyed out until used ----------------------------
 .optional-block {
@@ -189,7 +204,7 @@
   padding: 0.75rem 1rem;
   border-radius: $border-radius-lg;
   background: rgba($primary, 0.05);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   table { background: transparent; --bs-table-bg: transparent; }
 }
 .coach-popover {
@@ -228,7 +243,7 @@
     padding: 0.25rem 0.75rem;
     border: 1px solid $border-color;
     border-radius: 999px;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     background: #fff;
     transition: all 0.12s ease;
   }

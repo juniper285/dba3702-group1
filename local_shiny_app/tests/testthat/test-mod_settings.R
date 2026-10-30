@@ -128,3 +128,32 @@ test_that("the preview works before any place is added", {
     expect_match(output$preview$html, "options in your budget")
   })
 })
+
+test_that("an added place can be edited in place, keeping its location", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    places(new_places(name = c("Office", "Gym"), kind = c("work", "leisure"),
+                      address = c("1 Main Road", "2 Side Road"), lat = c(1.30, 1.31),
+                      lng = c(103.8, 103.81)))
+    session$setInputs(edit_place = "Office")
+    expect_equal(editing(), "Office")
+    expect_match(output$place_editing$html, "Editing")
+
+    # rename and change the icon; an empty search keeps the address
+    session$setInputs(place_search = "", place_name = "Church", place_kind = "other",
+                      place_kind_label = "Church", add_place = 1)
+    expect_equal(places()$name, c("Church", "Gym"))
+    expect_equal(places()$kind[1], "other")
+    expect_equal(places()$address[1], "1 Main Road")
+    expect_equal(places()$lat[1], 1.30)
+    expect_null(editing())
+
+    # a name another place already has is refused
+    session$setInputs(edit_place = "Church")
+    session$setInputs(place_name = "Gym", add_place = 2)
+    expect_equal(places()$name, c("Church", "Gym"))
+    session$setInputs(cancel_edit = 1)
+    expect_null(editing())
+  })
+})

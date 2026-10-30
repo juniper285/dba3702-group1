@@ -73,6 +73,7 @@
     a = titleCase(a.replace(/\s+/g, " "));
     return /^\d{6}$/.test(h.POSTAL) ? a + ", Singapore " + h.POSTAL : a;
   }
+  var ROAD = /^(JALAN|JLN|LORONG|LOR) |\b(ROAD|STREET|AVENUE|DRIVE|LANE|WAY|CRESCENT|CLOSE|LINK|RISE|WALK|TERRACE|BOULEVARD|EXPRESSWAY|HIGHWAY|RD|ST|AVE|DR)( \d+[A-Z]?)?$/;
   function searchPlaces(query, callback) {
     var self = this;
     if (!query || query.trim().length < 2) return callback();
@@ -88,8 +89,11 @@
           seen[key] = true;
           var place = { name: h.SEARCHVAL, building: h.BUILDING, address: h.ADDRESS,
                         postal: h.POSTAL, lat: +h.LATITUDE, lng: +h.LONGITUDE };
+          // A bare road (no postal code, named like a road) is pinned at its middle
+          var road = !/^\d{6}$/.test(h.POSTAL) && h.ADDRESS === h.SEARCHVAL && ROAD.test(h.SEARCHVAL);
           out.push({ value: JSON.stringify(place), label: titleCase(h.SEARCHVAL),
-                     detail: streetAddress(h) });
+                     detail: road ? "Whole street \u2013 add a block number for an exact spot"
+                                  : streetAddress(h), road: road });
         });
         // Show only this query's results, in OneMap's order
         if (self && self.clearOptions) self.clearOptions();
@@ -99,7 +103,8 @@
   }
   function renderPlace(item, escape) {
     return '<div class="place-option"><div class="place-option-name">' + escape(item.label) +
-      '</div>' + (item.detail ? '<div class="place-option-detail">' + escape(item.detail) + '</div>' : '') +
+      '</div>' + (item.detail ? '<div class="place-option-detail' + (item.road ? ' is-road' : '') + '">' +
+      escape(item.detail) + '</div>' : '') +
       '</div>';
   }
   function renderTyped(data, escape) {
