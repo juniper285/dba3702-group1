@@ -396,4 +396,20 @@ table.dataTable {
   .irs.irs--shiny .irs-min, .irs.irs--shiny .irs-max {
     .unit, .sqm { display: none; }
   }
+  // at the slider's end: the handle shows the upper limit, the end label the largest home
+  .irs.irs--shiny .irs-max .cur, .top { display: none; }
+  .irs.irs--shiny .irs-max .top { display: inline; }
+  .form-group, .shiny-input-container { margin-bottom: 0.5rem; }
+}
+// "Lower limit: [ ] ft² / [ ] m²"
+.area-limit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  .area-limit-label { width: 6.5rem; flex: none; }
+  input { width: 7rem; flex: none; }
+  .area-unit, .area-sep { color: $text-muted; }
+  .area-sep { margin: 0 0.25rem; }
 }

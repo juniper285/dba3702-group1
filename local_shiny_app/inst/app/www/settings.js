@@ -110,27 +110,78 @@
   function renderTyped(data, escape) {
     return '<div class="create">Use \u201c' + escape(data.input) + '\u201d as typed</div>';
   }
-  // ---- Floor area slider: each handle's label in both units ----
-  function areaLabel(max) {
+  // ---- Floor area: slider labels in both units, plus typed limits ----
+  // The slider's scale ends at its max (4,000 sq ft), which means "up to the
+  // largest home" (data-top); the Lower/Upper limit boxes hold the exact
+  // limits, in ft² and m², and any of the five can be changed.
+  var SQFT_PER_SQM = 10.7639;
+  function num(x, digits) { return (+x).toLocaleString("en-US", { maximumFractionDigits: digits || 0 }); }
+
+  function areaParts(root) {
+    var $root = $(root);
+    return { root: $root, slider: $root.find("input.js-range-slider"),
+             lo: $root.find(".area-limit.lo input.sqft"), loSqm: $root.find(".area-limit.lo input.sqm"),
+             hi: $root.find(".area-limit.hi input.sqft"), hiSqm: $root.find(".area-limit.hi input.sqm"),
+             top: +$root.data("top") };
+  }
+  // Label text; at the slider's end it shows the typed upper limit (or the
+  // largest home), and the end label shows the largest home: CSS picks
+  // .cur or .top, and hides the units on the 0 / max end labels
+  function areaLabel(p, max) {
     return function (n) {
-      var plus = n >= max ? "+" : "";
-      var sqm = (n / 10.7639).toLocaleString("en-US", { maximumFractionDigits: 1 });
-      // the end labels (0, 4,000) show only the number: CSS hides .unit and .sqm there
-      return "<span class=\"val\">" + n.toLocaleString("en-US") +
-        "<span class=\"unit\">" + plus + " ft\u00B2</span><span class=\"sqm\">" + sqm + plus +
-        " m\u00B2</span></span>";
+      var cur = n >= max ? (+p.hi.val() || p.top) : n;
+      var top = n >= max ? '<span class="top">' + num(p.top) + "</span>" : "";
+      return '<span class="val"><span class="cur">' + num(cur) + "</span>" + top +
+        '<span class="unit"> ft²</span><span class="sqm">' + num(cur / SQFT_PER_SQM, 1) +
+        " m²</span></span>";
     };
   }
-  function dualUnits(el) {
-    var slider = $(el).data("ionRangeSlider");
-    if (slider) slider.update({ prettify: areaLabel(+$(el).data("max")), force_edges: true,
-                                  values_separator: " \u2013 " });
+  function setBox($box, v) {
+    if (+$box.val() !== v) $box.val(v).trigger("change");   // "change" tells Shiny
+  }
+  var areaSyncing = false;
+  function setupArea(el) {
+    var p = areaParts(el.closest(".area-slider"));
+    var slider = p.slider.data("ionRangeSlider");
+    if (!slider) return;
+    var max = +p.slider.data("max");
+    slider.update({ prettify: areaLabel(p, max), force_edges: true, values_separator: " – " });
+    if (p.root.data("area-ready")) return;
+    p.root.data("area-ready", true);
+
+    // slider -> boxes
+    p.slider.on("change.rentlens", function () {
+      if (areaSyncing) return;
+      var r = slider.result;
+      setBox(p.lo, r.from); p.loSqm.val((r.from / SQFT_PER_SQM).toFixed(1));
+      // at the end, keep a typed limit above the slider's scale
+      var hi = r.to >= max ? (+p.hi.val() >= max ? +p.hi.val() : p.top) : r.to;
+      setBox(p.hi, hi); p.hiSqm.val((hi / SQFT_PER_SQM).toFixed(1));
+    });
+    // boxes -> slider (and the other unit)
+    function fromBoxes() {
+      var lo = Math.max(0, +p.lo.val() || 0), hi = +p.hi.val();
+      if (!(hi > 0)) hi = p.top;
+      areaSyncing = true;
+      slider.update({ from: Math.min(lo, max), to: Math.min(Math.max(hi, lo), max) });
+      areaSyncing = false;
+    }
+    p.lo.add(p.hi).on("input", function () {
+      var $m = $(this).is(p.lo) ? p.loSqm : p.hiSqm;
+      $m.val(this.value === "" ? "" : (+this.value / SQFT_PER_SQM).toFixed(1));
+      fromBoxes();
+    });
+    p.loSqm.add(p.hiSqm).on("input", function () {
+      var $f = $(this).is(p.loSqm) ? p.lo : p.hi;
+      $f.val(this.value === "" ? "" : Math.round(+this.value * SQFT_PER_SQM)).trigger("change");
+      fromBoxes();
+    });
   }
   // Shiny sets its own labels when the slider is created or updated, so
   // swap them afterwards
-  $(document).on("shiny:bound shiny:updateinput", ".area-slider input", function (e) {
+  $(document).on("shiny:bound shiny:updateinput", ".area-slider input.js-range-slider", function (e) {
     var el = e.target;
-    setTimeout(function () { dualUnits(el); }, 0);
+    setTimeout(function () { setupArea(el); }, 0);
   });
 
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };

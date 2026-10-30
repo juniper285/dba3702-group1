@@ -159,7 +159,8 @@ settings_choices <- function(rentals = rentals_data()) {
   list(districts = sort(unique(rentals$district)),
        types     = sort(unique(rentals$type)),
        stations  = sort(mrt_stations()$station),
-       dates     = range(rentals$lease_date))
+       dates     = range(rentals$lease_date),
+       area_top  = area_top(rentals))
 }
 
 #' Settings for someone who has not set anything up yet
@@ -171,7 +172,7 @@ default_settings <- function(choices = settings_choices()) {
     districts = character(),
     beds      = bed_levels,
     types     = choices$types,
-    area      = c(0, area_max),
+    area      = c(0, choices$area_top),
     period    = period_for(12, choices$dates),
     recent    = 12,
     mrt_pick  = "",
@@ -184,7 +185,7 @@ default_settings <- function(choices = settings_choices()) {
 #' @noRd
 settings_to_json <- function(s) {
   s$period <- format(s$period)
-  s$version <- 1
+  s$version <- 2
   as.character(jsonlite::toJSON(s, auto_unbox = TRUE, digits = NA))
 }
 
@@ -218,7 +219,9 @@ settings_from_json <- function(json, choices = settings_choices()) {
   keep("districts", pick(x$districts, choices$districts, allow_empty = TRUE))
   keep("beds",      pick(x$beds, bed_levels))
   keep("types",     pick(x$types, choices$types))
-  keep("area",      num_range(x$area, 0, area_max))
+  # Before version 2 the slider's top (area_max) meant "and above"
+  if (!isTRUE(x$version >= 2) && isTRUE(as.numeric(x$area[2]) >= area_max)) x$area[2] <- choices$area_top
+  keep("area",      num_range(x$area, 0, choices$area_top))
   keep("recent",    if (isTRUE(as.numeric(x$recent) %in% recent_choices)) as.numeric(x$recent))
   keep("mrt_pick",  if (identical(x$mrt_pick, "") || isTRUE(x$mrt_pick %in% choices$stations)) x$mrt_pick)
   keep("mrt_dist",  one_num(x$mrt_dist, 100, mrt_max))
@@ -257,8 +260,8 @@ settings_summary <- function(s, choices = settings_choices()) {
     if (setequal(s$beds, bed_levels)) "any bedrooms"
     else paste(paste(s$beds, collapse = ", "), "bedrooms"),
     if (!setequal(s$types, choices$types)) paste(s$types, collapse = ", "),
-    if (s$area[1] > 0 || s$area[2] < area_max)
-      area_text(s$area),
+    if (s$area[1] > 0 || s$area[2] < choices$area_top)
+      area_text(s$area, choices$area_top),
     if (length(s$districts) == 0) "anywhere in Singapore"
     # "D10 Bukit Timah, Holland, Tanglin" -> "D10 Bukit Timah"
     else paste(sub(",.*", "", sort(s$districts)), collapse = ", "),

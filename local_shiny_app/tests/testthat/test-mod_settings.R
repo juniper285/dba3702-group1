@@ -157,3 +157,18 @@ test_that("an added place can be edited in place, keeping its location", {
     expect_null(editing())
   })
 })
+
+test_that("typed floor-area limits win over the slider, which tops out at 'no limit'", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    session$setInputs(area = c(300, area_max), area_lo = 300, area_hi = 6000)
+    session$setInputs(save = 1)
+    expect_equal(settings()$area, c(300, 6000))
+
+    session$setInputs(open = 2)
+    session$setInputs(area = c(0, area_max), area_lo = NULL, area_hi = NULL)
+    session$setInputs(save = 2)
+    expect_equal(settings()$area, c(0, area_top()))
+  })
+})

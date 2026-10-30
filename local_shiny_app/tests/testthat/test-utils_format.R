@@ -20,5 +20,6 @@ test_that("dt_bookmark_inputs() lists every DataTable input", {
 
 test_that("area_text() gives both square feet and square metres", {
   expect_equal(area_text(c(500, 1200)), "500 - 1,200 sq ft (46 - 111 m²)")
-  expect_equal(area_text(c(0, area_max)), "0 - 4,000+ sq ft (0 - 372+ m²)")
+  expect_equal(area_text(c(500, 24650), top = 24650), "500+ sq ft (46+ m²)")
+  expect_equal(area_text(c(500, 6000), top = 24650), "500 - 6,000 sq ft (46 - 557 m²)")
 })

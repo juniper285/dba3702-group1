@@ -1,7 +1,8 @@
 choices <- list(districts = c("D01 Raffles Place, Marina", "D10 Bukit Timah, Holland, Tanglin"),
                 types = c("Landed Properties", "Non-Landed Properties"),
                 stations = c("Novena MRT", "Kent Ridge MRT"),
-                dates = as.Date(c("2021-09-01", "2026-08-01")))
+                dates = as.Date(c("2021-09-01", "2026-08-01")),
+                area_top = 24650)
 
 test_that("settings survive a round trip through JSON", {
   s <- default_settings(choices)
@@ -139,4 +140,20 @@ test_that("places saved with the old 'home' icon become 'Other', labelled Home",
   expect_equal(s$places$kind, "other")
   expect_equal(s$places$label, "Home")
   expect_false("home" %in% place_kinds$kind)
+})
+
+test_that("the floor area's upper limit is exact, and the largest home means no limit", {
+  s <- default_settings(choices)
+  expect_equal(s$area, c(0, 24650))
+  expect_false(any(grepl("sq ft", settings_summary(s, choices))))
+  s$area <- c(0, 6000)
+  back <- settings_from_json(settings_to_json(s), choices)
+  expect_equal(back$area, c(0, 6000))
+  expect_true("0 - 6,000 sq ft (0 - 557 m²)" %in% settings_summary(back, choices))
+  # saved before version 2, the slider's top (4,000) meant "and above"
+  old <- settings_from_json('{"version": 1, "area": [500, 4000]}', choices)
+  expect_equal(old$area, c(500, 24650))
+  # from version 2 on, 4,000 is a real limit
+  s$area <- c(500, 4000)
+  expect_equal(settings_from_json(settings_to_json(s), choices)$area, c(500, 4000))
 })

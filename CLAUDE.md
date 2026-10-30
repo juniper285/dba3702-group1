@@ -75,7 +75,7 @@ Pages in `R/app_ui.R`:
 
 | File | Main contents |
 |------|---------------|
-| `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session, **drops the 1,168 contracts with no floor area** (landed houses listed as "<=1000"/">8000" sqft), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels`, `area_max` (4000 = "4,000 sq ft and above") |
+| `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session, **drops the 1,168 contracts with no floor area** (landed houses listed as "<=1000"/">8000" sqft), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels`, `area_max` (4000, where the floor-area slider's scale ends). `area_top()` is the largest floor area, the "no limit" upper bound |
 | `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_two_areas()`, `empty_shortlist()` |
 | `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
@@ -86,7 +86,7 @@ Pages in `R/app_ui.R`:
 
 | File | Page / role |
 |------|-------------|
-| `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. Places are added one at a time and edited with the pencil, which loads one back into the form. The floor-area slider's handle labels show ft² and m² on two lines: `settings.js` swaps in its own `prettify` after Shiny creates or updates the slider (`.area-slider`). The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
+| `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. Places are added one at a time and edited with the pencil, which loads one back into the form. Floor area: the slider's scale stops at `area_max` (4,000), whose end means "up to the largest home" (`area_top()`, 24,650 sq ft); the Lower/Upper limit boxes (`area_lo`/`area_hi`, plus m² copies) hold exact limits and win over the slider in `read_settings_form()`. `settings.js` keeps the boxes, both units and the slider in step, and swaps in its own `prettify` for the two-line ft²/m² handle labels. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
 | `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |
@@ -166,7 +166,7 @@ What `inst/app/www/settings.js` does:
   |---|---|---|---|
   | `mrt_max` | 2000 | any distance | 100–1,900 m |
   | `place_km_max` | 30 | any distance | 1–29 km |
-  | `area_max` | 4000 | 4,000 sq ft and above | |
+  | `area_top()` | 24,650 (largest home in the data) | no upper limit on floor area; `area_max` (4000) is only where the slider's scale ends | |
 
 - **Settings live in the browser, not the server.** There are no accounts. To see the wizard again, use My filters → Start over, or run `localStorage.removeItem("rentlens-settings")` in the console. The period is always recomputed from `recent` and never stored on its own.
 - **Shiny custom-message handlers must take exactly one argument.** A zero-argument handler throws when Shiny connects and breaks the whole app silently. Register them when `settings.js` loads, not inside `shiny:connected`.

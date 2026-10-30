@@ -29,6 +29,22 @@ settings_sections <- c(budget = "Budget", places = "Places that matter",
                        area = "Where to search", home = "Type of home",
                        commute = "Commute and MRT")
 
+#' One "Lower limit: [ ] ft² / [ ] m²" line under the floor-area slider
+#' @noRd
+area_limit_ui <- function(ns, which, label, value, top) {
+  box <- function(id, unit, v, step) {
+    tagList(tags$input(id = ns(id), type = "number", class = paste("form-control form-control-sm", unit),
+                       min = 0, max = if (unit == "sqft") top else round(top / sqft_per_sqm, 1),
+                       step = step, value = v, `aria-label` = paste(label, if (unit == "sqft") "in square feet" else "in square metres")),
+            span(class = "area-unit", if (unit == "sqft") "ft\u00B2" else "m\u00B2"))
+  }
+  div(class = paste("area-limit", which),
+      span(class = "area-limit-label", paste0(label, ":")),
+      box(paste0("area_", which), "sqft", value, 10),
+      span(class = "area-sep", "/"),
+      box(paste0("area_", which, "_sqm"), "sqm", round(value / sqft_per_sqm, 1), 0.1))
+}
+
 #' One section of the settings form
 #'
 #' @param ns The settings module's namespace function.
@@ -100,9 +116,13 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
           checkboxGroupInput(ns("types"), "Property type", choices = choices$types,
                              selected = s$types, inline = TRUE)),
       # Each handle's label shows square feet and square metres (settings.js)
-      div(class = "area-slider",
-          sliderInput(ns("area"), "Floor area", min = 0, max = area_max, value = s$area,
-                      step = 100, ticks = FALSE, width = "100%"))
+      div(class = "area-slider", `data-top` = choices$area_top,
+          sliderInput(ns("area"), "Floor area", min = 0, max = area_max,
+                      value = pmin(s$area, area_max), step = 10, ticks = FALSE, width = "100%"),
+          # Exact limits, typed in either unit; settings.js keeps them in step
+          # with each other and the slider
+          area_limit_ui(ns, "lo", "Lower limit", s$area[1], choices$area_top),
+          area_limit_ui(ns, "hi", "Upper limit", s$area[2], choices$area_top))
     ),
     commute = tagList(
       p(class = "text-muted", "How far are you willing to travel? These are optional: just start ",
@@ -161,7 +181,15 @@ read_settings_form <- function(input, s, sections, places) {
   if ("home" %in% sections) {
     if (length(input$beds)) s$beds <- input$beds
     if (length(input$types)) s$types <- input$types
-    if (!is.null(input$area)) s$area <- input$area
+    # The typed limits are exact; the slider alone tops out at area_max,
+    # which means "up to the largest home"
+    top <- area_top()
+    typed <- suppressWarnings(as.numeric(c(input$area_lo, input$area_hi)))
+    if (length(typed) == 2 && !anyNA(typed)) {
+      s$area <- sort(pmin(pmax(typed, 0), top))
+    } else if (!is.null(input$area)) {
+      s$area <- c(input$area[1], if (input$area[2] >= area_max) top else input$area[2])
+    }
   }
   if ("commute" %in% sections) {
     # A switched-off option is stored as "any": the top of the range
@@ -189,7 +217,7 @@ mod_settings_server <- function(id) {
                          "place_search", "place_name", "place_kind", "place_kind_label",
                          "mrt_limit", "station_on", "place_limit",
                          "add_place", "edit_place", "cancel_edit",
-                         "remove_place"))
+                         "remove_place", "area_lo", "area_hi", "area_lo_sqm", "area_hi_sqm"))
 
     # What this browser saved last time ("none" on a first visit)
     observeEvent(input$stored, once = TRUE, {

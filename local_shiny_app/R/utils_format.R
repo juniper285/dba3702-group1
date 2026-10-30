@@ -11,15 +11,16 @@ money_or_dash <- function(x) if (is.na(x)) "-" else money(x)
 sqft_per_sqm <- 10.7639
 
 #' A floor-area range in square feet and square metres, e.g.
-#' "500 - 1,200 sq ft (46 - 111 m²)"; the top of the slider (`area_max`)
-#' reads as "and above"
+#' "500 - 1,200 sq ft (46 - 111 m²)"; an upper limit of `top` (the largest
+#' home) reads as "and above": "500+ sq ft (46+ m²)"
 #' @noRd
-area_text <- function(area) {
-  open_top <- area[2] >= area_max
+area_text <- function(area, top = Inf) {
   fmt <- function(x) format(round(x), big.mark = ",", trim = TRUE)
-  plus <- if (open_top) "+" else ""
-  paste0(fmt(area[1]), " - ", fmt(area[2]), plus, " sq ft (",
-         fmt(area[1] / sqft_per_sqm), " - ", fmt(area[2] / sqft_per_sqm), plus, " m\u00B2)")
+  if (area[2] >= top) {
+    return(paste0(fmt(area[1]), "+ sq ft (", fmt(area[1] / sqft_per_sqm), "+ m\u00B2)"))
+  }
+  paste0(fmt(area[1]), " - ", fmt(area[2]), " sq ft (",
+         fmt(area[1] / sqft_per_sqm), " - ", fmt(area[2] / sqft_per_sqm), " m\u00B2)")
 }
 
 #' Format a date as its quarter, e.g. "2024 Q2"

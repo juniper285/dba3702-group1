@@ -19,10 +19,16 @@ district_names <- c(
 )
 
 bed_levels <- c("1", "2", "3", "4", "5+", "Unknown")
-area_max   <- 4000   # floor-area slider's top end means "4,000 sqft and above"
+area_max   <- 4000   # the floor-area slider's scale ends here; its top end means "up to the
+                     # largest home" (area_top()), and bigger limits are typed in
 
 # Data loaded once per R session and shared by every user of the app
 .cache <- new.env(parent = emptyenv())
+
+#' The largest floor area in the data (sq ft): the upper limit that means
+#' "no limit"
+#' @noRd
+area_top <- function(rentals = rentals_data()) ceiling(max(rentals$area_sqft))
 
 #' Compute `expr` once and keep the result for the rest of the R session
 #' @noRd
@@ -92,7 +98,7 @@ filter_market <- function(d, districts, beds, types, area, period,
   d <- d[which(d$bed_group %in% beds &
                d$type %in% types &
                d$area_sqft >= area[1] &
-               (d$area_sqft <= area[2] | area[2] >= area_max) &
+               d$area_sqft <= area[2] &
                d$lease_date >= period[1] &
                d$lease_date <= period[2]), ]
   if (!is.null(near)) {
