@@ -3145,10 +3145,10 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "f8d602ab206e1a9521aeb6987bc07fbb"
+      "checksum": "64214a5122c99bad3f82d899955652de"
     },
     "inst/app/www/settings.js": {
-      "checksum": "c0d8d6b0c6141de0866b20b966621241"
+      "checksum": "d809b986b610b56a81ad2fc1af796fd9"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3217,7 +3217,7 @@
       "checksum": "ada4a12f596ba6e37876d2d53f5e2839"
     },
     "R/mod_settings.R": {
-      "checksum": "70cdb3d3551435c2042ad1f49b0da91b"
+      "checksum": "01bf1fe451a1a75cda9f605186a5f1d8"
     },
     "R/mod_shortlist.R": {
       "checksum": "faa41df73bd627b8751f4feaffe7db7c"
@@ -3241,7 +3241,7 @@
       "checksum": "c462a0085bf29fc331865e11855d89f2"
     },
     "R/utils_format.R": {
-      "checksum": "3711f661290dec864b1c87cdb5a8f7d4"
+      "checksum": "8d96709e1e9d757640a1ca10ab828a8e"
     },
     "R/utils_ui.R": {
       "checksum": "07a828182a2d192ffe0b5f7642b0abd4"

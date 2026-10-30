@@ -101,10 +101,8 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                              selected = s$types, inline = TRUE)),
       # Each handle's label shows square feet and square metres (settings.js)
       div(class = "area-slider",
-          tags$label(class = "control-label", `for` = ns("area"), "Floor area"),
-          uiOutput(ns("area_hint")),
-          sliderInput(ns("area"), NULL, min = 0, max = area_max, value = s$area, step = 100,
-                      ticks = FALSE, width = "100%"))
+          sliderInput(ns("area"), "Floor area", min = 0, max = area_max, value = s$area,
+                      step = 100, ticks = FALSE, width = "100%"))
     ),
     commute = tagList(
       p(class = "text-muted", "How far are you willing to travel? These are optional: just start ",
@@ -338,11 +336,6 @@ mod_settings_server <- function(id) {
                 money(q[1]), money(q[2]), share))
     })
 
-    # Floor area in both units (the data is in square feet)
-    output$area_hint <- renderUI({
-      req(input$area)
-      div(class = "area-value", area_units(input$area))
-    })
 
     # ---- The settings dialog ----
     open_dialog <- function() {

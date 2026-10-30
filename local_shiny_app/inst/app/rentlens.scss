@@ -381,38 +381,19 @@ table.dataTable {
 
 // ---- Floor area: each handle's label in square feet and square metres ----
 .area-slider {
-  margin-bottom: 1rem;
-  .control-label { margin-bottom: 0; }
-  .area-value { font-size: 0.875rem; color: $text-muted; white-space: pre; }
-  .form-group, .shiny-input-container { margin-bottom: 0; }
   // .irs.irs--shiny outranks the slider's own stylesheet, which loads after ours
-  .irs.irs--shiny .irs-min, .irs.irs--shiny .irs-max { display: none; }
-  // room above the bar for the two-line labels
-  .irs.irs--shiny { margin-top: 2.6rem; }
+  .irs.irs--shiny { margin-top: 1.75rem; }   // room for the two-line labels
   .irs.irs--shiny .irs-from, .irs.irs--shiny .irs-to, .irs.irs--shiny .irs-single {
-    top: -1.9rem;
-    padding: 0.3rem 0.65rem;
-    border: 1px solid $border-color;
-    border-radius: 0.5rem;
-    background: #fff;
-    color: $body-color;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    font-size: 0.875rem;
-    line-height: 1.2;
+    top: -1.4rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
     text-align: center;
-    .val { display: inline-block; vertical-align: middle; }   // side by side when the labels merge
-    b { display: block; font-weight: 700; }
-    .sqm { display: block; color: $text-muted; font-size: 0.8rem; }
-    &::before { display: none; }   // no arrow: the handle has a dashed line instead
+    &::before { display: none; }
   }
-  // drawn from the handle, so it still points at it when an end label is
-  // nudged inside the bar
-  .irs.irs--shiny .irs-handle::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: 100%;
-    height: 0.6rem;
-    border-left: 1px dashed $text-muted;
+  .val { display: inline-block; vertical-align: middle; }   // side by side when the labels merge
+  .sqm { display: block; }
+  .irs.irs--shiny .irs-min, .irs.irs--shiny .irs-max {
+    .unit, .sqm { display: none; }
   }
 }

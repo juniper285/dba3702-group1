@@ -22,8 +22,3 @@ test_that("area_text() gives both square feet and square metres", {
   expect_equal(area_text(c(500, 1200)), "500 - 1,200 sq ft (46 - 111 m²)")
   expect_equal(area_text(c(0, area_max)), "0 - 4,000+ sq ft (0 - 372+ m²)")
 })
-
-test_that("area_units() gives both units, with + at the top of the slider", {
-  expect_equal(area_units(c(500, 2000)), "500–2,000 ft²  ·  46–186 m²")
-  expect_match(area_units(c(0, area_max)), "4,000\\+ ft.*372\\+ m", perl = TRUE)
-})

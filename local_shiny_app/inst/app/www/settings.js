@@ -114,9 +114,11 @@
   function areaLabel(max) {
     return function (n) {
       var plus = n >= max ? "+" : "";
-      var fmt = function (x) { return Math.round(x).toLocaleString("en-US"); };
-      return "<span class=\"val\"><b>" + fmt(n) + plus + " ft\u00B2</b><span class=\"sqm\">" +
-        fmt(n / 10.7639) + plus + " m\u00B2</span></span>";
+      var sqm = (n / 10.7639).toLocaleString("en-US", { maximumFractionDigits: 1 });
+      // the end labels (0, 4,000) show only the number: CSS hides .unit and .sqm there
+      return "<span class=\"val\">" + n.toLocaleString("en-US") +
+        "<span class=\"unit\">" + plus + " ft\u00B2</span><span class=\"sqm\">" + sqm + plus +
+        " m\u00B2</span></span>";
     };
   }
   function dualUnits(el) {

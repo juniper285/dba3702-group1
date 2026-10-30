@@ -86,7 +86,7 @@ Pages in `R/app_ui.R`:
 
 | File | Page / role |
 |------|-------------|
-| `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. Places are added one at a time and edited with the pencil, which loads one back into the form. The floor-area slider's handle labels show ft² and m²: `settings.js` swaps in its own `prettify` after Shiny creates or updates the slider (`.area-slider`), and `area_units()` writes the range under the label. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
+| `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. Places are added one at a time and edited with the pencil, which loads one back into the form. The floor-area slider's handle labels show ft² and m² on two lines: `settings.js` swaps in its own `prettify` after Shiny creates or updates the slider (`.area-slider`). The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
 | `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |
@@ -104,7 +104,7 @@ Pages in `R/app_ui.R`:
 
 | File | Main contents |
 |------|---------------|
-| `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `area_units()` ("500–1,200 ft² · 46–111 m²"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
+| `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
 | `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short), `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
 | `utils_bookmark.R` | `dt_bookmark_inputs()`: DataTable inputs to leave out of "Save search" links |
 
