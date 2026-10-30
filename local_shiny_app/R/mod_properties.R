@@ -10,7 +10,8 @@ mod_properties_ui <- function(id) {
   ns <- NS(id)
   pick <- function(i, label) {
     selectizeInput(ns(i), label, choices = NULL,
-                   options = list(placeholder = "Type a project name"))
+                   # the list opens over the page instead of scrolling inside the card
+                   options = list(placeholder = "Type a project name", dropdownParent = "body"))
   }
   tagList(
     card(

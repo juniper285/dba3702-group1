@@ -103,6 +103,7 @@ mod_filters_server <- function(id, settings, map_sel = NULL) {
       projects    = reactive(input$project),
       districts   = reactive(s()$districts),
       budget      = reactive(s()$budget),
+      settings    = s,
       recent      = recent,
       summary     = summary,
       period      = reactive(s()$period),

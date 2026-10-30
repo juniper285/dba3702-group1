@@ -7,6 +7,7 @@ rl_colours <- c(
   typical = "#14b8a6",   # typical range (middle 50%)
   budget  = "#16a34a",   # the user's budget range (soft green when shaded)
   accent  = "#7b3294",   # the user's own pin and asking rent only
+  trend   = "#e11d48",   # fitted trend lines
   muted   = "#94a3b8",
   grid    = "#e5e7eb"
 )
