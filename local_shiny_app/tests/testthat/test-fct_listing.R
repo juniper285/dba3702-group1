@@ -60,3 +60,9 @@ test_that("asking_verdict() reads as a sentence", {
   expect_equal(asking_verdict(row, 3000, "Any"),
                "S$3,000 is lower than 70% of rentals in the same district (10 rentals).")
 })
+
+test_that("no_rentals_message() points to a wider level", {
+  expect_match(no_rentals_message("Same project"), "isn't in our data.*Try Nearby or Same district")
+  expect_match(no_rentals_message("Nearby"), "^No past rentals nearby")
+  expect_match(no_rentals_message("Same district"), "^No past rentals in the district")
+})

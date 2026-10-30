@@ -282,6 +282,16 @@
   &.verdict-danger  { border-color: rgba($danger, 0.35);  background: rgba($danger, 0.05);  .verdict-icon { color: $danger; } }
   &.verdict-info    { border-color: rgba($info, 0.35);    background: rgba($info, 0.06);    .verdict-icon { color: $info; } }
   &.verdict-accent  { border-color: rgba(#7b3294, 0.35);  background: rgba(#7b3294, 0.05); .verdict-icon { color: #7b3294; } }
+  // The answer on Check a listing: hard to miss
+  &.verdict-strong {
+    border-width: 2px;
+    padding: 1.25rem 1.5rem;
+    .verdict-icon { font-size: 2rem; }
+    .verdict-title { font-size: 1.35rem; }
+    &.verdict-accent { border-color: #7b3294; background: rgba(#7b3294, 0.09); }
+    &.verdict-info { border-color: $info; }
+  }
+  .verdict-warning { margin-top: 0.5rem; font-weight: 600; color: #b45309; }
 }
 
 // ---- Empty states --------------------------------------------------------

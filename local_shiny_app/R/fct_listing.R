@@ -161,6 +161,19 @@ asking_verdict <- function(row, asking, beds = NULL) {
          " (", format(row$n, big.mark = ","), " rentals).")
 }
 
+# Fewer past rentals than this and a verdict is only a rough guide
+few_rentals <- 5
+
+#' What to say when a comparison level has no past rentals
+#' @param level "Same project", "Nearby", "Same district" or "Same region".
+#' @noRd
+no_rentals_message <- function(level) {
+  if (level == "Same project")
+    "This project isn't in our data, or has no past rentals for these choices. Try Nearby or Same district."
+  else paste0("No past rentals ", if (level == "Nearby") "nearby" else paste("in the", tolower(sub("Same ", "", level))),
+              " for these choices. Try a wider radius or a wider level.")
+}
+
 #' "higher than 72%" / "lower than 60%", from the % of past rents below a value
 #' @noRd
 higher_lower <- function(pct_below) {
