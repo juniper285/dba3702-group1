@@ -2,10 +2,10 @@
 
 Live: https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/
 
-A Shiny app for renters: a first-visit setup wizard and personal settings, budget
-check, listing check, options within budget, map
-(with key places, MRT/LRT stations and map selections applied to every page), price
-trends, area comparison (districts, Area A vs B), property comparison, value for
+A Shiny app for renters: a first-visit setup wizard and personal filters ("My
+filters"), budget check, listing check, options within budget, map
+(with key places, MRT/LRT stations and map selections applied to every page),
+area comparison (districts, Area A vs B), property comparison, value for
 money, shortlist and raw transactions. It is structured as
 an R package, following
 [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/structuring-project.html).
@@ -33,7 +33,7 @@ local_shiny_app/
 │   ├── app_server.R       wires the modules together
 │   ├── app_config.R       app_sys() (paths into inst/), theme
 │   ├── mod_*.R            one module per tab (UI + server), plus mod_settings (My
-│   │                      settings + setup wizard) and mod_filters (quick filters)
+│   │                      filters + setup wizard) and mod_filters (quick filters)
 │   ├── fct_*.R            business logic: data, rent summaries, distances, map pieces
 │   ├── utils_*.R          small helpers: formatting, bookmarking
 │   └── rentalapp-package.R  package-wide imports
@@ -63,7 +63,11 @@ local_shiny_app/
 - Rental data is read once per R session by `rentals_data()` (`fct_data.R`),
   which also attaches each contract's nearest MRT/LRT station.
 
-### My settings and the setup wizard
+### My filters and the setup wizard
+
+The code calls them settings (`mod_settings.R`, `fct_settings.R`); the app
+calls them "My filters".
+
 
 - Settings are saved in the **browser** (`localStorage`, key `rentlens-settings`),
   not on the server: there are no accounts, and each browser has its own
@@ -74,8 +78,8 @@ local_shiny_app/
   (budget, places, where to search, type of home, commute and MRT, with a
   preview of the closest homes). Finishing saves the settings, opens the Search
   page and shows a tip on the options list and "Add to shortlist".
-- "My settings" (navbar, Search page, or the filter line on any page) opens the
-  same sections as tabs. "Start over" clears the saved settings and reruns the
+- "My filters" (navbar) or "Edit my filters" (the My filters box at the top
+  of every page) opens the same sections as tabs. "Start over" clears the saved settings and reruns the
   wizard. To see the wizard again while developing, run
   `localStorage.removeItem("rentlens-settings")` in the browser console.
 - `fct_settings.R` defines the settings: `default_settings()`,

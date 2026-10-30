@@ -66,9 +66,9 @@ Pages in `R/app_ui.R`:
 - Search
 - Map
 - Check a listing
-- Market, with five sub-tabs
+- Market, with four sub-tabs: Compare areas, Area A vs B, Compare properties, Value for money
 - Shortlist
-- My settings
+- My filters (the code calls them settings)
 - More → Rental records / About
 
 ### `local_shiny_app/R/`: logic (`fct_*`): no Shiny inputs or outputs, easy to unit-test
@@ -80,21 +80,20 @@ Pages in `R/app_ui.R`:
 | `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
 | `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()`, `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
-| `fct_settings.R` | The **My settings** model. `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()`. Places (`new_places()`, `place_kinds`, `chosen_place()`, `place_address()`, `place_label()`). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
+| `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
 
 ### `local_shiny_app/R/`: modules (`mod_*`), each with `mod_x_ui(id)` and `mod_x_server(id, ...)`
 
 | File | Page / role |
 |------|-------------|
-| `mod_settings.R` | **My settings** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
+| `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
 | `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |
-| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", Save as Area A/B. `new_map_selection()` |
-| `mod_listing_check.R` | Check a listing: is an asking rent fair? Looks the address up with OneMap or takes a map pin |
-| `mod_trends.R` | Market → Price trends |
-| `mod_compare.R` | Market → Compare areas (districts vs budget) |
-| `mod_area_compare.R` | Market → Area A vs B (areas saved on the Map page). `new_saved_areas()` |
+| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", Save as Area A/B, "Only buildings within my budget" switch (on by default), "How to use the map" guide. Maps only Exact/Good geocodes (`well_located()` in `fct_map.R`). `new_map_selection()` |
+| `mod_listing_check.R` | Check a listing: is an asking rent fair? Looks the address up with OneMap or takes a map pin. Flags verdicts based on fewer than `few_rentals` (5); `no_rentals_message()` in `fct_listing.R` |
+| `mod_compare.R` | Market → Compare areas (districts vs budget). Charts grow with the number of districts; heatmap numbers are placed by position, because plotly reads "1", "2" on a category axis as positions |
+| `mod_area_compare.R` | Market → Area A vs B (areas saved on the Map page), with the Singapore median for the same filters as a grey reference (needs `filters$settings`). `new_saved_areas()` |
 | `mod_properties.R` | Market → Compare properties (up to three projects side by side) |
 | `mod_value.R` | Market → Value for money (rent vs floor area, ranked by psf) |
 | `mod_shortlist.R` | Shortlist page; `add_to_shortlist()` |
@@ -106,7 +105,7 @@ Pages in `R/app_ui.R`:
 | File | Main contents |
 |------|---------------|
 | `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
-| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_note_ui()` (the "Edit my settings" line on each page), `rl_plotly()`, `rl_datatable()`, `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
+| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short), `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
 | `utils_bookmark.R` | `dt_bookmark_inputs()`: DataTable inputs to leave out of "Save search" links |
 
 ### `local_shiny_app/inst/`: files shipped with the app
@@ -114,7 +113,7 @@ Pages in `R/app_ui.R`:
 | Path | What it is |
 |------|------------|
 | `inst/app/rentlens.scss` | Every custom style (settings summary, wizard, place list, `.optional-block` greying, etc.) |
-| `inst/app/www/settings.js` | Browser side of My settings. See the next list |
+| `inst/app/www/settings.js` | Browser side of My filters. See the next list |
 | `inst/extdata/rentals.rds` | URA rental contracts, cleaned and geocoded. Rebuilt by `data-raw/rentals.R` |
 | `inst/extdata/mrt_stations.csv` | 188 MRT/LRT stations (LTA exits averaged). Rebuilt by `data-raw/mrt_stations.R` |
 | `inst/extdata/schools.csv` | MOE schools, geocoded with OneMap. Rebuilt by `data-raw/schools.R` |
@@ -125,6 +124,7 @@ What `inst/app/www/settings.js` does:
 - Handles the `rentlens-save-settings`, `rentlens-clear-settings` and `rentlens-coach` messages.
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
 - Turns on a greyed optional block when you use it.
+- Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.
 
 ### `local_shiny_app/data-raw/`, `dev/`, `tests/`
 
@@ -168,7 +168,7 @@ What `inst/app/www/settings.js` does:
   | `place_km_max` | 30 | any distance | 1–29 km |
   | `area_max` | 4000 | 4,000 sq ft and above | |
 
-- **Settings live in the browser, not the server.** There are no accounts. To see the wizard again, use My settings → Start over, or run `localStorage.removeItem("rentlens-settings")` in the console. The period is always recomputed from `recent` and never stored on its own.
+- **Settings live in the browser, not the server.** There are no accounts. To see the wizard again, use My filters → Start over, or run `localStorage.removeItem("rentlens-settings")` in the console. The period is always recomputed from `recent` and never stored on its own.
 - **Shiny custom-message handlers must take exactly one argument.** A zero-argument handler throws when Shiny connects and breaks the whole app silently. Register them when `settings.js` loads, not inside `shiny:connected`.
 - **Don't use `%||%`.** It needs R 4.4; write `if (is.null(x)) y else x`.
 - **Don't use `modifyList()` on settings in tests.** It merges into the `places` data frame. Assign fields instead, as in `fake_settings()`.

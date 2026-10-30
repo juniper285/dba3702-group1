@@ -3145,10 +3145,10 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "88d3b92567662ce360dcba669c0ec45c"
+      "checksum": "387a82382c08b0cf4d775fc078b78980"
     },
     "inst/app/www/settings.js": {
-      "checksum": "056c8db7a81c9bb7d458f5fb30b59614"
+      "checksum": "a0da651a5ebe428c074e0095acc78237"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3160,7 +3160,7 @@
       "checksum": "7f3967fdf72261a9d7f88779fab256c4"
     },
     "NAMESPACE": {
-      "checksum": "97a0d7c23837c89b982e11ec3bc5dd2c"
+      "checksum": "bc0733c15313b82feee28128b0990f0f"
     },
     "R/_disable_autoload.R": {
       "checksum": "d53883cb84528ce3568964b4ba310a1c"
@@ -3169,73 +3169,70 @@
       "checksum": "fad792fc499bb6da453d96cc57fc6def"
     },
     "R/app_server.R": {
-      "checksum": "467247d0f3afcad400eed472762495ae"
+      "checksum": "b6da616bfc0786b876d39b71097fc75b"
     },
     "R/app_ui.R": {
-      "checksum": "4b129baaddd93eb933bc14bf56ef179f"
+      "checksum": "e41351e00e94d6e3f7ef10537f7c4cc5"
     },
     "R/fct_data.R": {
       "checksum": "44d7c584ecf61da4702ab711ab829246"
     },
     "R/fct_listing.R": {
-      "checksum": "d25f9bff27f4a35783b4c2817641cc2e"
+      "checksum": "9804edf1d6d8828be14ee71cd009890e"
     },
     "R/fct_location.R": {
       "checksum": "2fa113e2060b13141c7a6336ec8f58ae"
     },
     "R/fct_map.R": {
-      "checksum": "a6e9fd203c91c5c03602754fee524ae9"
+      "checksum": "2448a2ff0511ad77eaebc742fb42f979"
     },
     "R/fct_rent.R": {
       "checksum": "0ad929a8d71890bff49d7b2f024bed9d"
     },
     "R/fct_settings.R": {
-      "checksum": "28a6907c47c63efeb8795a70bbdf2530"
+      "checksum": "836e597e04bb1512125a614da811af57"
     },
     "R/mod_about.R": {
-      "checksum": "45f3dd0a398b8395cbd882867ffa9aa1"
+      "checksum": "4a8db38de87c0b2906b7b170a552f7ce"
     },
     "R/mod_area_compare.R": {
-      "checksum": "18112a5ae6aa33aa53efea95703ce0fe"
+      "checksum": "21a213dfd5fdec97b6130b1fa1661077"
     },
     "R/mod_budget_check.R": {
-      "checksum": "1aeb3c6cbbbe98cfb608cfc3f3cb8e6b"
+      "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
     },
     "R/mod_compare.R": {
-      "checksum": "2e6c2271718e1b579df116a522977b32"
+      "checksum": "dd4c833e73427793446e0e5ad68c7c33"
     },
     "R/mod_filters.R": {
-      "checksum": "a12dc1d35dc5160951b299f01f3d63d4"
+      "checksum": "79f8a02931d80366bd5f282c2a0084c0"
     },
     "R/mod_listing_check.R": {
-      "checksum": "073ce675f7983967e235f201469ad2d9"
+      "checksum": "965c09ac505cb9a88c5f151e51728d91"
     },
     "R/mod_map.R": {
-      "checksum": "b650e43bfe14809a4777a599e4cf55e6"
+      "checksum": "81f2ef95f73d13d5523058332d68187f"
     },
     "R/mod_properties.R": {
-      "checksum": "57402cefbdbf33c544cfd84ecb773bd5"
+      "checksum": "ada4a12f596ba6e37876d2d53f5e2839"
     },
     "R/mod_settings.R": {
-      "checksum": "aeff0a6ef08b0395201e040f890da30f"
+      "checksum": "66f579f520a8a8e10a8b5fa198762658"
     },
     "R/mod_shortlist.R": {
       "checksum": "faa41df73bd627b8751f4feaffe7db7c"
     },
     "R/mod_transactions.R": {
-      "checksum": "05d4d7e6f72ad4a0bc4860bd4068a97f"
-    },
-    "R/mod_trends.R": {
-      "checksum": "f756b1187b01cd485cf384c783edb0de"
+      "checksum": "034e9b46971349e97ef9a50f1992d76d"
     },
     "R/mod_value.R": {
-      "checksum": "12234cf5a9fcdfa26fa4ee85698a307f"
+      "checksum": "e98d3cd0ebebedb189d3c6a51a7a9876"
     },
     "R/mod_within_budget.R": {
-      "checksum": "e66e7daecc6e10c7379cdcc474b706a0"
+      "checksum": "d16f059ce90af26e6ccf21a796e61eec"
     },
     "R/rentalapp-package.R": {
-      "checksum": "2137b3babc5c09fb0c8f04aff742b3e0"
+      "checksum": "2b88cf0f4e58dce5a2a29620b14fd92c"
     },
     "R/run_app.R": {
       "checksum": "8fab8141f3ea83813478e23aad9c9803"
@@ -3247,10 +3244,10 @@
       "checksum": "8d96709e1e9d757640a1ca10ab828a8e"
     },
     "R/utils_ui.R": {
-      "checksum": "83e083418ad47712bb78442c6616d04c"
+      "checksum": "07a828182a2d192ffe0b5f7642b0abd4"
     },
     "README.md": {
-      "checksum": "7b3e0b6269b797087eb068a700521311"
+      "checksum": "6ae162d0e4a6b694f217f6b77fdf5c9c"
     }
   },
   "users": null
