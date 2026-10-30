@@ -200,12 +200,34 @@ range_dot_chart <- function(s, budget = NULL) {
 dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
 
 #' A DataTable with the app's defaults
+#'
+#' @param search What the search box looks in: "project" (the Project
+#'   column only; the default when there is one), "rental" (every column,
+#'   for tables of single rentals) or "table" (every column).
 #' @noRd
-rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE, ...) {
+rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE,
+                         search = if ("Project" %in% names(s)) "project" else "table", ...) {
+  search <- match.arg(search, c("project", "rental", "table"))
+  # Other columns can't be searched when the box is for projects
+  not_searched <- if (search == "project") which(names(s) != "Project") - 1
   datatable(s, rownames = FALSE, selection = selection, escape = escape,
+            colnames = short_colnames(names(s)),
             class = "compact hover row-border",
             options = list(pageLength = page_length, order = list(), scrollX = TRUE,
                            dom = '<"dt-top"f>t<"dt-bottom"ip>',
-                           language = list(search = "", searchPlaceholder = "Search table")),
+                           columnDefs = if (length(not_searched))
+                             list(list(searchable = FALSE, targets = not_searched)),
+                           language = list(search = "", searchPlaceholder = paste("Search", search))),
             ...)
+}
+
+#' Column headers short enough not to stretch a table's header row:
+#' "To NUS (Ridge View Residential College (RVRC)) (km)" -> "To NUS (Ridge View… (km)"
+#' @noRd
+short_colnames <- function(x, width = 24) {
+  long <- nchar(x) > width
+  km <- long & grepl("^To .* \\(km\\)$", x)
+  x[km] <- paste0(substr(x[km], 1, width - 6), "\u2026 (km)")
+  x[long & !km] <- paste0(substr(x[long & !km], 1, width - 1), "\u2026")
+  x
 }

@@ -312,7 +312,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     })
 
     output$contracts <- renderDT({
-      rl_datatable(contracts(), page_length = 15, selection = "none") |>
+      rl_datatable(contracts(), page_length = 15, selection = "none", search = "rental") |>
         formatCurrency("Rent", "S$", digits = 0)
     })
 

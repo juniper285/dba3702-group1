@@ -34,7 +34,7 @@ mod_transactions_server <- function(id, filters) {
     })
 
     output$table <- renderDT({
-      rl_datatable(records(), page_length = 20, selection = "none") |>
+      rl_datatable(records(), page_length = 20, selection = "none", search = "rental") |>
         formatCurrency("Monthly rent", "S$", digits = 0)
     })
 
