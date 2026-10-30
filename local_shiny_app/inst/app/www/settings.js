@@ -110,6 +110,27 @@
   function renderTyped(data, escape) {
     return '<div class="create">Use \u201c' + escape(data.input) + '\u201d as typed</div>';
   }
+  // ---- Floor area slider: each handle's label in both units ----
+  function areaLabel(max) {
+    return function (n) {
+      var plus = n >= max ? "+" : "";
+      var fmt = function (x) { return Math.round(x).toLocaleString("en-US"); };
+      return "<span class=\"val\"><b>" + fmt(n) + plus + " ft\u00B2</b><span class=\"sqm\">" +
+        fmt(n / 10.7639) + plus + " m\u00B2</span></span>";
+    };
+  }
+  function dualUnits(el) {
+    var slider = $(el).data("ionRangeSlider");
+    if (slider) slider.update({ prettify: areaLabel(+$(el).data("max")), force_edges: true,
+                                  values_separator: " \u2013 " });
+  }
+  // Shiny sets its own labels when the slider is created or updated, so
+  // swap them afterwards
+  $(document).on("shiny:bound shiny:updateinput", ".area-slider input", function (e) {
+    var el = e.target;
+    setTimeout(function () { dualUnits(el); }, 0);
+  });
+
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out

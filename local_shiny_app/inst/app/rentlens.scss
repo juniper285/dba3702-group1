@@ -379,43 +379,40 @@ table.dataTable {
 // ---- "How to use the map" guide ------------------------------------------
 .map-guide li { margin-bottom: 0.6rem; }
 
-// ---- Floor area: a ruler with square feet above and square metres below ----
-.area-ruler {
-  --knob: 19px;   // the slider handle's width: marks line up with its centre
+// ---- Floor area: each handle's label in square feet and square metres ----
+.area-slider {
   margin-bottom: 1rem;
-  .area-head {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  .area-value { font-size: 0.875rem; font-weight: 600; color: $primary; }
+  .control-label { margin-bottom: 0; }
+  .area-value { font-size: 0.875rem; color: $text-muted; white-space: pre; }
   .form-group, .shiny-input-container { margin-bottom: 0; }
-  // the ruler shows the numbers, so the slider's own labels are hidden
-  .irs-min, .irs-max, .irs-from, .irs-to, .irs-single { display: none; }
-  // with no labels above it, pull the bar up against the top ruler
-  .irs { margin-top: -21px; margin-bottom: 3px; }
-}
-.area-scale {
-  position: relative;
-  height: 1.6rem;
-  font-size: 0.75rem;
-  color: $text-muted;
-  .tick {
+  // .irs.irs--shiny outranks the slider's own stylesheet, which loads after ours
+  .irs.irs--shiny .irs-min, .irs.irs--shiny .irs-max { display: none; }
+  // room above the bar for the two-line labels
+  .irs.irs--shiny { margin-top: 2.6rem; }
+  .irs.irs--shiny .irs-from, .irs.irs--shiny .irs-to, .irs.irs--shiny .irs-single {
+    top: -1.9rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid $border-color;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: $body-color;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    font-size: 0.875rem;
+    line-height: 1.2;
+    text-align: center;
+    .val { display: inline-block; vertical-align: middle; }   // side by side when the labels merge
+    b { display: block; font-weight: 700; }
+    .sqm { display: block; color: $text-muted; font-size: 0.8rem; }
+    &::before { display: none; }   // no arrow: the handle has a dashed line instead
+  }
+  // drawn from the handle, so it still points at it when an end label is
+  // nudged inside the bar
+  .irs.irs--shiny .irs-handle::after {
+    content: "";
     position: absolute;
-    width: 1px; height: 5px;
-    background: rgba($text-muted, 0.45);
-    transform: translateX(-0.5px);
-  }
-  .tick.major { height: 9px; background: $text-muted; }
-  .tick-label { position: absolute; transform: translateX(-50%); white-space: nowrap; }
-  // the first and last labels sit inside the ruler instead of past its ends
-  .tick:first-child .tick-label { transform: none; left: -2px; }
-  .tick.major:last-of-type .tick-label { transform: translateX(-100%); }
-  &.sqft {
-    .tick { bottom: 0; }
-    .tick-label { bottom: 10px; }
-  }
-  &.sqm {
-    .tick { top: 0; }
-    .tick-label { top: 10px; }
+    left: 50%;
+    bottom: 100%;
+    height: 0.6rem;
+    border-left: 1px dashed $text-muted;
   }
 }

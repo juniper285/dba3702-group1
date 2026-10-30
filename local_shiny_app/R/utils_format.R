@@ -22,6 +22,15 @@ area_text <- function(area) {
          fmt(area[1] / sqft_per_sqm), " - ", fmt(area[2] / sqft_per_sqm), plus, " m\u00B2)")
 }
 
+#' A floor-area range in both units, e.g. "500-1,200 ft² · 46-111 m²"
+#' @noRd
+area_units <- function(area) {
+  plus <- if (area[2] >= area_max) "+" else ""
+  fmt <- function(x) format(round(x), big.mark = ",", trim = TRUE)
+  paste0(fmt(area[1]), "\u2013", fmt(area[2]), plus, " ft\u00B2  \u00B7  ",
+         fmt(area[1] / sqft_per_sqm), "\u2013", fmt(area[2] / sqft_per_sqm), plus, " m\u00B2")
+}
+
 #' Format a date as its quarter, e.g. "2024 Q2"
 #' @noRd
 quarter_label <- function(d) {
