@@ -29,6 +29,32 @@ settings_sections <- c(budget = "Budget", places = "Places that matter",
                        area = "Where to search", home = "Type of home",
                        commute = "Commute and MRT")
 
+#' One side of the floor-area ruler: square feet (above the slider) or
+#' square metres (below), with a labelled mark every 500 sq ft / 50 m² and
+#' small marks in between. Marks line up with the slider's handle centres
+#' (see `.area-ruler` in rentlens.scss).
+#' @noRd
+area_scale <- function(unit = c("sqft", "sqm")) {
+  unit <- match.arg(unit)
+  per <- if (unit == "sqft") 1 else sqft_per_sqm
+  minor <- if (unit == "sqft") 100 else 10
+  major <- if (unit == "sqft") 500 else 50
+  at <- seq(0, area_max / per, by = minor)
+  marks <- lapply(at, function(x) {
+    f <- x * per / area_max
+    lab <- NULL
+    if (x %% major == 0) {
+      lab <- format(x, big.mark = ",")
+      if (x == 0) lab <- paste(lab, if (unit == "sqft") "sq ft" else "m\u00B2")
+      if (unit == "sqft" && x == area_max) lab <- paste0(lab, "+")
+    }
+    span(class = paste("tick", if (!is.null(lab)) "major"),
+         style = sprintf("left: calc(var(--knob) / 2 + %.4f * (100%% - var(--knob)))", f),
+         if (!is.null(lab)) span(class = "tick-label", lab))
+  })
+  div(class = paste("area-scale", unit), `aria-hidden` = "true", marks)
+}
+
 #' One section of the settings form
 #'
 #' @param ns The settings module's namespace function.
@@ -99,9 +125,15 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                              selected = s$beds, inline = TRUE),
           checkboxGroupInput(ns("types"), "Property type", choices = choices$types,
                              selected = s$types, inline = TRUE)),
-      sliderInput(ns("area"), "Floor area (sq ft)", min = 0, max = area_max,
-                  value = s$area, step = 100, width = "100%"),
-      uiOutput(ns("area_hint"))
+      # Like a tape measure: square feet above the bar, square metres below
+      div(class = "area-ruler",
+          div(class = "area-head",
+              tags$label(class = "control-label", `for` = ns("area"), "Floor area"),
+              uiOutput(ns("area_hint"), inline = TRUE)),
+          area_scale("sqft"),
+          sliderInput(ns("area"), NULL, min = 0, max = area_max, value = s$area, step = 100,
+                      ticks = FALSE, width = "100%"),
+          area_scale("sqm"))
     ),
     commute = tagList(
       p(class = "text-muted", "How far are you willing to travel? These are optional: just start ",
@@ -338,8 +370,7 @@ mod_settings_server <- function(id) {
     # Floor area in both units (the data is in square feet)
     output$area_hint <- renderUI({
       req(input$area)
-      p(class = "small text-muted", icon("ruler-combined"), " ", area_text(input$area),
-        if (input$area[2] >= area_max) ". The top of the slider means 4,000 sq ft (372 m\u00B2) and above.")
+      span(class = "area-value", area_text(input$area))
     })
 
     # ---- The settings dialog ----

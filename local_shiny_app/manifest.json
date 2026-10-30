@@ -3145,10 +3145,10 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "387a82382c08b0cf4d775fc078b78980"
+      "checksum": "0477555b4b5795c8c9f493760760bb79"
     },
     "inst/app/www/settings.js": {
-      "checksum": "a0da651a5ebe428c074e0095acc78237"
+      "checksum": "4cc720c06a61b1a5816c23152e758c96"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3217,7 +3217,7 @@
       "checksum": "ada4a12f596ba6e37876d2d53f5e2839"
     },
     "R/mod_settings.R": {
-      "checksum": "66f579f520a8a8e10a8b5fa198762658"
+      "checksum": "a882d9374b606c2871b2d9c5f7413cad"
     },
     "R/mod_shortlist.R": {
       "checksum": "faa41df73bd627b8751f4feaffe7db7c"

@@ -378,3 +378,44 @@ table.dataTable {
 
 // ---- "How to use the map" guide ------------------------------------------
 .map-guide li { margin-bottom: 0.6rem; }
+
+// ---- Floor area: a ruler with square feet above and square metres below ----
+.area-ruler {
+  --knob: 19px;   // the slider handle's width: marks line up with its centre
+  margin-bottom: 1rem;
+  .area-head {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .area-value { font-size: 0.875rem; font-weight: 600; color: $primary; }
+  .form-group, .shiny-input-container { margin-bottom: 0; }
+  // the ruler shows the numbers, so the slider's own labels are hidden
+  .irs-min, .irs-max, .irs-from, .irs-to, .irs-single { display: none; }
+  // with no labels above it, pull the bar up against the top ruler
+  .irs { margin-top: -21px; margin-bottom: 3px; }
+}
+.area-scale {
+  position: relative;
+  height: 1.6rem;
+  font-size: 0.75rem;
+  color: $text-muted;
+  .tick {
+    position: absolute;
+    width: 1px; height: 5px;
+    background: rgba($text-muted, 0.45);
+    transform: translateX(-0.5px);
+  }
+  .tick.major { height: 9px; background: $text-muted; }
+  .tick-label { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  // the first and last labels sit inside the ruler instead of past its ends
+  .tick:first-child .tick-label { transform: none; left: -2px; }
+  .tick.major:last-of-type .tick-label { transform: translateX(-100%); }
+  &.sqft {
+    .tick { bottom: 0; }
+    .tick-label { bottom: 10px; }
+  }
+  &.sqm {
+    .tick { top: 0; }
+    .tick-label { top: 10px; }
+  }
+}
