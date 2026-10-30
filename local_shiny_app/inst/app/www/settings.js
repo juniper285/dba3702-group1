@@ -122,6 +122,17 @@
     if (sw && sw.checked) { sw.checked = false; $(sw).trigger("change"); }
   });
 
+  // The setup wizard shows each step as a new dialog. When one dialog
+  // replaces another, Bootstrap can save the page's "no scrolling" style as
+  // the one to restore, so the page couldn't scroll after the wizard. Once
+  // the last dialog has closed, let the page scroll again.
+  $(document).on("hidden.bs.modal", function () {
+    if (document.querySelector(".modal.show")) return;
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
+    document.body.classList.remove("modal-open");
+  });
+
   // Shiny is loaded before this script, so the handlers can be registered
   // now. Every handler must take exactly one argument, or Shiny refuses it.
   Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });
