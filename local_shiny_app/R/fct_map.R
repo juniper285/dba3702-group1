@@ -30,6 +30,11 @@ budget_fit <- function(rent, budget) {
          levels = budget_levels)
 }
 
+#' TRUE for rentals whose building was found exactly or well enough to map
+#' (the geocoding's "Exact" and "Good" matches)
+#' @noRd
+well_located <- function(geo_match) grepl("^Exact|^Good", geo_match)
+
 #' One row per map location (loc_id, lat, lng)
 #' @noRd
 map_locations <- function() {

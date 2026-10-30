@@ -14,7 +14,7 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
 
   testServer(mod_map_server, args = list(filters = filters, shortlist = shortlist,
                                          areas = areas), {
-    session$setInputs(metric = "psf", geo_match = unique(rentals$geo_match))
+    session$setInputs(metric = "psf", in_budget = FALSE)
     expect_true(all(selected()$district_no == 1))
 
     loc <- loc_summary()$loc_id[1]
@@ -50,5 +50,27 @@ test_that("an applied map selection narrows the filters' market", {
     map_sel$apply <- FALSE
     session$flushReact()
     expect_equal(nrow(market()), nrow(base()))
+  })
+})
+
+test_that("the map shows only buildings within budget unless switched off", {
+  rentals <- rentals_data()
+  filters <- list(
+    base     = reactive(rentals[rentals$district_no == 10, ]),
+    projects = reactive(NULL),
+    budget   = reactive(c(3000, 5000)),
+    places   = reactive(new_places()),
+    mrt_pick = reactive(NULL),
+    mrt_dist = reactive(mrt_max)
+  )
+  testServer(mod_map_server, args = list(filters = filters, shortlist = reactiveVal(empty_shortlist()),
+                                         areas = new_saved_areas()), {
+    session$setInputs(metric = "budget", in_budget = TRUE)
+    within <- loc_summary()
+    expect_gt(nrow(within), 0)
+    expect_true(all(within$rent >= 3000 & within$rent <= 5000))
+    session$setInputs(in_budget = FALSE)
+    expect_gt(nrow(loc_summary()), nrow(within))
+    expect_true(all(well_located(map_data()$geo_match)))
   })
 })

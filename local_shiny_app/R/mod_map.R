@@ -14,13 +14,15 @@
 mod_map_ui <- function(id) {
   ns <- NS(id)
   rentals <- rentals_data()
-  geo_choices <- sort(unique(rentals$geo_match[!is.na(rentals$loc_id)]))
 
   tagList(
     card(
-      full_screen = TRUE,
+      # Fits a laptop screen with the filter box above it; the side panel scrolls
+      full_screen = TRUE, height = 640,
       header_with_actions(
         span(icon("hand-pointer"), " Click a building, or draw an area with the tools on the left"),
+        actionButton(ns("help"), "How to use the map", icon = icon("lightbulb"),
+                     class = "btn-sm btn-outline-primary"),
         actionButton(ns("clear"), "Clear selection", icon = icon("xmark"),
                      class = "btn-sm btn-outline-secondary")
       ),
@@ -40,23 +42,20 @@ mod_map_ui <- function(id) {
               kpi("Median rent", textOutput(ns("vb_rent"))),
               kpi("Median psf", textOutput(ns("vb_psf")))),
           div(class = "section-title mt-3", "Map options"),
+          input_switch(ns("in_budget"), "Only buildings within my budget", value = TRUE),
           div(class = "chips",
-              radioButtons(ns("metric"), "Colour circles by", metric_choices)),
-          selectizeInput(ns("geo_match"), "Geocode quality", geo_choices,
-                         selected = grep("^Exact|^Good", geo_choices, value = TRUE),
-                         multiple = TRUE, options = list(plugins = list("remove_button"))),
-          helpText(format(sum(is.na(rentals$loc_id)), big.mark = ","),
-                   " rentals have no coordinates and are not mapped. ",
-                   "Purple pins are your places that matter; yellow stars mark universities, ",
-                   "polytechnics and work areas. Use the ",
-                   "layers button for MRT/LRT stations, the airport and hospitals, the ",
-                   "heatmap, or another basemap.")
+              radioButtons(ns("metric"), "Colour circles by", metric_choices,
+                           selected = "budget"))
         ),
-        leafletOutput(ns("map"), height = 640)
+        leafletOutput(ns("map"), height = "100%")
       ),
-      card_footer("Circle size = number of rentals; colour bins stay the same whatever the ",
-                  "filters. 'Vs my budget' colours each building by whether its median rent is ",
-                  "below, within or above your budget. The map follows your settings.")
+      card_footer("The map follows your filters. Circle size = number of rentals; 'vs my budget' ",
+                  "colours each building by whether its median rent is below, within or above ",
+                  "your budget. Purple pins are your places; yellow stars mark universities and ",
+                  "work areas; the layers button adds MRT/LRT stations, hospitals, the heatmap ",
+                  "and other basemaps. ",
+                  format(sum(is.na(rentals$loc_id) | !well_located(rentals$geo_match)), big.mark = ","),
+                  " rentals with no exact location are not mapped.")
     ),
     layout_columns(
       col_widths = c(7, 5),
@@ -90,15 +89,22 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
     observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
-                                 "add_short", "clear", "save_a", "save_b",
+                                 "add_short", "clear", "save_a", "save_b", "help",
                                  grep("^map_", names(input), value = TRUE))))
 
     # Mapped rentals: the filters (before the map selection) narrowed to chosen
-    # projects (like filters$selection(), but without validate() so the map can be empty)
+    # projects (like filters$selection(), but without validate() so the map can be empty),
+    # and to buildings whose median rent is within budget unless that's switched off
     map_data <- reactive({
       d <- filters$base()
       if (length(filters$projects())) d <- d[d$project %in% filters$projects(), ]
-      d[!is.na(d$loc_id) & d$geo_match %in% input$geo_match, ]
+      d <- d[!is.na(d$loc_id) & well_located(d$geo_match), ]
+      if (!isFALSE(input$in_budget) && nrow(d)) {
+        b <- filters$budget()
+        med <- tapply(d$rent, d$loc_id, median)
+        d <- d[d$loc_id %in% as.integer(names(med)[med >= b[1] & med <= b[2]]), ]
+      }
+      d
     })
 
     loc_summary <- reactive(summarise_locations(map_data()))
@@ -117,7 +123,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     observeEvent(input$map_draw_new_feature, {
       shape <- drawn_to_sf(input$map_draw_new_feature)
       locs_sf <- map_locations_sf()
-      # Only the buildings on show (the geocode-quality choice hides some)
+      # Only the buildings on show (the budget switch hides some)
       ids <- intersect(locs_sf$loc_id[lengths(st_intersects(locs_sf, shape)) > 0],
                        loc_summary()$loc_id)
       if (length(ids) == 0) {
@@ -136,6 +142,29 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
       leafletProxy("map") |> clearGroup("Selected") |>
         removeDrawToolbar(clearFeatures = TRUE) |> add_draw_toolbar()
     })
+
+    # Short guide to the map's tools
+    observeEvent(input$help, showModal(modalDialog(
+      title = span(icon("lightbulb"), " How to use the map"),
+      tags$ol(class = "map-guide",
+        tags$li(strong("Pick a building or an area. "),
+                "Click a circle for one building, or use the drawing tools on the left of the ",
+                "map to draw a shape around several. The figures beside the map, and the ",
+                "charts and tables below it, then show just that selection."),
+        tags$li(strong("Use it everywhere (optional). "),
+                "With 'Apply map selection to all pages' on, the Search and Market pages ",
+                "also show only your selection."),
+        tags$li(strong("Compare two areas. "),
+                "Press 'Save as Area A', pick another building or area, press 'Save as ",
+                "Area B', then open Market > Area A vs B."),
+        tags$li(strong("Shortlist what you like. "),
+                "Tick rows in 'Projects in the map selection' and press 'Add to shortlist'."),
+        tags$li(strong("See more. "),
+                "Switch off 'Only buildings within my budget' to see every building, change ",
+                "what the colours show, or use the layers button (bottom left of the map) for ",
+                "MRT/LRT stations, hospitals and the heatmap.")),
+      easyClose = TRUE, footer = modalButton("Got it")
+    )))
 
     # Save the selection as Area A or B, for "Area A vs B"
     save_area <- function(w) {
