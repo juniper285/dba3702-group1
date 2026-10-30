@@ -40,7 +40,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
     section,
     budget = tagList(
       p(class = "text-muted", "How much can you spend on rent each month?"),
-      sliderInput(ns("budget"), "Monthly budget", min = 1000, max = 15000,
+      sliderInput(ns("budget"), "Monthly budget", min = 0, max = 15000,
                   value = s$budget, step = 100, pre = "S$", width = "100%"),
       uiOutput(ns("budget_hint"))
     ),
