@@ -78,7 +78,7 @@ Pages in `R/app_ui.R`:
 
 | File | Main contents |
 |------|---------------|
-| `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session, adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels`, `area_max` (4000 = "4,000 sq ft and above") |
+| `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session, **drops the 1,168 contracts with no floor area** (landed houses listed as "<=1000"/">8000" sqft), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels`, `area_max` (4000 = "4,000 sq ft and above") |
 | `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_two_areas()`, `empty_shortlist()` |
 | `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |

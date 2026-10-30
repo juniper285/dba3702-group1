@@ -3701,7 +3701,7 @@
       "checksum": "4b129baaddd93eb933bc14bf56ef179f"
     },
     "R/fct_data.R": {
-      "checksum": "e915c0098a2063fa9e2eb8d3c0c27551"
+      "checksum": "44d7c584ecf61da4702ab711ab829246"
     },
     "R/fct_listing.R": {
       "checksum": "d25f9bff27f4a35783b4c2817641cc2e"
@@ -3719,7 +3719,7 @@
       "checksum": "28a6907c47c63efeb8795a70bbdf2530"
     },
     "R/mod_about.R": {
-      "checksum": "b748fd6c26b626c2a80d5f46e4a442d8"
+      "checksum": "45f3dd0a398b8395cbd882867ffa9aa1"
     },
     "R/mod_area_compare.R": {
       "checksum": "18112a5ae6aa33aa53efea95703ce0fe"
@@ -3776,7 +3776,7 @@
       "checksum": "83e083418ad47712bb78442c6616d04c"
     },
     "README.md": {
-      "checksum": "2b5e79b1026c4965b6ada881360e30b4"
+      "checksum": "951d71e8ae1a371d9ac5fa1c6ebfb329"
     },
     "tests/testthat.R": {
       "checksum": "f4d4c5fb2fd6b3aa2b146102ce0670cc"
@@ -3788,7 +3788,7 @@
       "checksum": "89a661bb0bb5a6120e28582ed13d4f9a"
     },
     "tests/testthat/test-fct_data.R": {
-      "checksum": "8af4a27daec608e827059625a7cf0e34"
+      "checksum": "8c0becd219fd15140d3073bb4c6b7e01"
     },
     "tests/testthat/test-fct_listing.R": {
       "checksum": "0cb1fc1719db59984cd82a9266915bf5"

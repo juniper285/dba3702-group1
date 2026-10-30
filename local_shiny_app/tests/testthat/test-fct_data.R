@@ -57,3 +57,10 @@ test_that("filter_market() keeps buildings near one of my places", {
   expect_equal(nrow(filter_market(d, NULL, bed_levels, d$type, c(0, area_max), period,
                                   places = places[1, ], place_km = 1)), 0)
 })
+
+test_that("rentals_data() leaves out contracts with no floor area", {
+  d <- rentals_data()
+  expect_gt(nrow(d), 0)
+  expect_false(anyNA(d$area_sqft))
+  expect_false(anyNA(d$psf))
+})

@@ -35,10 +35,15 @@ cached <- function(name, expr) {
 #'
 #' Reads inst/extdata/rentals.rds (built by data-raw/rentals.R) on first use
 #' and adds each contract's nearest MRT/LRT station.
+#'
+#' Contracts with no floor area are left out everywhere. They are landed
+#' houses that URA only gives as "<=1000" or ">8000" sqft (about 0.3% of
+#' contracts), so they have no rent per sqft and can't be sized.
 #' @noRd
 rentals_data <- function() {
   cached("rentals", {
-    prepare_rentals(readRDS(app_sys("extdata", "rentals.rds"))) |>
+    d <- readRDS(app_sys("extdata", "rentals.rds"))
+    prepare_rentals(d[!is.na(d$area_sqft), ]) |>
       add_location_mrt(mrt_stations())
   })
 }
