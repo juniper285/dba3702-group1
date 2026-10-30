@@ -5,6 +5,7 @@ Almost all active work happens in **`local_shiny_app/`** (RentLens, an R package
 called `rentalapp`). `sg_rental_map/` is the older single-file map app and is
 mostly left alone.
 
+- Live app: https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/ (Posit Connect Cloud; every push to `main` redeploys it, so a broken `main` breaks the live site).
 - People-facing docs: `README.md` (both apps + **all data sources**) and
   `local_shiny_app/README.md` (package layout and how the modules talk).
 - Keep both READMEs up to date when you add a feature, page or data source.

@@ -1,5 +1,7 @@
 # SG Rental Map
 
+**RentLens, live:** https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/ (`local_shiny_app/`, redeployed from `main` on every push; see [its README](local_shiny_app/README.md#deploying-posit-connect-cloud)).
+
 An interactive R Shiny map of Singapore private residential rental contracts (URA data, Sep 2021 – Aug 2026, 412,595 contracts). It's styled after [viscover](https://github.com/XiaodanLyu/viscover).
 
 ## Features

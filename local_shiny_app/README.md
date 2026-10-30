@@ -1,5 +1,7 @@
 # RentLens (`rentalapp`)
 
+Live: https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/
+
 A Shiny app for renters: a first-visit setup wizard and personal settings, budget
 check, listing check, options within budget, map
 (with key places, MRT/LRT stations and map selections applied to every page), price
@@ -93,8 +95,9 @@ local_shiny_app/
 
 ## Deploying (Posit Connect Cloud)
 
-The app is published on [Posit Connect Cloud](https://connect.posit.cloud) from
-GitHub: every push to `main` redeploys it automatically.
+The app is live at https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/, published on
+[Posit Connect Cloud](https://connect.posit.cloud) from GitHub: every push to
+`main` redeploys it automatically.
 
 - Connect Cloud installs the packages listed in `manifest.json` (next to
   `app.R`). After adding or updating a package, regenerate it and commit it:
