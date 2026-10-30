@@ -127,8 +127,8 @@ source("dev/check.R")          # regenerate NAMESPACE + run tests
 - Adding a tab: create `R/mod_newtab.R` with `mod_newtab_ui(id)` /
   `mod_newtab_server(id, filters)`, then add one line to `app_ui.R` and one to
   `app_server.R`.
-- Data changed? Rebuild `sg_rental_map/data/rentals.rds`, then
-  `source("data-raw/rentals.R")`.
+- Data changed? Put the new `URA_Union_Cleaned_with_Address.xlsx` in `data-raw/`,
+  then `source("data-raw/rentals.R")`.
 - "Check a listing" looks up addresses with the OneMap Search API (no key
   needed); answers are cached for the R session.
 - Key places (universities, polytechnics, business districts, transport,
