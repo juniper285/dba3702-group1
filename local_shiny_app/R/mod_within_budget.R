@@ -8,24 +8,26 @@ mod_within_budget_ui <- function(id) {
   navset_card_underline(
     title = div(class = "card-title-text", "Options within your budget",
                 div(class = "small text-muted fw-normal", textOutput(ns("summary"), inline = TRUE))),
+    id = ns("tab"),
     nav_panel(
-      "List", icon = icon("list"),
-      div(class = "d-flex flex-wrap gap-3 align-items-end",
-          numericInput(ns("min_n"), "Min. recent rentals per row", value = 3, min = 1,
-                       width = "240px"),
-          div(class = "text-muted small mb-3", uiOutput(ns("distance_note"), inline = TRUE))),
+      "List", value = "list", icon = icon("list"),
       DTOutput(ns("table"), fill = FALSE),
-      div(class = "text-muted small mt-2",
-          "Each row is a project and bedroom type whose median recent rent is inside your ",
-          "budget. Select rows, then press 'Add to shortlist'.")
+      div(class = "d-flex flex-wrap gap-3 justify-content-between align-items-start mt-2",
+          div(class = "text-muted small",
+              "Each row is a project and bedroom type whose median recent rent is inside your ",
+              "budget. Select rows, then press 'Add to shortlist'."),
+          min_rentals_input(ns("min_n")))
     ),
     nav_panel(
-      "By district", icon = icon("chart-bar"),
+      "By district", value = "district", icon = icon("chart-bar"),
       plotly::plotlyOutput(ns("plot"), height = 620)
     ),
     nav_spacer(),
-    nav_item(actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
-                          class = "btn-sm btn-primary"))
+    # Rows are picked in the list, so the button only shows with it
+    nav_item(conditionalPanel(
+      "input.tab == 'list'", ns = ns,
+      actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
+                   class = "btn-sm btn-primary")))
   )
 }
 
@@ -51,13 +53,6 @@ mod_within_budget_server <- function(id, filters, shortlist) {
              format(n_distinct(s$project), big.mark = ","), " projects across ",
              n_distinct(s$district), " districts",
              if (length(beds)) paste0(" · bedrooms: ", paste(beds, collapse = ", ")) else "")
-    })
-
-    output$distance_note <- renderUI({
-      mrt <- if (is.null(mrt_stations())) "" else " and the nearest MRT/LRT station"
-      places <- filters$places()$name
-      if (length(places) == 0) return(paste0("Add places that matter to see distances to them."))
-      paste0("Distances are to ", paste(places, collapse = ", "), mrt, ".")
     })
 
     output$plot <- plotly::renderPlotly({

@@ -19,9 +19,8 @@ mod_budget_check_ui <- function(id) {
       card_header("How your budget compares with recent comparable rents"),
       plotly::plotlyOutput(ns("plot"), height = 360),
       card_footer(
-        span(style = paste0("color:", rl_colours[["typical"]]), "■"), " typical range (middle 50%)  ",
-        span(style = paste0("color:", rl_colours[["budget"]]), "■"), " your budget range  ",
-        "┇ median. Hover over a bar for the number of rentals."
+        span(style = paste0("color:", rl_colours[["budget"]]), "■"), " Your budget range  ",
+        "┇ Median. Hover over a bar for the number of rentals."
       )
     )
   )

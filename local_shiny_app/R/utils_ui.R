@@ -5,7 +5,7 @@ rl_colours <- c(
   ink     = "#1f2937",
   primary = "#0f766e",   # brand teal
   typical = "#14b8a6",   # typical range (middle 50%)
-  budget  = "#e11d48",   # the user's budget range
+  budget  = "#16a34a",   # the user's budget range (soft green when shaded)
   accent  = "#7b3294",   # the user's own pin and asking rent only
   muted   = "#94a3b8",
   grid    = "#e5e7eb"
@@ -126,23 +126,21 @@ vline <- function(x, colour, dash = "solid", width = 2) {
        line = list(color = colour, dash = dash, width = width))
 }
 
-#' Histogram of monthly rents with the typical range, median and optional
-#' budget band / marker line (used by Budget and Check a listing)
+#' Histogram of monthly rents with the median and an optional budget band /
+#' marker line (used by Search and Check a listing)
 #'
 #' @param rents Monthly rents.
 #' @param budget c(min, max) to shade, or NULL.
 #' @param mark A single rent to mark (e.g. the asking rent), or NA.
 #' @noRd
 rent_histogram <- function(rents, budget = NULL, mark = NA) {
-  q <- quantile(rents, c(0.25, 0.5, 0.75))
   shown <- rents[rents <= quantile(rents, 0.99)]   # hide extreme top 1%
   size <- max(100, round(diff(range(shown)) / 40, -2))
-  shapes <- list(band(q[1], q[3], rl_colours[["typical"]], 0.15),
-                 vline(q[2], rl_colours[["ink"]], "dot", 1.5))
+  shapes <- list(vline(median(rents), rl_colours[["ink"]], "dot", 1.5))
   if (!is.null(budget)) {
-    shapes <- c(shapes, list(band(budget[1], budget[2], rl_colours[["budget"]], 0.10),
-                             vline(budget[1], rl_colours[["budget"]], "dash"),
-                             vline(budget[2], rl_colours[["budget"]], "dash")))
+    shapes <- c(shapes, list(band(budget[1], budget[2], rl_colours[["budget"]], 0.12),
+                             vline(budget[1], rl_colours[["budget"]], "dash", 1.5),
+                             vline(budget[2], rl_colours[["budget"]], "dash", 1.5)))
   }
   if (!is.na(mark)) shapes <- c(shapes, list(vline(mark, rl_colours[["accent"]], width = 3)))
 
@@ -155,6 +153,20 @@ rent_histogram <- function(rents, budget = NULL, mark = NA) {
                    # keep a marked rent in view even if it is off the histogram
                    xaxis = if (!is.na(mark) && (mark < min(shown) || mark > max(shown)))
                      list(range = range(c(shown, mark)) + c(-1, 1) * size))
+}
+
+#' Settings most people never need, in a collapsed "More options" link
+#' @noRd
+more_options <- function(...) {
+  tags$details(class = "more-options",
+               tags$summary(icon("sliders"), " More options"),
+               div(class = "more-options-body", ...))
+}
+
+#' "Min. recent rentals" box: rows with fewer rentals are left out
+#' @noRd
+min_rentals_input <- function(id, label = "Leave out rows with fewer recent rentals than") {
+  more_options(numericInput(id, label, value = 3, min = 1, width = "100%"))
 }
 
 #' Dot (median) and line (typical range) chart, one row per label

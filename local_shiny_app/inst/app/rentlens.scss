@@ -339,3 +339,11 @@ table.dataTable {
   .kpi .kpi-value { font-size: 1.3rem; }
   .verdict { flex-direction: column; gap: 0.5rem; }
 }
+
+// ---- "More options" (min. rentals and other rarely changed settings) ------
+.more-options {
+  font-size: 0.85rem;
+  summary { color: $text-muted; cursor: pointer; white-space: nowrap; }
+  .more-options-body { padding-top: 0.5rem; min-width: 16rem; }
+  .shiny-input-container { margin-bottom: 0; }
+}

@@ -97,9 +97,8 @@ mod_listing_check_ui <- function(id) {
         ),
         plotly::plotlyOutput(ns("plot"), height = 360),
         card_footer(
-          span(style = paste0("color:", rl_colours[["typical"]]), "\u25A0"), " typical range  ",
-          "\u2507 median  ",
-          span(style = paste0("color:", rl_colours[["accent"]]), "\u2503"), " your asking rent")
+          "\u2507 Median  ",
+          span(style = paste0("color:", rl_colours[["accent"]]), "\u2503"), " Your asking rent")
       )
     )
   )
