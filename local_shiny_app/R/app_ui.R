@@ -11,15 +11,15 @@ app_ui <- function(request) {
     theme = app_theme(),
     fillable = FALSE,   # let each page scroll instead of squeezing content to fit
     navbar_options = navbar_options(theme = "light"),
-    header = settings_dependency(),   # loads and saves My settings in the browser
+    header = settings_dependency(),   # loads and saves My filters in the browser
 
-    # The Search page shows the renter's settings and quick filters; Map,
-    # Market, Shortlist and Rental records follow them too and say so with
-    # filter_note_ui()
+    # Every page that follows the renter's filters starts with the same
+    # "My filters" box (mod_settings_summary_ui() on Search, filter_note_ui()
+    # elsewhere)
     nav_panel(
       "Search", value = "budget", icon = icon("wallet"),
       page_intro("What does your budget get you?",
-                 "Results follow your settings. Change them any time with 'Edit my settings'; ",
+                 "Results follow your filters. Change them any time with 'Edit my filters'; ",
                  "the Map, Market, Shortlist and Rental records pages use them too."),
       mod_settings_summary_ui("settings"),
       mod_filters_ui("filters"),

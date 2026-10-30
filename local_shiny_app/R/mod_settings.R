@@ -1,4 +1,4 @@
-#' "My settings": the renter's budget, places that matter, type of home and
+#' "My filters" (called settings in the code): the renter's budget, places that matter, type of home and
 #' commute, kept in the browser (see fct_settings.R)
 #'
 #' On a first visit a setup wizard asks for them one section at a time,
@@ -13,19 +13,15 @@
 #' @noRd
 mod_settings_summary_ui <- function(id) {
   ns <- NS(id)
-  div(class = "settings-summary",
-      div(class = "settings-icon", icon("user")),
-      div(class = "flex-fill",
-          div(class = "section-title mb-1", "My settings"),
-          uiOutput(ns("summary"))),
-      actionButton(ns("open"), "Edit my settings", icon = icon("pen"),
-                   class = "btn-sm btn-outline-primary"))
+  filter_box_ui(uiOutput(ns("summary")),
+                actionButton(ns("open"), "Edit my filters", icon = icon("pen"),
+                             class = "btn-sm btn-outline-primary edit-filters"))
 }
 
-#' Link in the navbar that opens the settings dialog
+#' Link in the navbar that opens the My filters dialog
 #' @noRd
 mod_settings_nav_ui <- function(id) {
-  nav_item(actionLink(NS(id, "open_nav"), span(icon("user"), "My settings")))
+  nav_item(actionLink(NS(id, "open_nav"), span(icon("filter"), "My filters")))
 }
 
 # The settings dialog's sections, in wizard order
@@ -298,7 +294,7 @@ mod_settings_server <- function(id) {
         nav_panel(settings_sections[[k]], div(class = "pt-3", settings_section_ui(ns, k, s, choices)))
       })
       showModal(modalDialog(
-        title = span(icon("user"), " My settings"),
+        title = span(icon("filter"), " My filters"),
         do.call(navset_pill, c(list(id = ns("tab")), tabs)),
         footer = tagList(
           actionLink(ns("start_over"), "Start over", icon = icon("rotate-left"),
@@ -412,10 +408,7 @@ mod_settings_server <- function(id) {
             }))))
     })
 
-    output$summary <- renderUI({
-      div(class = "settings-chips",
-          lapply(settings_summary(settings(), choices), function(x) span(class = "settings-chip", x)))
-    })
+    output$summary <- renderUI(filter_chips(settings_summary(settings(), choices)))
 
     # Settings travel inside "Save search" links; a link's settings apply to
     # this visit only and don't replace what this browser saved

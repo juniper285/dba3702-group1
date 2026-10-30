@@ -47,9 +47,14 @@ test_that("settings_summary() describes the settings", {
   s$places <- key_place(c("NTU", "SMU")); s$place_km <- 5; s$mrt_dist <- 500
   txt <- paste(settings_summary(s, choices), collapse = " · ")
   expect_match(txt, "S\\$3,000 - S\\$5,000")
-  expect_match(txt, "near NTU, SMU")
-  expect_match(txt, "within 5 km of them")
-  expect_match(txt, "within 500 m of an MRT/LRT")
+  expect_match(txt, "Near NTU, SMU")
+  expect_match(txt, "Within 5 km of them")
+  expect_match(txt, "Within 500 m of an MRT/LRT")
+  expect_match(txt, "Any bedrooms")
+  expect_match(txt, "Anywhere in Singapore")
+
+  s$districts <- choices$districts
+  expect_true("D01 Raffles Place, D10 Bukit Timah" %in% settings_summary(s, choices))
 })
 
 test_that("place icons are kept, and unknown icons become 'other'", {

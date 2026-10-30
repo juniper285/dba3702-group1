@@ -45,7 +45,7 @@ test_that("an applied map selection narrows the filters' market", {
     map_sel$ids <- loc; map_sel$label <- "One building"
     session$flushReact()
     expect_true(all(market()$loc_id == loc))
-    expect_match(summary(), "map selection: One building")
+    expect_match(paste(summary(), collapse = " · "), "Map selection: One building")
 
     map_sel$apply <- FALSE
     session$flushReact()

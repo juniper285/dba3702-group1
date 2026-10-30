@@ -1,7 +1,7 @@
 // RentLens look and feel, added on top of the bslib theme (app_theme())
 
 // ---- Navbar --------------------------------------------------------------
-// Stays at the top while scrolling, so the menu (and My settings) is always
+// Stays at the top while scrolling, so the menu (and My filters) is always
 // in reach, e.g. after the setup wizard scrolls down to the options list
 .navbar {
   position: sticky;
@@ -76,7 +76,7 @@
   a { text-decoration: none; font-weight: 500; }
 }
 
-// ---- My settings summary and quick filters (Search page) -----------------
+// ---- "My filters" box (every page) and quick filters (Search page) --------
 .settings-summary {
   display: flex;
   gap: 1rem;
@@ -96,8 +96,14 @@
 .settings-chip {
   padding: 0.15rem 0.65rem;
   border-radius: 999px;
-  background: rgba($primary, 0.08);
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
   font-size: 0.85rem;
+}
+.edit-filters { white-space: nowrap; flex: none; }
+@media (max-width: 575.98px) {
+  .settings-summary { flex-wrap: wrap; }
 }
 .quick-filters {
   display: grid;

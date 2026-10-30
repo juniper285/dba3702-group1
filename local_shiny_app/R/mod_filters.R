@@ -1,6 +1,6 @@
 #' Filters: the renter's settings plus quick search filters (Search page)
 #'
-#' Most filters come from "My settings" (mod_settings_server()); the Search
+#' Most filters come from "My filters" (mod_settings_server()); the Search
 #' page adds quick District and Project filters. The districts are part of
 #' the settings, so changing them here updates (and saves) the settings.
 #'
@@ -82,21 +82,18 @@ mod_filters_server <- function(id, settings, map_sel = NULL) {
       d <- market()
       if (length(input$project)) d <- d[d$project %in% input$project, ]
       validate(need(nrow(d) > 0,
-        "No rentals match your settings. Try widening them with 'Edit my settings', or clear the map selection."))
+        "No rentals match your settings. Try widening them with 'Edit my filters', or clear the map selection."))
       d
     })
 
     recent <- reactive(s()$recent)
 
-    # One-line description of the filters, for the other pages
-    summary <- reactive({
-      parts <- c(
-        settings_summary(s()),
-        if (length(input$project)) paste(length(input$project), "project(s)"),
-        if (sel_applied()) paste("map selection:", map_sel$label)
-      )
-      paste(parts, collapse = " · ")
-    })
+    # The filters in words, one phrase per chip, for the other pages
+    summary <- reactive(c(
+      settings_summary(s()),
+      if (length(input$project)) paste(length(input$project), "project(s)"),
+      if (sel_applied()) paste("Map selection:", map_sel$label)
+    ))
 
     list(
       base        = base,

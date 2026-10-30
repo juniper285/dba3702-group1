@@ -1,6 +1,6 @@
 # ---- Personal settings: what the renter is looking for ----------------
 #
-# Set up by the first-visit wizard and the "My settings" dialog, kept in the
+# Set up by the first-visit wizard and the "My filters" dialog, kept in the
 # browser's localStorage (settings.js) and turned into filters by
 # mod_filters_server().
 
@@ -248,10 +248,11 @@ settings_from_json <- function(json, choices = settings_choices()) {
   s
 }
 
-#' Short description of the settings, one phrase per setting
+#' Short description of the settings, one phrase per setting, each
+#' starting with a capital ("Any bedrooms")
 #' @noRd
 settings_summary <- function(s, choices = settings_choices()) {
-  c(
+  parts <- c(
     paste0(money(s$budget[1]), " - ", money(s$budget[2])),
     if (setequal(s$beds, bed_levels)) "any bedrooms"
     else paste(paste(s$beds, collapse = ", "), "bedrooms"),
@@ -259,14 +260,15 @@ settings_summary <- function(s, choices = settings_choices()) {
     if (s$area[1] > 0 || s$area[2] < area_max)
       area_text(s$area),
     if (length(s$districts) == 0) "anywhere in Singapore"
-    else if (length(s$districts) <= 2) paste(sub(" .*", "", s$districts), collapse = ", ")
-    else paste(length(s$districts), "districts"),
+    # "D10 Bukit Timah, Holland, Tanglin" -> "D10 Bukit Timah"
+    else paste(sub(",.*", "", sort(s$districts)), collapse = ", "),
     if (nrow(s$places)) paste("near", paste(s$places$name, collapse = ", ")),
     if (nrow(s$places) && s$place_km < place_km_max) paste0("within ", s$place_km, " km of them"),
     if (nzchar(s$mrt_pick)) paste0("within ", s$mrt_dist, " m of ", s$mrt_pick)
     else if (s$mrt_dist < mrt_max) paste0("within ", s$mrt_dist, " m of an MRT/LRT"),
-    tolower(names(recent_choices)[match(s$recent, recent_choices)])
+    names(recent_choices)[match(s$recent, recent_choices)]
   )
+  paste0(toupper(substr(parts, 1, 1)), substring(parts, 2))
 }
 
 #' Script that loads and saves the settings in the browser (inst/app/www/settings.js)

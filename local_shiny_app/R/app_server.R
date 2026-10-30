@@ -33,9 +33,9 @@ app_server <- function(input, output, session) {
   # Number of shortlisted options, shown next to "Shortlist" in the navbar
   output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")
 
-  # "Filters in use" line on the pages that follow the renter's settings
+  # "My filters" box on the pages that follow the renter's filters
   for (page in c("map", "market", "shortlist", "records")) {
-    output[[paste0("filter_note_", page)]] <- renderText(filters$summary())
+    output[[paste0("filter_note_", page)]] <- renderUI(filter_chips(filters$summary()))
   }
   onBookmarked(function(url) showBookmarkUrlModal(url))
 }

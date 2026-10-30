@@ -51,18 +51,37 @@ page_intro <- function(title, ...) {
   div(class = "page-intro", h4(title), p(class = "text-muted mb-0", ...))
 }
 
-#' "Filters in use" line for pages that follow the renter's settings
+#' "My filters" box: one chip per filter and an "Edit my filters" button
+#'
+#' The same box tops every page that follows the renter's filters.
+#' @param chips Usually a uiOutput() filled with filter_chips().
+#' @param button The edit button; by default it opens the My filters dialog.
+#' @noRd
+filter_box_ui <- function(chips, button = edit_filters_button()) {
+  div(class = "settings-summary",
+      div(class = "settings-icon", icon("filter")),
+      div(class = "flex-fill", div(class = "section-title mb-1", "My filters"), chips),
+      button)
+}
+
+#' "Edit my filters" button that opens the My filters dialog from any page
+#' @noRd
+edit_filters_button <- function() {
+  tags$button(type = "button", class = "btn btn-sm btn-outline-primary edit-filters",
+              onclick = "Shiny.setInputValue('settings-open_nav', Date.now(), {priority: 'event'});",
+              icon("pen"), " Edit my filters")
+}
+
+#' The filter box on pages other than Search
 #'
 #' @param page Short page name; app_server() fills output `filter_note_<page>`.
 #' @noRd
-filter_note_ui <- function(page) {
-  div(class = "filter-note",
-      icon("filter"),
-      span(class = "text-muted", "Filters:"),
-      textOutput(paste0("filter_note_", page), inline = TRUE),
-      tags$a(href = "#", class = "ms-auto text-nowrap",
-             onclick = "Shiny.setInputValue('settings-open_nav', Date.now(), {priority: 'event'}); return false;",
-             icon("pen"), " Edit my settings"))
+filter_note_ui <- function(page) filter_box_ui(uiOutput(paste0("filter_note_", page)))
+
+#' One chip per filter (from settings_summary())
+#' @noRd
+filter_chips <- function(parts) {
+  div(class = "settings-chips", lapply(parts, function(x) span(class = "settings-chip", x)))
 }
 
 #' Consistent look for every plotly chart
