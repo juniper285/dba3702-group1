@@ -28,12 +28,22 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     expect_equal(nrow(shortlist()), 1)
     expect_equal(shortlist()$project, table_data()$project[1])
 
-    session$setInputs(save_a = 1)
-    expect_equal(areas$a_ids, loc)
+    session$setInputs(save_area = 1)
+    expect_equal(length(areas()), 1)
+    expect_equal(areas()[[1]]$locs, loc)
+    expect_equal(areas()[[1]]$name, sel$label)
 
+    session$setInputs(rename_area = areas()[[1]]$id)
+    session$setInputs(rename_to = "My favourite", rename_ok = 1)
+    expect_equal(areas()[[1]]$name, "My favourite")
+
+    # "Clear selection" keeps the saved areas
     session$setInputs(clear = 1)
     expect_null(sel$ids)
-    expect_null(areas$a_ids)
+    expect_equal(length(areas()), 1)
+
+    session$setInputs(remove_area = areas()[[1]]$id)
+    expect_equal(length(areas()), 0)
   })
 })
 

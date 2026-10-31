@@ -127,7 +127,7 @@ map_key <- function() {
     row(span(dot("#9ca3af", "#333", 8), dot("#9ca3af", "#333", 14)),
         "A building with rentals; bigger = more rentals"),
     row(ring("#000"), "Selected"),
-    row(span(ring(area_colours[["a"]]), ring(area_colours[["b"]])), "Saved Area A / Area B"),
+    row(span(ring(area_palette[1]), ring(area_palette[2])), "Saved areas, each in its own colour"),
     row(pin("location-dot", "#d252b9"), "My places"),
     row(HTML(star_svg), "Universities and polytechnics"),
     lapply(names(layers), function(n) row(pin(layers[[n]]$icon, layers[[n]]$hex), n)),
@@ -235,4 +235,70 @@ location_labels <- function(d) {
     format(d$n, big.mark = ","), money(d$rent), d$psf,
     ifelse(is.na(d$mrt), "-", paste0(d$mrt, " (", format(d$mrt_m, big.mark = ","), " m)"))) |>
     lapply(HTML)
+}
+
+# ---- Saved areas (compared under the map) ---------------------------------
+
+# One colour per saved area, used for its outline, list dot and charts
+area_palette <- c("#1e3a8a", "#f59e0b", "#db2777", "#059669")
+max_areas <- length(area_palette)
+
+#' No saved areas yet: a list of areas, each list(id, name, colour, locs)
+#' where `locs` are map location ids
+#' @noRd
+new_saved_areas <- function() reactiveVal(list())
+
+#' A name for a selection of buildings
+#'
+#' One building: its project name. Several: the station nearest their centre,
+#' e.g. "Around Clementi MRT · 59 buildings".
+#' @param d Contracts in the selection (with loc_id, lat, lng, project, district).
+#' @noRd
+name_area <- function(d, mrt = mrt_stations()) {
+  d <- d[!is.na(d$loc_id), ]
+  n <- length(unique(d$loc_id))
+  if (n == 0) return("Empty area")
+  if (n == 1) return(paste(head(unique(d$project), 2), collapse = " / "))
+  where <- if (is.null(mrt)) names(which.max(table(d$district)))
+           else nearest_mrt(mean(d$lat), mean(d$lng), mrt)$mrt_station
+  paste0("Around ", where, " · ", n, " buildings")
+}
+
+#' Add an area to the saved list (NULL when the list is full), giving it the
+#' first colour not in use
+#' @noRd
+add_area <- function(areas, locs, name) {
+  if (length(areas) >= max_areas) return(NULL)
+  used <- vapply(areas, `[[`, "", "colour")
+  ids <- vapply(areas, `[[`, 0, "id")
+  c(areas, list(list(id = if (length(ids)) max(ids) + 1 else 1, name = name,
+                     colour = setdiff(area_palette, used)[1], locs = as.integer(locs))))
+}
+
+#' Saved areas as JSON for the browser and "Save search" links. Buildings are
+#' stored by their coordinates, which survive a rebuild of the data (the map
+#' location ids don't)
+#' @noRd
+areas_to_json <- function(areas, locs = map_locations()) {
+  keys <- paste(locs$lat, locs$lng)
+  jsonlite::toJSON(lapply(areas, function(a) list(
+    name = a$name, keys = I(keys[match(a$locs, locs$loc_id)]))),
+    auto_unbox = TRUE)
+}
+
+#' Saved areas back from areas_to_json(); areas whose buildings are no longer
+#' in the data are dropped, and anything unreadable gives no areas
+#' @noRd
+areas_from_json <- function(json, locs = map_locations()) {
+  x <- tryCatch(jsonlite::fromJSON(json, simplifyVector = FALSE), error = function(e) NULL)
+  if (!is.list(x)) return(list())
+  keys <- paste(locs$lat, locs$lng)
+  areas <- list()
+  for (a in head(x, max_areas)) {
+    ids <- locs$loc_id[match(unlist(a$keys), keys)]
+    ids <- ids[!is.na(ids)]
+    if (length(ids) == 0 || !is.character(a$name)) next
+    areas <- add_area(areas, ids, substr(a$name, 1, 80))
+  }
+  areas
 }

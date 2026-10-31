@@ -217,6 +217,11 @@
   Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });
   Shiny.addCustomMessageHandler("rentlens-clear-settings", function (_) { write(null); });
   Shiny.addCustomMessageHandler("rentlens-coach", function (m) { coach(m); });
+  // Saved map areas (mod_map.R), kept like the settings
+  var AREAS_KEY = "rentlens-areas";
+  Shiny.addCustomMessageHandler("rentlens-save-areas", function (json) {
+    try { window.localStorage.setItem(AREAS_KEY, json); } catch (e) { /* this session only */ }
+  });
 
   $(document).on("shiny:connected", function () {
     // "none" tells the server there is nothing saved yet (first visit).
@@ -224,6 +229,9 @@
     // thrown inside this event would stop Shiny from starting up.
     setTimeout(function () {
       Shiny.setInputValue("settings-stored", read() || "none");
+      var areas = null;
+      try { areas = window.localStorage.getItem(AREAS_KEY); } catch (e) { /* blocked */ }
+      Shiny.setInputValue("map-stored_areas", areas || "none");
     }, 0);
   });
 })();

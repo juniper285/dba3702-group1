@@ -322,13 +322,22 @@
 .map-panel {
   .selection-label { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; word-break: break-word; }
 }
-// Area A (navy) and Area B (orange): buttons, card headers and map outlines
-$area-a: #1e3a8a;
-$area-b: #f59e0b;
-.btn-area-a { background: $area-a; border-color: $area-a; color: #fff; &:hover { background: darken($area-a, 6%); color: #fff; } }
-.btn-area-b { background: $area-b; border-color: $area-b; color: #fff; &:hover { background: darken($area-b, 8%); color: #fff; } }
-.card-header.area-a { background: $area-a; color: #fff; }
-.card-header.area-b { background: $area-b; color: #fff; }
+// Saved areas: list in the map panel, comparison card under the map
+// (each area's colour is set inline from area_palette in fct_map.R)
+.saved-area-row {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0; border-bottom: 1px solid $border-color; font-size: 0.875rem;
+  .saved-area-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; flex: none; }
+  .saved-area-name { word-break: break-word; }
+  .saved-area-edit, .saved-area-remove { color: $text-muted; padding: 0 0.3rem; }
+  .saved-area-edit:hover { color: $primary; }
+  .saved-area-remove:hover { color: $danger; }
+}
+.saved-areas-table {
+  font-size: 0.9rem;
+  th[scope=row] { font-weight: 500; color: $text-muted; white-space: nowrap; }
+  thead th { vertical-align: bottom; font-weight: 600; min-width: 9rem; }
+}
 .leaflet-container { font-family: inherit; border-radius: 0 0 $border-radius-lg $border-radius-lg; }
 
 // ---- Tables --------------------------------------------------------------

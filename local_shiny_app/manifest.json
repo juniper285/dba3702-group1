@@ -3145,10 +3145,10 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "0b1afd63987038e05915653c1eb66bea"
+      "checksum": "081b60943ae58257faaeedc773fa77c9"
     },
     "inst/app/www/settings.js": {
-      "checksum": "da9017f385a8850ccc520e697a625685"
+      "checksum": "d9ca572b5e8049061d3ba7108500679b"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3169,10 +3169,10 @@
       "checksum": "fad792fc499bb6da453d96cc57fc6def"
     },
     "R/app_server.R": {
-      "checksum": "b6da616bfc0786b876d39b71097fc75b"
+      "checksum": "feda78d4792214ea9cfbb23b0aad02c2"
     },
     "R/app_ui.R": {
-      "checksum": "e41351e00e94d6e3f7ef10537f7c4cc5"
+      "checksum": "36abf8d0d9f7d912be7f1dd0f75fe20a"
     },
     "R/fct_data.R": {
       "checksum": "278429dc7c0db57a262064788c5a00ca"
@@ -3184,19 +3184,16 @@
       "checksum": "ce8af90cf7659ea4cd6ed39c09b7aa85"
     },
     "R/fct_map.R": {
-      "checksum": "95c646921085c7eafbf86d5a01f08784"
+      "checksum": "e65e74e62355509c817a2c90326c62c5"
     },
     "R/fct_rent.R": {
-      "checksum": "0ad929a8d71890bff49d7b2f024bed9d"
+      "checksum": "a93a748d90de907995a58f8d2abeda7f"
     },
     "R/fct_settings.R": {
       "checksum": "6606b166ab34655a7d4459557882e7c9"
     },
     "R/mod_about.R": {
       "checksum": "27c5fb5198e3bdef119d482aa4dfe645"
-    },
-    "R/mod_area_compare.R": {
-      "checksum": "21a213dfd5fdec97b6130b1fa1661077"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
@@ -3211,10 +3208,13 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "a0fa201c8d86df80ef95d7c31b0e385d"
+      "checksum": "ffffd2730de2adb2e7e7815f3f536a36"
     },
     "R/mod_properties.R": {
       "checksum": "a84fd416a4261089e0bdcdb345d4f412"
+    },
+    "R/mod_saved_areas.R": {
+      "checksum": "62172090066149dbc9b2a63248dec9cc"
     },
     "R/mod_settings.R": {
       "checksum": "e82d9821d94f05bd3a06dfc51bd757c7"

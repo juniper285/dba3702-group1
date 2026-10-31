@@ -30,16 +30,16 @@ mod_map_ui <- function(id) {
           div(class = "section-title", "Selection"),
           div(class = "selection-label", textOutput(ns("sel_label"))),
           input_switch(ns("apply_sel"), "Apply map selection to all pages", value = TRUE),
-          div(class = "d-flex gap-2 mb-1",
-              actionButton(ns("save_a"), "Save as Area A", class = "btn-sm btn-area-a flex-fill"),
-              actionButton(ns("save_b"), "Save as Area B", class = "btn-sm btn-area-b flex-fill")),
-          div(class = "small text-muted mb-2", textOutput(ns("areas_status"), inline = TRUE)),
           div(class = "kpi-stack",
               kpi("Rentals", textOutput(ns("vb_n"))),
               kpi("Projects", textOutput(ns("vb_proj"))),
               kpi("Median rent", textOutput(ns("vb_rent"))),
               kpi("Median psf", textOutput(ns("vb_psf")))),
           div(class = "small text-muted mt-2", textOutput(ns("unmapped"), inline = TRUE)),
+          div(class = "section-title mt-3", "Saved areas"),
+          actionButton(ns("save_area"), "Save this area", icon = icon("bookmark"),
+                       class = "btn-sm btn-primary w-100 mb-2"),
+          uiOutput(ns("saved_list")),
           div(class = "section-title mt-3", "Map options"),
           input_switch(ns("in_budget"), "Only buildings within my budget", value = TRUE),
           div(class = "chips",
@@ -51,6 +51,7 @@ mod_map_ui <- function(id) {
       card_footer("The map follows your filters. The key (top right) explains the symbols, ",
                   "and the colour scale (bottom right) the circle colours.")
     ),
+    mod_saved_areas_ui(ns("areas")),
     layout_columns(
       col_widths = c(7, 5),
       card(card_header(textOutput(ns("trend_title"), inline = TRUE)),
@@ -83,16 +84,22 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
     observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
-                                 "add_short", "clear", "save_a", "save_b", "help",
+                                 "add_short", "clear", "save_area", "rename_area",
+                                 "remove_area", "rename_to", "rename_ok", "stored_areas", "help",
                                  grep("^map_", names(input), value = TRUE))))
 
-    # Mapped rentals: the filters (before the map selection) narrowed to chosen
-    # projects (like filters$selection(), but without validate() so the map can be empty),
-    # and to buildings whose median rent is within budget unless that's switched off
-    map_data <- reactive({
+    # Mappable rentals: the filters (before the map selection) narrowed to chosen
+    # projects (like filters$selection(), but without validate() so the map can
+    # be empty). Saved areas are compared on these
+    area_data <- reactive({
       d <- filters$base()
       if (length(filters$projects())) d <- d[d$project %in% filters$projects(), ]
-      d <- d[!is.na(d$loc_id) & well_located(d$geo_match), ]
+      d[!is.na(d$loc_id) & well_located(d$geo_match), ]
+    })
+    # Mapped rentals: also only buildings whose median rent is within budget,
+    # unless that's switched off
+    map_data <- reactive({
+      d <- area_data()
       if (!isFALSE(input$in_budget) && nrow(d)) {
         b <- filters$budget()
         med <- tapply(d$rent, d$loc_id, median)
@@ -135,14 +142,13 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         return()
       }
       sel$ids <- ids
-      sel$label <- sprintf("Drawn area (%d buildings)", length(ids))
+      sel$label <- name_area(map_data()[map_data()$loc_id %in% ids, ])
     })
     clear_sel <- function() { sel$ids <- NULL; sel$label <- NULL }
     observeEvent(input$map_draw_deleted_features, clear_sel())
-    # "Clear selection" also wipes the saved Area A and Area B
+    # Saved areas stay until removed one by one
     observeEvent(input$clear, {
       clear_sel()
-      for (k in names(areas)) areas[[k]] <- NULL
       leafletProxy("map") |> clearGroup("Selected") |>
         removeDrawToolbar(clearFeatures = TRUE) |> add_draw_toolbar()
     })
@@ -158,9 +164,10 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         tags$li(strong("Use it everywhere (optional). "),
                 "With 'Apply map selection to all pages' on, the Search and Market pages ",
                 "also show only your selection."),
-        tags$li(strong("Compare two areas. "),
-                "Press 'Save as Area A', pick another building or area, press 'Save as ",
-                "Area B', then open Market > Area A vs B."),
+        tags$li(strong("Compare areas. "),
+                "Press 'Save this area', then pick another building or area and save it too ",
+                "(up to ", max_areas, "). 'Compare saved areas', just below the map, shows them ",
+                "side by side. Rename (pencil) or remove (cross) them in the panel."),
         tags$li(strong("Shortlist what you like. "),
                 "Tick rows in 'Projects in the map selection' and press 'Add to shortlist'."),
         tags$li(strong("See more. "),
@@ -170,23 +177,86 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
       easyClose = TRUE, footer = modalButton("Got it")
     )))
 
-    # Save the selection as Area A or B, for "Area A vs B"
-    save_area <- function(w) {
+    # ---- Saved areas: up to max_areas, compared under the map ----
+    observeEvent(input$save_area, {
       if (is.null(sel$ids)) {
         showNotification("Click a building or draw an area on the map first.", type = "warning")
         return()
       }
-      areas[[paste0(w, "_ids")]]   <- sel$ids
-      areas[[paste0(w, "_label")]] <- sel$label
-      showNotification(paste0("Saved as Area ", toupper(w), ": ", sel$label,
-                              ". Compare them on Market > Area A vs B."), type = "message")
-    }
-    observeEvent(input$save_a, save_area("a"))
-    observeEvent(input$save_b, save_area("b"))
-    output$areas_status <- renderText({
-      lab <- function(w) if (is.null(areas[[paste0(w, "_label")]])) "not set" else areas[[paste0(w, "_label")]]
-      paste0("A: ", lab("a"), " | B: ", lab("b"))
+      a <- add_area(areas(), sel$ids, sel$label)
+      if (is.null(a)) {
+        showNotification(paste0("You can save up to ", max_areas, " areas. Remove one first ",
+                                "(the cross next to it)."), type = "warning")
+        return()
+      }
+      areas(a)
+      showNotification(paste0("Saved: ", sel$label, ". ",
+                              if (length(a) < 2) "Save one more to compare them below the map."
+                              else "See 'Compare saved areas' below the map."),
+                       type = "message")
     })
+    observe(updateActionButton(session, "save_area", disabled = length(areas()) >= max_areas))
+    observeEvent(input$remove_area, {
+      areas(Filter(function(x) x$id != input$remove_area, areas()))
+    })
+    renaming <- reactiveVal(NULL)
+    observeEvent(input$rename_area, {
+      a <- Filter(function(x) x$id == input$rename_area, areas())
+      req(length(a) == 1)
+      renaming(a[[1]]$id)
+      showModal(modalDialog(
+        title = "Rename this area",
+        textInput(session$ns("rename_to"), NULL, value = a[[1]]$name, width = "100%"),
+        easyClose = TRUE,
+        footer = tagList(modalButton("Cancel"),
+                         actionButton(session$ns("rename_ok"), "Rename", class = "btn-primary"))))
+    })
+    observeEvent(input$rename_ok, {
+      name <- trimws(input$rename_to)
+      if (nzchar(name)) {
+        areas(lapply(areas(), function(x) {
+          if (x$id == renaming()) x$name <- substr(name, 1, 80)
+          x
+        }))
+      }
+      removeModal()
+    })
+    output$saved_list <- renderUI({
+      a <- areas()
+      if (length(a) == 0) {
+        return(div(class = "small text-muted",
+                   "Save a building or a drawn area to compare it with others below the map."))
+      }
+      send <- function(input_id, id) sprintf(
+        "Shiny.setInputValue('%s', %d, {priority: 'event'}); return false;", session$ns(input_id), id)
+      tagList(
+        lapply(a, function(x) div(class = "saved-area-row",
+          span(class = "saved-area-dot", style = paste0("background:", x$colour)),
+          span(class = "saved-area-name flex-fill", x$name),
+          tags$a(href = "#", class = "saved-area-edit", title = "Rename",
+                 `aria-label` = paste("Rename", x$name), onclick = send("rename_area", x$id),
+                 icon("pen")),
+          tags$a(href = "#", class = "saved-area-remove", title = "Remove",
+                 `aria-label` = paste("Remove", x$name), onclick = send("remove_area", x$id),
+                 icon("xmark")))),
+        if (length(a) == 1) div(class = "small text-muted mt-1", "Save one more to compare.")
+      )
+    })
+    # Kept in this browser (settings.js), like My filters. Load once, then save
+    # every change; a "Save search" link's areas win over the stored ones
+    areas_loaded <- reactiveVal(FALSE)
+    observeEvent(input$stored_areas, once = TRUE, {
+      if (!areas_loaded() && length(areas()) == 0 && input$stored_areas != "none") {
+        areas(areas_from_json(input$stored_areas))
+      }
+      areas_loaded(TRUE)
+    })
+    observeEvent(areas(), {
+      if (areas_loaded()) {
+        session$sendCustomMessage("rentlens-save-areas", as.character(areas_to_json(areas())))
+      }
+    }, ignoreInit = TRUE)
+    mod_saved_areas_server("areas", area_data, areas, filters)
 
     selected <- reactive({
       d <- map_data()
@@ -253,17 +323,15 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
       }
     })
 
-    # Outline the saved areas (A navy, B orange)
+    # Outline each saved area's buildings in its colour
     observe({
       req(map_ready())
-      p <- leafletProxy("map") |> clearGroup("Area A") |> clearGroup("Area B")
-      for (w in c("a", "b")) {
-        ids <- areas[[paste0(w, "_ids")]]
-        if (is.null(ids)) next
-        s <- map_locations() |> filter(loc_id %in% ids)
+      p <- leafletProxy("map") |> clearGroup("Saved areas")
+      for (x in areas()) {
+        s <- map_locations() |> filter(loc_id %in% x$locs)
         p <- addCircleMarkers(p, data = s, lng = ~lng, lat = ~lat,
-                              group = paste("Area", toupper(w)), radius = 12, fill = FALSE,
-                              color = area_colours[[w]], weight = 2,
+                              group = "Saved areas", radius = 12, fill = FALSE,
+                              color = x$colour, weight = 2,
                               options = pathOptions(interactive = FALSE))
       }
     })
@@ -358,16 +426,17 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     onBookmark(function(state) {
       state$values$sel_ids   <- sel$ids
       state$values$sel_label <- sel$label
-      state$values$areas     <- reactiveValuesToList(areas)
+      state$values$areas     <- as.character(areas_to_json(areas()))
     })
     onRestore(function(state) {
       if (length(state$values$sel_ids) > 0) {
         sel$ids   <- as.integer(unlist(state$values$sel_ids))
         sel$label <- unlist(state$values$sel_label)
       }
-      a <- state$values$areas
-      for (k in c("a_ids", "b_ids")) if (length(a[[k]])) areas[[k]] <- as.integer(unlist(a[[k]]))
-      for (k in c("a_label", "b_label")) if (length(a[[k]])) areas[[k]] <- unlist(a[[k]])
+      if (length(state$values$areas)) {
+        areas(areas_from_json(state$values$areas))
+        areas_loaded(TRUE)
+      }
     })
 
     list(map_data = map_data)
