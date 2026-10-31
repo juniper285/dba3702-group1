@@ -28,4 +28,8 @@ rentals <- data.frame(
   geo_match   = raw$Match_Status
 )
 
+# Leave out contracts with no floor area: landed houses that URA only gives as
+# "<=1000" or ">8000" sqft, so they have no rent per sqft and can't be sized
+rentals <- rentals[!is.na(rentals$area_sqft), ]
+
 saveRDS(rentals, "inst/extdata/rentals.rds", compress = "xz")

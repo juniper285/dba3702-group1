@@ -3154,7 +3154,7 @@
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
     },
     "inst/extdata/rentals.rds": {
-      "checksum": "14a338f237c1f40874256ecdd0ae6318"
+      "checksum": "19954d418b21a575726237eae989ce3a"
     },
     "inst/extdata/schools.csv": {
       "checksum": "7f3967fdf72261a9d7f88779fab256c4"
@@ -3175,7 +3175,7 @@
       "checksum": "e41351e00e94d6e3f7ef10537f7c4cc5"
     },
     "R/fct_data.R": {
-      "checksum": "8d8164017d8a6f16b5562e30750dd530"
+      "checksum": "278429dc7c0db57a262064788c5a00ca"
     },
     "R/fct_listing.R": {
       "checksum": "9804edf1d6d8828be14ee71cd009890e"
@@ -3226,7 +3226,7 @@
       "checksum": "034e9b46971349e97ef9a50f1992d76d"
     },
     "R/mod_value.R": {
-      "checksum": "e98d3cd0ebebedb189d3c6a51a7a9876"
+      "checksum": "f3555eae12941afcbe71abd6adceac66"
     },
     "R/mod_within_budget.R": {
       "checksum": "d16f059ce90af26e6ccf21a796e61eec"

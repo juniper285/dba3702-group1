@@ -64,8 +64,8 @@ rentals <- data.frame(project = raw$`Project Name`, ..., lat = raw$Latitude,
 saveRDS(rentals, "inst/extdata/rentals.rds", compress = "xz")
 ```
 
-The app leaves out the 1,168 contracts with no floor area (landed houses URA
-lists only as "<=1000" or ">8000" sqft); see `rentals_data()`.
+The script leaves out the 1,168 contracts with no floor area (landed houses URA
+lists only as "<=1000" or ">8000" sqft).
 
 ### MRT/LRT stations (LTA, data.gov.sg)
 

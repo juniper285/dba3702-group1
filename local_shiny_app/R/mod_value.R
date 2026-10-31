@@ -28,7 +28,7 @@ mod_value_server <- function(id, filters) {
 
     value_data <- reactive({
       d <- latest_months(filters$market(), filters$recent())
-      s <- d[!is.na(d$area_sqft), ] |>
+      s <- d |>
         group_by(project, district) |>
         summarise(median = median(rent), sqft = median(area_sqft),
                   psf = median(psf, na.rm = TRUE), n = n(), .groups = "drop") |>
