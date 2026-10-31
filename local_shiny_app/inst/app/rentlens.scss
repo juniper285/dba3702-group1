@@ -430,6 +430,8 @@ table.dataTable {
   .map-key-symbol { width: 2.2rem; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; }
   .map-key-symbol svg { width: 16px; height: 16px; }
   .map-key-dot { display: inline-block; border-radius: 50%; }
+  .map-key-lines { display: flex; flex-direction: column; gap: 1px; width: 1.6rem; }
+  .map-key-lines span { display: block; height: 2px; border-radius: 1px; }
   .map-key-pin {
     display: inline-flex; align-items: center; justify-content: center;
     width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);

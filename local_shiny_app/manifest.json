@@ -3145,10 +3145,13 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "081b60943ae58257faaeedc773fa77c9"
+      "checksum": "edba2910d77c10e406e25051a37aaa1c"
     },
     "inst/app/www/settings.js": {
       "checksum": "d9ca572b5e8049061d3ba7108500679b"
+    },
+    "inst/extdata/mrt_lines.rds": {
+      "checksum": "da18d217946f2341e1bf2415dfed3d65"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3181,10 +3184,10 @@
       "checksum": "f91af693238a6732f1d82b2ecdc50fcc"
     },
     "R/fct_location.R": {
-      "checksum": "ce8af90cf7659ea4cd6ed39c09b7aa85"
+      "checksum": "1acedaa770d976a965e0fc2a16772d0a"
     },
     "R/fct_map.R": {
-      "checksum": "e65e74e62355509c817a2c90326c62c5"
+      "checksum": "af3f572d3f1eed1211725f23e35b54ca"
     },
     "R/fct_rent.R": {
       "checksum": "a93a748d90de907995a58f8d2abeda7f"
@@ -3193,7 +3196,7 @@
       "checksum": "6606b166ab34655a7d4459557882e7c9"
     },
     "R/mod_about.R": {
-      "checksum": "d5764347facaebe4d09352defee8e79e"
+      "checksum": "664bcfb11a3cff6b9c4a9ad03891ff50"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
@@ -3208,7 +3211,7 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "ffffd2730de2adb2e7e7815f3f536a36"
+      "checksum": "c7d24d8407dbc5f9b5e5802562ddb63e"
     },
     "R/mod_properties.R": {
       "checksum": "a84fd416a4261089e0bdcdb345d4f412"
@@ -3247,7 +3250,7 @@
       "checksum": "07a828182a2d192ffe0b5f7642b0abd4"
     },
     "README.md": {
-      "checksum": "ad38fcdba99a6b94b7d5e866af4bf93f"
+      "checksum": "3b7836815b03c7129bc1b0cfe82519b2"
     }
   },
   "users": null

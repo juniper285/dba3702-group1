@@ -37,7 +37,7 @@ local_shiny_app/
 │   ├── fct_*.R            business logic: data, rent summaries, distances, map pieces
 │   ├── utils_*.R          small helpers: formatting, bookmarking
 │   └── rentalapp-package.R  package-wide imports
-├── inst/extdata/          rentals.rds, mrt_stations.csv, schools.csv (see ../README.md)
+├── inst/extdata/          rentals.rds, mrt_stations.csv, mrt_lines.rds, schools.csv (see ../README.md)
 ├── data-raw/             scripts that rebuild inst/extdata/ from the source data
 ├── dev/                   developer scripts (run_dev.R, check.R)
 ├── manifest.json          packages for Posit Connect Cloud (rsconnect::writeManifest())

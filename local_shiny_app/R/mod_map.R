@@ -173,7 +173,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         tags$li(strong("See more. "),
                 "Switch off 'Only buildings within my budget' to see every building, change ",
                 "what the colours show, or use the layers button (bottom left of the map) for ",
-                "MRT/LRT stations, hospitals and the heatmap.")),
+                "MRT/LRT lines and stations, hospitals and the heatmap.")),
       easyClose = TRUE, footer = modalButton("Got it")
     )))
 

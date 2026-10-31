@@ -79,9 +79,9 @@ Pages in `R/app_ui.R`:
 |------|---------------|
 | `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session (the 1,168 contracts with no floor area, landed houses listed as "<=1000"/">8000" sqft, are already dropped by `data-raw/rentals.R`), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels` (every bedroom group, for ordering and colours), `bed_choices` (the chips, without "Unknown"; picking all of them means any bedrooms, so unknown-bedroom rentals, including every landed house, show only then), `area_max` (4000, where the floor-area slider's scale ends). `area_top()` is the largest floor area, the "no limit" upper bound |
 | `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_areas()`/`compare_areas_by_bed()` (saved areas), `empty_shortlist()` |
-| `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
+| `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `mrt_lines()` (the tracks, for the map), `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
-| `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()`, `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
+| `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()` (MRT/LRT lines and stations, one layer: `mrt_group`), `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
 | `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
 
 ### `local_shiny_app/R/`: modules (`mod_*`), each with `mod_x_ui(id)` and `mod_x_server(id, ...)`
@@ -118,6 +118,7 @@ Pages in `R/app_ui.R`:
 | `inst/app/www/settings.js` | Browser side of My filters. See the next list |
 | `inst/extdata/rentals.rds` | URA rental contracts, cleaned and geocoded. Rebuilt by `data-raw/rentals.R` |
 | `inst/extdata/mrt_stations.csv` | 188 MRT/LRT stations (LTA exits averaged). Rebuilt by `data-raw/mrt_stations.R` |
+| `inst/extdata/mrt_lines.rds` | The track of each MRT/LRT line (sf, with its official colour), from OpenStreetMap. Rebuilt by `data-raw/mrt_lines.R` |
 | `inst/extdata/schools.csv` | MOE schools, geocoded with OneMap. Rebuilt by `data-raw/schools.R` |
 
 What `inst/app/www/settings.js` does:
@@ -134,6 +135,7 @@ What `inst/app/www/settings.js` does:
 |------|------------|
 | `data-raw/rentals.R` | `data-raw/URA_Union_Cleaned_with_Address.xlsx` (git-ignored, put it there yourself) → `inst/extdata/rentals.rds`, without contracts that have no floor area. Needs readxl |
 | `data-raw/mrt_stations.R` | data.gov.sg LTA station exits → `mrt_stations.csv` |
+| `data-raw/mrt_lines.R` | OpenStreetMap (Overpass API) line tracks → `mrt_lines.rds`. Needs httr2 |
 | `data-raw/schools.R` | data.gov.sg MOE schools + OneMap geocoding → `schools.csv` (about a minute) |
 | `dev/run_dev.R` | Development launcher |
 | `dev/check.R` | `roxygenise()` + `test_local()` + `rsconnect::writeManifest()` |

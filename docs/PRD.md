@@ -91,7 +91,7 @@ Other parts:
 |---|---|---|---|
 | Building circles | One circle per mapped building. Size = rentals; colour = median rent vs budget (or median rent / psf) | `summarise_locations()`, `map_palette()`. Only Exact/Good geocodes are mapped (`well_located()`) | **Keep** |
 | Only buildings within my budget | Hides buildings whose median rent is outside the budget (on by default) | `map_data()` filters by the median per `loc_id` | **Keep** |
-| Layers and map key | Buildings and my places (purple pins) show by default. Universities and polytechnics (stars), work areas, hospitals, airport and ports, MRT/LRT stations, schools and the heatmap start hidden and are turned on with the layers button; Light, OneMap and Satellite basemaps. A "Map key" box (top right) shows every symbol; the colour scale (bottom right) uses one colour, light = cheap, dark = dear. The side panel says how many filtered rentals have no exact location | `key_layers`, `add_key_places()`, `map_key()`, `add_station_layers()`, `update_my_places()`, `map_palette()` | **Keep**, possibly with fewer layers: check whether the heatmap and schools are used |
+| Layers and map key | Buildings and my places (purple pins) show by default. Universities and polytechnics (stars), work areas, hospitals, airport and ports, MRT/LRT lines (in their own colours, hover for the name) and stations, schools and the heatmap start hidden and are turned on with the layers button; Light, OneMap and Satellite basemaps. A "Map key" box (top right) shows every symbol; the colour scale (bottom right) uses one colour, light = cheap, dark = dear. The side panel says how many filtered rentals have no exact location | `key_layers`, `add_key_places()`, `map_key()`, `add_station_layers()` (with `mrt_lines()`), `update_my_places()`, `map_palette()` | **Keep**, possibly with fewer layers: check whether the heatmap and schools are used |
 | Station ring | A ring around the station picked in My filters, and the map flies to it | `update_station_ring()` | **Keep** |
 | Click / draw selection | Click one building or draw a shape; the side panel and everything below follow it | `map_marker_click`, `map_draw_new_feature` → `map_sel` | **Keep** |
 | Apply map selection to all pages | Narrows Search, Market, Shortlist and Rental records to the selection | `map_sel$apply` → `filters$market()` | **Keep**. Shown as a chip so people know it is on |
@@ -163,6 +163,7 @@ The shortlist is kept only for the session and in Save search links; it is **not
 |---|---|---|---|
 | `rentals.rds` | 411,427 contracts | project, street, district_no, type, bedrooms, rent, area_band, area_sqft, psf, lease_date, address, lat, lng, geo_match | `data-raw/rentals.R` |
 | `mrt_stations.csv` | 188 stations (41 LRT) | station, lat, lng, kind | `data-raw/mrt_stations.R` |
+| `mrt_lines.rds` | 9 lines (NSL, EWL, NEL, CCL, DTL, TEL and the three LRTs) | ref, line, colour, geometry (sf multi-line) | `data-raw/mrt_lines.R` |
 | `schools.csv` | 337 schools | name, level, postal, lat, lng | `data-raw/schools.R` |
 
 All columns are used: `street`, `area_band` and `geo_match` appear in the records tables, and `postal` identifies a school.

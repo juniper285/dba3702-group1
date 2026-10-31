@@ -30,6 +30,7 @@ Rebuild scripts live in `local_shiny_app/data-raw/` and write to
 |------|--------|-----------|------------|
 | Rental contracts | [URA Data Service API](https://eservice.ura.gov.sg/maps/api/#introduction): private residential rental contracts | team's cleaning and geocoding (see below), then `local_shiny_app/data-raw/rentals.R` | `local_shiny_app/inst/extdata/rentals.rds` |
 | MRT/LRT stations | [LTA MRT Station Exit (GeoJSON)](https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view), data.gov.sg | `local_shiny_app/data-raw/mrt_stations.R` | `local_shiny_app/inst/extdata/mrt_stations.csv` |
+| MRT/LRT lines (track shapes and colours) | [OpenStreetMap](https://www.openstreetmap.org/copyright) route relations for each line (ODbL; credited on the map), via the [Overpass API](https://overpass-api.de/) | `local_shiny_app/data-raw/mrt_lines.R` | `local_shiny_app/inst/extdata/mrt_lines.rds` |
 | Schools | [MOE General information of schools](https://data.gov.sg/datasets/d_688b934f82c1059ed0a6993d2a829089/view), data.gov.sg, geocoded with the [OneMap Search API](https://www.onemap.gov.sg/apidocs/) | `local_shiny_app/data-raw/schools.R` | `local_shiny_app/inst/extdata/schools.csv` |
 | Key places (universities, business districts, ...) | typed in by hand | `destination_groups` in `local_shiny_app/R/fct_location.R` | code |
 | Address lookup ("Check a listing") | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live | `onemap_search()` in `local_shiny_app/R/fct_listing.R` | cached per R session |
@@ -81,6 +82,22 @@ exits <- jsonlite::fromJSON(poll$data$url)$features   # one row per station exit
 stations <- aggregate(cbind(lat, lng) ~ name, data = exits, FUN = mean)
 ```
 
+### MRT/LRT lines (OpenStreetMap)
+
+LTA's open data has stations but not the track between them, so the lines
+come from OpenStreetMap, which tags each line's route with its official
+colour. For each line (NSL, EWL, NEL, CCL, DTL, TEL and the Bukit Panjang,
+Sengkang and Punggol LRTs) the Overpass API returns the track ways, which are
+merged and simplified to 10 m. Lines still being built are left out. The map
+credits OpenStreetMap whenever the lines are shown, as its licence asks.
+
+```r
+ways <- overpass(sprintf(paste0(
+  '[out:json][timeout:120];',
+  'rel(1.15,103.6,1.48,104.1)["type"="route"]["ref"="%s"];',   # e.g. "NSL"
+  'way(r)["railway"];out geom;'), ref))
+```
+
 ### Schools (MOE, data.gov.sg + OneMap)
 
 MOE's school list has names, levels and postal codes but no coordinates, so
@@ -106,5 +123,6 @@ httr2::request("https://www.onemap.gov.sg/api/common/elastic/search") |>
 # from local_shiny_app/
 source("data-raw/rentals.R")       # needs data-raw/URA_Union_Cleaned_with_Address.xlsx
 source("data-raw/mrt_stations.R")  # LTA station exits
+source("data-raw/mrt_lines.R")     # OpenStreetMap line tracks
 source("data-raw/schools.R")       # MOE schools + OneMap (about a minute)
 ```

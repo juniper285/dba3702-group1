@@ -14,10 +14,20 @@ test_that("base_map() has the key-place and MRT/LRT layers", {
   expect_true(all(c("addMarkers", "addAwesomeMarkers", "addCircleMarkers") %in% methods))
   overlays <- calls[[which(methods == "addLayersControl")]]$args[[2]]
   expect_true(all(c("My places", "Universities and polytechnics", "Work areas", "Hospitals",
-                    "Airport and ports", "MRT/LRT stations") %in% overlays))
+                    "Airport and ports", mrt_group) %in% overlays))
   # every key place is on one layer
   expect_setequal(unlist(lapply(key_layers, `[[`, "groups")), unique(key_places$group))
   expect_true("addControl" %in% methods)   # the map key
+})
+
+test_that("the MRT/LRT lines are drawn in their own colours", {
+  skip_if(is.null(mrt_lines()))
+  expect_true(all(c("North-South Line", "Circle Line", "Thomson-East Coast Line") %in%
+                    mrt_lines()$line))
+  calls <- base_map()$x$calls
+  lines <- Filter(function(cl) cl$method == "addPolylines", calls)
+  expect_length(lines, 1)
+  expect_equal(lines[[1]]$args[[3]], mrt_group)
 })
 
 test_that("budget_fit() places rents below, within or above the budget", {
