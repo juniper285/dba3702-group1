@@ -9,7 +9,8 @@ private residential rental contracts (Sep 2021 – Aug 2026): a setup wizard
 and personal settings, what your budget gets you, a map with MRT/LRT
 stations and your places, a listing check, market comparisons,
 and a shortlist. The app lives in [`local_shiny_app/`](local_shiny_app/README.md),
-structured as an R package.
+structured as an R package. Every feature, how it works and whether it is
+worth keeping is described in the [PRD](docs/PRD.md).
 
 ## Run it
 

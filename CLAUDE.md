@@ -6,7 +6,8 @@ data). It lives in **`local_shiny_app/`**, an R package called `rentalapp`.
 - Live app: https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/ (Posit Connect Cloud; every push to `main` redeploys it, so a broken `main` breaks the live site).
 - People-facing docs: `README.md` (overview + **all data sources**) and
   `local_shiny_app/README.md` (package layout and how the modules talk).
-- Keep both READMEs up to date when you add a feature, page or data source.
+- `docs/PRD.md`: every feature, what it does, how it works, and a keep/trim/merge/cut verdict.
+- Keep both READMEs and the PRD up to date when you add, change or remove a feature, page or data source.
 
 ## Everyday commands
 
@@ -43,6 +44,7 @@ Rscript -e 'pkgload::load_all(); run_app(options = list(port = 4321))'   # app a
 | Path | What it is |
 |------|------------|
 | `README.md` | Overview of the app, the live link, and the **Data sources** table: where every data set comes from and the code that pulls it |
+| `docs/PRD.md` | Product requirements: every feature, how it works, and the keep/trim/merge/cut decision table |
 | `.gitignore` | Ignores `*.xlsx`; the raw URA Excel file is about 30 MB and never committed |
 
 ### `local_shiny_app/`: package plumbing
