@@ -4,8 +4,6 @@ app_server <- function(input, output, session) {
   # The building or area selected on the map; with "Apply map selection to
   # all pages" on, the filters narrow every page to it
   map_sel <- new_map_selection()
-  # Map selections saved as Area A and Area B, compared on Market > Area A vs B
-  areas <- new_saved_areas()
 
   # The renter's settings (budget, places, type of home, commute), saved in
   # the browser
@@ -21,9 +19,8 @@ app_server <- function(input, output, session) {
   mod_budget_check_server("budget_check", filters)
   mod_listing_check_server("listing_check", filters, shortlist)
   mod_within_budget_server("within_budget", filters, shortlist)
-  map <- mod_map_server("map", filters, shortlist, map_sel, areas)
-  mod_area_compare_server("area_compare", map$map_data, areas)
-  mod_trends_server("trends", filters)
+  # Also saves areas and compares them under the map (mod_saved_areas)
+  mod_map_server("map", filters, shortlist, map_sel)
   mod_compare_server("compare", filters)
   mod_properties_server("properties", filters, shortlist)
   mod_value_server("value", filters)
@@ -33,9 +30,9 @@ app_server <- function(input, output, session) {
   # Number of shortlisted options, shown next to "Shortlist" in the navbar
   output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")
 
-  # "Filters in use" line on the pages that follow the renter's settings
+  # "My filters" box on the pages that follow the renter's filters
   for (page in c("map", "market", "shortlist", "records")) {
-    output[[paste0("filter_note_", page)]] <- renderText(filters$summary())
+    output[[paste0("filter_note_", page)]] <- renderUI(filter_chips(filters$summary()))
   }
   onBookmarked(function(url) showBookmarkUrlModal(url))
 }

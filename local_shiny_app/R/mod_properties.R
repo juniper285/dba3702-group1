@@ -10,7 +10,8 @@ mod_properties_ui <- function(id) {
   ns <- NS(id)
   pick <- function(i, label) {
     selectizeInput(ns(i), label, choices = NULL,
-                   options = list(placeholder = "Type a project name"))
+                   # the list opens over the page instead of scrolling inside the card
+                   options = list(placeholder = "Type a project name", dropdownParent = "body"))
   }
   tagList(
     card(
@@ -24,9 +25,9 @@ mod_properties_ui <- function(id) {
       layout_columns(
         col_widths = c(3, 3, 3, 3),
         pick("a", "Property A"), pick("b", "Property B"), pick("c", "Property C"),
-        selectInput(ns("bed"), "Bedrooms", choices = c("All", bed_levels))
+        selectInput(ns("bed"), "Bedrooms", choices = c("All", bed_choices))
       ),
-      card_footer("Uses the time period and budget from My settings; ",
+      card_footer("Uses the time period and budget from My filters; ",
                   "all three use the bedroom choice above.")
     ),
     uiOutput(ns("cards")),

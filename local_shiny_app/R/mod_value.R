@@ -7,16 +7,14 @@ mod_value_ui <- function(id) {
   tagList(
     card(
       class = "mt-3",
-      header_with_actions(
-        "Median monthly rent vs median floor area",
-        div(class = "d-flex align-items-center gap-2 small text-muted fw-normal",
-            "Min. recent rentals per project",
-            numericInput(ns("min_n"), NULL, value = 5, min = 1, width = "80px"))
-      ),
+      card_header("Median monthly rent vs median floor area"),
       plotly::plotlyOutput(ns("plot"), height = 560),
-      card_footer("One dot per project (recent rentals matching your filters). Further right ",
-                  "and lower = more space for the money. Green = median rent within your budget. ",
-                  "Starts zoomed in on 98% of projects; double-click to see them all.")
+      card_footer(
+        class = "d-flex flex-wrap gap-3 justify-content-between align-items-start",
+        div("One dot per project (recent rentals matching your filters). Further right ",
+            "and lower = more space for the money. Green = median rent within your budget. ",
+            "Starts zoomed in on 98% of projects; double-click to see them all."),
+        min_rentals_input(ns("min_n"), "Leave out projects with fewer recent rentals than"))
     ),
     card(card_header("Best value: lowest median rent per sqft"),
          DTOutput(ns("table"), fill = FALSE))
@@ -30,7 +28,7 @@ mod_value_server <- function(id, filters) {
 
     value_data <- reactive({
       d <- latest_months(filters$market(), filters$recent())
-      s <- d[!is.na(d$area_sqft), ] |>
+      s <- d |>
         group_by(project, district) |>
         summarise(median = median(rent), sqft = median(area_sqft),
                   psf = median(psf, na.rm = TRUE), n = n(), .groups = "drop") |>

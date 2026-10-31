@@ -1,30 +1,35 @@
 # ==================================================================
 #  Build inst/extdata/rentals.rds, the data set the app reads.
 #
-#  Source: the geocoded copy built by the map app
-#  (../sg_rental_map/data/rentals.rds, from URA_Union_Cleaned_with_Address.xlsx).
-#  Run from the package root (local_shiny_app/) after that file changes:
+#  Source: URA_Union_Cleaned_with_Address.xlsx (URA rental contracts,
+#  combined and geocoded by the team; git-ignored, about 30 MB). Put it in
+#  data-raw/ and run from the package root (local_shiny_app/):
 #    source("data-raw/rentals.R")
+#  Needs readxl (install.packages("readxl")); takes about a minute.
 # ==================================================================
 
-raw <- readRDS("../sg_rental_map/data/rentals.rds")
+raw <- readxl::read_excel("data-raw/URA_Union_Cleaned_with_Address.xlsx", guess_max = 50000)
 
 # Short column names without spaces or symbols
 rentals <- data.frame(
-  project     = raw$project,
-  street      = raw$street,
-  district_no = raw$district,
-  type        = raw$type,
-  bedrooms    = suppressWarnings(as.numeric(raw$bedrooms)),  # "Unknown" -> NA
-  rent        = raw$rent,
-  area_band   = raw$area_sqft,
-  area_sqft   = raw$sqft,
-  psf         = raw$psf,
-  lease_date  = raw$month,
-  address     = raw$address,
-  lat         = raw$lat,
-  lng         = raw$lng,
-  geo_match   = raw$match
+  project     = raw$`Project Name`,
+  street      = raw$`Street Name`,
+  district_no = as.integer(raw$`Postal District`),
+  type        = raw$`Property Type`,
+  bedrooms    = suppressWarnings(as.numeric(raw$`No of Bedroom`)),  # missing -> NA
+  rent        = raw$`Monthly Rent ($)`,
+  area_band   = raw$`Floor Area (SQFT)`,
+  area_sqft   = raw$`Floor Area (SQFT) Midpoint`,
+  psf         = raw$`Rental Price (PSF)`,
+  lease_date  = as.Date(raw$`Lease Commencement Date`),
+  address     = raw$Address,
+  lat         = raw$Latitude,
+  lng         = raw$Longitude,
+  geo_match   = raw$Match_Status
 )
+
+# Leave out contracts with no floor area: landed houses that URA only gives as
+# "<=1000" or ">8000" sqft, so they have no rent per sqft and can't be sized
+rentals <- rentals[!is.na(rentals$area_sqft), ]
 
 saveRDS(rentals, "inst/extdata/rentals.rds", compress = "xz")

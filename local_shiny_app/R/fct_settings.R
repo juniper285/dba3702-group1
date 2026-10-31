@@ -1,6 +1,6 @@
 # ---- Personal settings: what the renter is looking for ----------------
 #
-# Set up by the first-visit wizard and the "My settings" dialog, kept in the
+# Set up by the first-visit wizard and the "My filters" dialog, kept in the
 # browser's localStorage (settings.js) and turned into filters by
 # mod_filters_server().
 
@@ -25,11 +25,52 @@ period_for <- function(months, dates) {
 # Icons a renter can give a place: `icon` for the app (Font Awesome 6),
 # `map_icon` for the map's pins (leaflet's Font Awesome 4 names)
 place_kinds <- data.frame(
-  kind     = c("work", "study", "home", "family", "leisure", "other"),
-  label    = c("Work", "School", "Home", "Family", "Leisure", "Other"),
-  icon     = c("briefcase", "graduation-cap", "house", "heart", "dumbbell", "location-dot"),
-  map_icon = c("briefcase", "graduation-cap", "home", "heart", "bicycle", "map-marker")
+  kind     = c("work", "study", "family", "leisure", "other"),
+  label    = c("Work", "School", "Family", "Leisure", "Other"),
+  icon     = c("briefcase", "graduation-cap", "heart", "dumbbell", "location-dot"),
+  map_icon = c("briefcase", "graduation-cap", "heart", "bicycle", "map-marker")
 )
+
+# Words OneMap writes in capitals that should stay that way, and short
+# words with no vowels that are street abbreviations rather than acronyms.
+# settings.js keeps a copy of both lists for its place suggestions.
+place_acronyms <- c("NUS", "NTU", "SMU", "SUTD", "SIT", "SUSS", "SIM", "NIE", "ITE", "NAFA",
+                    "ACS", "SJI", "CHIJ", "SCGS", "MGS", "RI", "RGS", "HCI", "SOTA",
+                    "NUH", "SGH", "CGH", "KTPH", "MOE", "HDB", "URA", "LTA", "MRT", "LRT",
+                    "CBD", "MBS", "ECP", "PIE", "AYE", "CTE", "BKE", "KPE", "TPE", "SLE",
+                    "UOB", "OCBC", "DBS", "POSB", "IMM", "JEM", "NEX", "ION", "YMCA", "YWCA")
+place_abbrevs <- c("ST", "RD", "DR", "PL", "CL", "CT", "LN", "GR", "SQ", "WK", "PK", "BT",
+                   "TG", "MT", "STH", "NTH", "BLK", "BLVD", "JLN", "LOR", "LRG", "GDN",
+                   "GDNS", "HTS", "CTR", "CRES", "TCE", "HWY", "WLK", "PKWY", "XPWY", "MKT")
+place_small_words <- c("of", "and", "the", "at", "in", "on", "by", "for", "to")
+
+#' Title case for OneMap's all-capitals names and addresses, keeping acronyms
+#'
+#' "NUS (RIDGE VIEW RESIDENTIAL COLLEGE (RVRC))" becomes "NUS (Ridge View
+#' Residential College (RVRC))". A word stays in capitals when it is a known
+#' acronym, has a digit ("10A"), or is 2-5 letters with no vowel (RVRC, KKH),
+#' unless it is a street abbreviation ("St", "Rd").
+#' @noRd
+title_case_place <- function(x) {
+  vapply(as.character(x), function(s) {
+    parts <- regmatches(s, gregexpr("[A-Za-z0-9]+|[^A-Za-z0-9]+", s))[[1]]
+    first <- TRUE
+    for (i in seq_along(parts)) {
+      w <- parts[i]
+      if (!grepl("[A-Za-z0-9]", w)) next
+      up <- toupper(w); low <- tolower(w)
+      prev <- if (i > 1) parts[i - 1] else ""
+      parts[i] <-
+        if (grepl("[0-9]", w) || up %in% place_acronyms ||
+            (nchar(w) %in% 2:5 && !grepl("[AEIOUY]", up) && !up %in% place_abbrevs)) up
+        else if (endsWith(prev, "'")) low                          # "Andrew's"
+        else if (!first && low %in% place_small_words) low
+        else paste0(toupper(substr(w, 1, 1)), substring(low, 2))
+      first <- FALSE
+    }
+    paste(parts, collapse = "")
+  }, "", USE.NAMES = FALSE)
+}
 
 #' A table of places (name, kind, label, address, lat, lng); no rows by default
 #'
@@ -90,7 +131,7 @@ place_address <- function(hit) {
   a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(a)))
   # Some places' address is just their name: keep it rather than nothing
   if (!nzchar(a)) a <- trimws(sub("SINGAPORE \\d{6}$", "", trimws(hit$address)))
-  a <- tools::toTitleCase(tolower(a))
+  a <- title_case_place(a)
   if (grepl("^\\d{6}$", hit$postal)) paste0(a, ", Singapore ", hit$postal) else a
 }
 
@@ -118,7 +159,8 @@ settings_choices <- function(rentals = rentals_data()) {
   list(districts = sort(unique(rentals$district)),
        types     = sort(unique(rentals$type)),
        stations  = sort(mrt_stations()$station),
-       dates     = range(rentals$lease_date))
+       dates     = range(rentals$lease_date),
+       area_top  = area_top(rentals))
 }
 
 #' Settings for someone who has not set anything up yet
@@ -128,9 +170,9 @@ default_settings <- function(choices = settings_choices()) {
     budget    = c(3000, 5000),
     places    = new_places(),
     districts = character(),
-    beds      = bed_levels,
+    beds      = bed_choices,
     types     = choices$types,
-    area      = c(0, area_max),
+    area      = c(0, choices$area_top),
     period    = period_for(12, choices$dates),
     recent    = 12,
     mrt_pick  = "",
@@ -143,7 +185,7 @@ default_settings <- function(choices = settings_choices()) {
 #' @noRd
 settings_to_json <- function(s) {
   s$period <- format(s$period)
-  s$version <- 1
+  s$version <- 2
   as.character(jsonlite::toJSON(s, auto_unbox = TRUE, digits = NA))
 }
 
@@ -175,9 +217,11 @@ settings_from_json <- function(json, choices = settings_choices()) {
 
   keep("budget",    num_range(x$budget, 0, 1e5))
   keep("districts", pick(x$districts, choices$districts, allow_empty = TRUE))
-  keep("beds",      pick(x$beds, bed_levels))
+  keep("beds",      pick(x$beds, bed_choices))
   keep("types",     pick(x$types, choices$types))
-  keep("area",      num_range(x$area, 0, area_max))
+  # Before version 2 the slider's top (area_max) meant "and above"
+  if (!isTRUE(x$version >= 2) && isTRUE(as.numeric(x$area[2]) >= area_max)) x$area[2] <- choices$area_top
+  keep("area",      num_range(x$area, 0, choices$area_top))
   keep("recent",    if (isTRUE(as.numeric(x$recent) %in% recent_choices)) as.numeric(x$recent))
   keep("mrt_pick",  if (identical(x$mrt_pick, "") || isTRUE(x$mrt_pick %in% choices$stations)) x$mrt_pick)
   keep("mrt_dist",  one_num(x$mrt_dist, 100, mrt_max))
@@ -189,10 +233,12 @@ settings_from_json <- function(json, choices = settings_choices()) {
   # Places: name + a location in Singapore (kind and address are optional)
   pl <- x$places
   if (is.data.frame(pl) && all(c("name", "lat", "lng") %in% names(pl))) {
-    kind <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
-    kind <- ifelse(kind %in% place_kinds$kind, kind, "other")
+    saved <- if (is.null(pl$kind)) "other" else as.character(pl$kind)
+    kind <- ifelse(saved %in% place_kinds$kind, saved, "other")
+    # Places saved with the old "home" icon keep "Home" as their label
+    custom <- if (is.null(pl$label)) ifelse(saved == "home", "Home", "") else pl$label
     pl <- new_places(name = as.character(pl$name), kind = kind,
-                     label = place_label(kind, if (is.null(pl$label)) "" else pl$label),
+                     label = place_label(kind, custom),
                      address = if (is.null(pl$address)) "" else as.character(pl$address),
                      lat = as.numeric(pl$lat), lng = as.numeric(pl$lng))
     pl <- pl[!is.na(pl$lat) & !is.na(pl$lng) & nzchar(pl$name) &
@@ -205,25 +251,27 @@ settings_from_json <- function(json, choices = settings_choices()) {
   s
 }
 
-#' Short description of the settings, one phrase per setting
+#' Short description of the settings, one phrase per setting, each
+#' starting with a capital ("Any bedrooms")
 #' @noRd
 settings_summary <- function(s, choices = settings_choices()) {
-  c(
+  parts <- c(
     paste0(money(s$budget[1]), " - ", money(s$budget[2])),
-    if (setequal(s$beds, bed_levels)) "any bedrooms"
+    if (all(bed_choices %in% s$beds)) "any bedrooms"
     else paste(paste(s$beds, collapse = ", "), "bedrooms"),
     if (!setequal(s$types, choices$types)) paste(s$types, collapse = ", "),
-    if (s$area[1] > 0 || s$area[2] < area_max)
-      area_text(s$area),
+    if (s$area[1] > 0 || s$area[2] < choices$area_top)
+      area_text(s$area, choices$area_top),
     if (length(s$districts) == 0) "anywhere in Singapore"
-    else if (length(s$districts) <= 2) paste(sub(" .*", "", s$districts), collapse = ", ")
-    else paste(length(s$districts), "districts"),
+    # "D10 Bukit Timah, Holland, Tanglin" -> "D10 Bukit Timah"
+    else paste(sub(",.*", "", sort(s$districts)), collapse = ", "),
     if (nrow(s$places)) paste("near", paste(s$places$name, collapse = ", ")),
     if (nrow(s$places) && s$place_km < place_km_max) paste0("within ", s$place_km, " km of them"),
     if (nzchar(s$mrt_pick)) paste0("within ", s$mrt_dist, " m of ", s$mrt_pick)
     else if (s$mrt_dist < mrt_max) paste0("within ", s$mrt_dist, " m of an MRT/LRT"),
-    tolower(names(recent_choices)[match(s$recent, recent_choices)])
+    names(recent_choices)[match(s$recent, recent_choices)]
   )
+  paste0(toupper(substr(parts, 1, 1)), substring(parts, 2))
 }
 
 #' Script that loads and saves the settings in the browser (inst/app/www/settings.js)

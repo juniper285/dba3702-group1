@@ -6,3 +6,11 @@ fake_settings <- function(...) {
   rv <- reactiveVal(s)
   list(settings = rv, first_visit = reactive(FALSE), save = function(x) rv(x))
 }
+
+# Key places as a places table (name, lat, lng), in the order given
+key_place <- function(names) {
+  p <- key_places[match(names, key_places$name), c("name", "lat", "lng")]
+  p <- p[!is.na(p$name), ]
+  rownames(p) <- NULL
+  p
+}

@@ -1,50 +1,28 @@
-# SG Rental Map
+# RentLens
 
-**RentLens, live:** https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/ (`local_shiny_app/`, redeployed from `main` on every push; see [its README](local_shiny_app/README.md#deploying-posit-connect-cloud)).
+**Live:** https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/
+(redeployed from `main` on every push; see
+[Deploying](local_shiny_app/README.md#deploying-posit-connect-cloud)).
 
-An interactive R Shiny map of Singapore private residential rental contracts (URA data, Sep 2021 – Aug 2026, 412,595 contracts). It's styled after [viscover](https://github.com/XiaodanLyu/viscover).
-
-## Features
-
-- **Map:** one circle per building, coloured by median rent psf or median monthly rent and sized by number of contracts. Includes an optional heatmap layer and Light, OneMap and Satellite basemaps.
-- **Click a building:** see its contract count, median rent and psf, bedroom breakdown and monthly trend.
-- **Draw a shape:** use the polygon, rectangle or circle tool to summarise every contract in that area.
-- **Filters:** lease month range, property type, bedrooms, postal district, geocode quality.
-- **Export:** download the contracts in the current selection as CSV.
+An R Shiny app that helps renters in Singapore check their budget against URA
+private residential rental contracts (Sep 2021 – Aug 2026): a setup wizard
+and personal settings, what your budget gets you, a map with MRT/LRT
+stations and your places, a listing check, market comparisons,
+and a shortlist. The app lives in [`local_shiny_app/`](local_shiny_app/README.md),
+structured as an R package. Every feature, how it works and whether it is
+worth keeping is described in the [PRD](docs/PRD.md).
 
 ## Run it
 
 ```r
-install.packages(c("shiny", "shinydashboard", "leaflet", "leaflet.extras",
-                   "sf", "dplyr", "DT", "plotly", "readxl"))
-shiny::runApp("sg_rental_map")
+install.packages(c("shiny", "bslib", "DT", "dplyr", "plotly", "sass",
+                   "leaflet", "leaflet.extras", "sf", "httr2", "pkgload"))
+shiny::runApp("local_shiny_app")
 ```
-
-## Data
-
-The rental contracts come from URA's
-[Data Service API](https://eservice.ura.gov.sg/maps/api/#introduction)
-(private residential rental contracts; needs a free URA access key). Every
-data source the apps use is listed under [Data sources](#data-sources) below.
-
-`sg_rental_map/data/rentals.rds` is a cleaned, fast-loading copy of
-`URA_Union_Cleaned_with_Address.xlsx`. To refresh it:
-
-1. Put the updated `URA_Union_Cleaned_with_Address.xlsx` in `sg_rental_map/data/`.
-2. Delete `rentals.rds`.
-3. Start the app. It rebuilds the `.rds` from the Excel file in about 30 seconds.
-
-The Excel file itself is git-ignored because of its size (about 30 MB).
-
-### Notes
-
-- **Missing coordinates:** 1,647 contracts are not shown on the map.
-- **Default geocode filter:** only *Exact* and *Good* matches are shown at first. *Street only* matches sit at the street rather than the building, and you can switch them on in the sidebar.
 
 ## Data sources
 
-Every data set RentLens (`local_shiny_app`) uses, where it comes from and the code
-that pulls it. The SG Rental Map app uses the rental contracts only.
+Every data set RentLens uses, where it comes from and the code that pulls it.
 Rebuild scripts live in `local_shiny_app/data-raw/` and write to
 `local_shiny_app/inst/extdata/`; run them from `local_shiny_app/`.
 
@@ -55,7 +33,7 @@ Rebuild scripts live in `local_shiny_app/data-raw/` and write to
 | Schools | [MOE General information of schools](https://data.gov.sg/datasets/d_688b934f82c1059ed0a6993d2a829089/view), data.gov.sg, geocoded with the [OneMap Search API](https://www.onemap.gov.sg/apidocs/) | `local_shiny_app/data-raw/schools.R` | `local_shiny_app/inst/extdata/schools.csv` |
 | Key places (universities, business districts, ...) | typed in by hand | `destination_groups` in `local_shiny_app/R/fct_location.R` | code |
 | Address lookup ("Check a listing") | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live | `onemap_search()` in `local_shiny_app/R/fct_listing.R` | cached per R session |
-| Place suggestions ("Places that matter" in My settings) | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live, called from the browser as you type | `searchPlaces()` in `local_shiny_app/inst/app/www/settings.js` | not stored; the chosen place is saved in the browser with the settings |
+| Place suggestions ("Places that matter" in My filters) | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live, called from the browser as you type | `searchPlaces()` in `local_shiny_app/inst/app/www/settings.js` | not stored; the chosen place is saved in the browser with the settings |
 | Basemaps | Esri World Gray Canvas and World Imagery; [OneMap](https://www.onemap.gov.sg/) tiles (Singapore Land Authority) | `base_map()` in `local_shiny_app/R/fct_map.R` | loaded live |
 | Map place search | OpenStreetMap Nominatim, via `leaflet.extras::addSearchOSM()` | `base_map()` | live |
 
@@ -75,19 +53,19 @@ and a `Match_Status` geocode-quality flag, giving
 `URA_Union_Cleaned_with_Address.xlsx`. The scripts for those steps are not in
 this repo. The Excel file is git-ignored (about 30 MB).
 
-From there:
-
-1. `sg_rental_map/app.R` converts the Excel file to `sg_rental_map/data/rentals.rds`
-   on first run (see [Data](#data) above).
-2. `source("data-raw/rentals.R")` (from `local_shiny_app/`) renames the columns and writes
-   `local_shiny_app/inst/extdata/rentals.rds`:
+From there, put the Excel file in `local_shiny_app/data-raw/` and run
+`source("data-raw/rentals.R")` from `local_shiny_app/`. It renames the columns
+and writes `local_shiny_app/inst/extdata/rentals.rds`:
 
 ```r
-raw <- readRDS("../sg_rental_map/data/rentals.rds")
-rentals <- data.frame(project = raw$project, ..., lat = raw$lat, lng = raw$lng,
-                      geo_match = raw$match)
+raw <- readxl::read_excel("data-raw/URA_Union_Cleaned_with_Address.xlsx", guess_max = 50000)
+rentals <- data.frame(project = raw$`Project Name`, ..., lat = raw$Latitude,
+                      lng = raw$Longitude, geo_match = raw$Match_Status)
 saveRDS(rentals, "inst/extdata/rentals.rds", compress = "xz")
 ```
+
+The script leaves out the 1,168 contracts with no floor area (landed houses URA
+lists only as "<=1000" or ">8000" sqft).
 
 ### MRT/LRT stations (LTA, data.gov.sg)
 
@@ -126,7 +104,7 @@ httr2::request("https://www.onemap.gov.sg/api/common/elastic/search") |>
 
 ```r
 # from local_shiny_app/
-source("data-raw/rentals.R")       # after sg_rental_map/data/rentals.rds is rebuilt
+source("data-raw/rentals.R")       # needs data-raw/URA_Union_Cleaned_with_Address.xlsx
 source("data-raw/mrt_stations.R")  # LTA station exits
 source("data-raw/schools.R")       # MOE schools + OneMap (about a minute)
 ```

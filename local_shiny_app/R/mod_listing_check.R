@@ -52,10 +52,10 @@ mod_listing_check_ui <- function(id) {
         ),
         layout_columns(
           col_widths = c(4, 8),
-          selectInput(ns("beds"), "Bedrooms", c("Any", bed_levels[bed_levels != "Unknown"]),
+          selectInput(ns("beds"), "Bedrooms", c("Any", bed_choices),
                       selected = "2"),
           selectInput(ns("type"), "Property type", c("Any", sort(unique(rentals$type))),
-                      selected = "Non-Landed Properties")
+                      selected = "Any")
         ),
         sliderInput(ns("radius"), "Nearby means within", min = 200, max = 2000,
                     value = 500, step = 100, post = " m")
@@ -97,9 +97,8 @@ mod_listing_check_ui <- function(id) {
         ),
         plotly::plotlyOutput(ns("plot"), height = 360),
         card_footer(
-          span(style = paste0("color:", rl_colours[["typical"]]), "\u25A0"), " typical range  ",
-          "\u2507 median  ",
-          span(style = paste0("color:", rl_colours[["accent"]]), "\u2503"), " your asking rent")
+          "\u2507 Median  ",
+          span(style = paste0("color:", rl_colours[["accent"]]), "\u2503"), " Your asking rent")
       )
     )
   )
@@ -213,21 +212,32 @@ mod_listing_check_server <- function(id, filters, shortlist) {
           div(class = "mt-3", tiles), few))
       }
       r <- level_row()
+      if (r$n == 0) {
+        return(tagList(
+          div(class = "verdict verdict-info verdict-strong",
+              div(class = "verdict-icon", icon("circle-question")),
+              div(div(class = "verdict-title", no_rentals_message(input$level)),
+                  div(class = "verdict-body", "Pick another level under the chart, or change ",
+                      "the bedrooms or property type."))),
+          div(class = "mt-3", tiles), few))
+      }
       psf <- if (!is.na(r$pct_psf_below))
         paste0(" Per sqft that is S$", format(round(input$asking / input$area, 2), nsmall = 2),
                ", ", higher_lower(r$pct_psf_below), " of them.")
       tagList(
-        div(class = "verdict verdict-accent",
+        div(class = "verdict verdict-accent verdict-strong",
             div(class = "verdict-icon", icon("scale-balanced")),
-            div(div(class = "verdict-title",
-                    if (r$n > 0) asking_verdict(r, input$asking, input$beds)
-                    else paste("No past rentals at the", tolower(input$level), "level.")),
+            div(div(class = "verdict-title", asking_verdict(r, input$asking, input$beds)),
                 div(class = "verdict-body",
-                    if (r$n > 0 && round(r$diff_pct, 1) == 0) paste0("That is the median, ", money(r$median), ".", psf)
-                    else if (r$n > 0) paste0("That is ", sprintf("%.1f%%", abs(r$diff_pct)),
-                                             if (r$diff_pct > 0) " above" else " below",
-                                             " the median of ", money(r$median), ".", psf),
-                    " Change the level under the chart to compare more widely."))),
+                    if (round(r$diff_pct, 1) == 0) paste0("That is the median, ", money(r$median), ".", psf)
+                    else paste0("That is ", sprintf("%.1f%%", abs(r$diff_pct)),
+                                if (r$diff_pct > 0) " above" else " below",
+                                " the median of ", money(r$median), ".", psf),
+                    " Change the level under the chart to compare more widely."),
+                if (r$n < few_rentals)
+                  div(class = "verdict-warning", icon("triangle-exclamation"),
+                      sprintf(" Based on only %d past rental%s, so treat this as a rough guide.",
+                              r$n, if (r$n == 1) "" else "s")))),
         div(class = "mt-3", tiles), few)
     })
 
@@ -274,8 +284,7 @@ mod_listing_check_server <- function(id, filters, shortlist) {
     output$plot <- plotly::renderPlotly({
       i <- match(input$level, c("Same project", "Nearby", "Same district", "Same region"))
       s <- sets()[[i]]
-      validate(need(nrow(s) > 0, paste0("No past rentals at the '", input$level,
-                                        "' level. Try another level or a wider radius.")))
+      validate(need(nrow(s) > 0, no_rentals_message(input$level)))
       rent_histogram(s$rent, mark = input$asking)
     })
 

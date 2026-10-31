@@ -14,7 +14,7 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
 
   testServer(mod_map_server, args = list(filters = filters, shortlist = shortlist,
                                          areas = areas), {
-    session$setInputs(metric = "psf", geo_match = unique(rentals$geo_match))
+    session$setInputs(metric = "psf", in_budget = FALSE)
     expect_true(all(selected()$district_no == 1))
 
     loc <- loc_summary()$loc_id[1]
@@ -28,12 +28,22 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     expect_equal(nrow(shortlist()), 1)
     expect_equal(shortlist()$project, table_data()$project[1])
 
-    session$setInputs(save_a = 1)
-    expect_equal(areas$a_ids, loc)
+    session$setInputs(save_area = 1)
+    expect_equal(length(areas()), 1)
+    expect_equal(areas()[[1]]$locs, loc)
+    expect_equal(areas()[[1]]$name, sel$label)
 
+    session$setInputs(rename_area = areas()[[1]]$id)
+    session$setInputs(rename_to = "My favourite", rename_ok = 1)
+    expect_equal(areas()[[1]]$name, "My favourite")
+
+    # "Clear selection" keeps the saved areas
     session$setInputs(clear = 1)
     expect_null(sel$ids)
-    expect_null(areas$a_ids)
+    expect_equal(length(areas()), 1)
+
+    session$setInputs(remove_area = areas()[[1]]$id)
+    expect_equal(length(areas()), 0)
   })
 })
 
@@ -45,10 +55,32 @@ test_that("an applied map selection narrows the filters' market", {
     map_sel$ids <- loc; map_sel$label <- "One building"
     session$flushReact()
     expect_true(all(market()$loc_id == loc))
-    expect_match(summary(), "map selection: One building")
+    expect_match(paste(summary(), collapse = " · "), "Map selection: One building")
 
     map_sel$apply <- FALSE
     session$flushReact()
     expect_equal(nrow(market()), nrow(base()))
+  })
+})
+
+test_that("the map shows only buildings within budget unless switched off", {
+  rentals <- rentals_data()
+  filters <- list(
+    base     = reactive(rentals[rentals$district_no == 10, ]),
+    projects = reactive(NULL),
+    budget   = reactive(c(3000, 5000)),
+    places   = reactive(new_places()),
+    mrt_pick = reactive(NULL),
+    mrt_dist = reactive(mrt_max)
+  )
+  testServer(mod_map_server, args = list(filters = filters, shortlist = reactiveVal(empty_shortlist()),
+                                         areas = new_saved_areas()), {
+    session$setInputs(metric = "budget", in_budget = TRUE)
+    within <- loc_summary()
+    expect_gt(nrow(within), 0)
+    expect_true(all(within$rent >= 3000 & within$rent <= 5000))
+    session$setInputs(in_budget = FALSE)
+    expect_gt(nrow(loc_summary()), nrow(within))
+    expect_true(all(well_located(map_data()$geo_match)))
   })
 })

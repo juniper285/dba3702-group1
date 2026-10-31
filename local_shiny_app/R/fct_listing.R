@@ -70,12 +70,12 @@ nearest_locations <- function(locs, lat, lng) {
 #' @noRd
 comparable_sets <- function(d, place, radius_m = 500) {
   # Distances only use contracts placed at their building, not street-level matches
-  placed <- !is.na(d$lat) & !grepl("^Street only", d$geo_match %||% "")
+  placed <- !is.na(d$lat) & !grepl("^Street only", if (is.null(d$geo_match)) "" else d$geo_match)
   locs <- distinct(d[placed, ], project, district_no, lat, lng)
   near <- nearest_locations(locs, place$lat, place$lng)
 
   # Same project: the OneMap building name, or a project within 50 m
-  building <- toupper(trimws(place$building %||% ""))
+  building <- toupper(trimws(if (is.null(place$building)) "" else place$building))
   project <- if (nzchar(building) && building %in% d$project) building
              else if (nrow(near) && near$dist_m[1] <= 50) near$project[1]
              else NA_character_
@@ -159,6 +159,19 @@ asking_verdict <- function(row, asking, beds = NULL) {
            else paste("in the", tolower(row$level))
   paste0(money(asking), " is ", higher_lower(row$pct_below), " of ", what, " ", where,
          " (", format(row$n, big.mark = ","), " rentals).")
+}
+
+# Fewer past rentals than this and a verdict is only a rough guide
+few_rentals <- 5
+
+#' What to say when a comparison level has no past rentals
+#' @param level "Same project", "Nearby", "Same district" or "Same region".
+#' @noRd
+no_rentals_message <- function(level) {
+  if (level == "Same project")
+    "This project isn't in our data, or has no past rentals for these choices. Try Nearby or Same district."
+  else paste0("No past rentals ", if (level == "Nearby") "nearby" else paste("in the", tolower(sub("Same ", "", level))),
+              " for these choices. Try a wider radius or a wider level.")
 }
 
 #' "higher than 72%" / "lower than 60%", from the % of past rents below a value

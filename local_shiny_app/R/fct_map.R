@@ -18,7 +18,8 @@ map_palette <- function(metric) {
   if (metric == "budget") {
     colorFactor(c("#4575b4", "#1a9850", "#d73027"), levels = budget_levels)
   } else {
-    colorBin("RdYlBu", bins = map_bins[[metric]], reverse = TRUE)
+    # One colour, lightest = cheapest, darkest = dearest
+    colorBin(c("#c6dbef", "#08306b"), bins = map_bins[[metric]])
   }
 }
 
@@ -29,6 +30,11 @@ budget_fit <- function(rent, budget) {
                 ifelse(rent > budget[2], budget_levels[3], budget_levels[2])),
          levels = budget_levels)
 }
+
+#' TRUE for rentals whose building was found exactly or well enough to map
+#' (the geocoding's "Exact" and "Good" matches)
+#' @noRd
+well_located <- function(geo_match) grepl("^Exact|^Good", geo_match)
 
 #' One row per map location (loc_id, lat, lng)
 #' @noRd
@@ -62,34 +68,74 @@ add_draw_toolbar <- function(map) {
                  editOptions = editToolbarOptions())
 }
 
-# Schools and work areas show as yellow stars (always on); airport, ports and
-# hospitals get their own layer with icons
-star_groups <- c("Universities", "Polytechnics", "Business districts")
+# Key-place layers on the map, built from the groups in destination_groups.
+# All start hidden, so the map shows only the renter's own places until they
+# turn a layer on. Universities and polytechnics are yellow stars; the others
+# are pins with an icon (`colour` is an awesome-markers colour, `hex` the same
+# colour for the key)
+key_layers <- list(
+  "Universities and polytechnics" = list(groups = c("Universities", "Polytechnics")),
+  "Work areas"        = list(groups = "Business districts",
+                             icon = "briefcase", colour = "blue", hex = "#38aadd"),
+  "Hospitals"         = list(groups = "Hospitals",
+                             icon = "plus-square", colour = "red", hex = "#d63e2a"),
+  "Airport and ports" = list(groups = "Transport",
+                             icon = "plane", colour = "green", hex = "#72b026")
+)
 star_svg <- paste0(
   "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>",
   "<path d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6 5.6 21.1 7 14l-5.3-5 7.2-.9z' ",
   "fill='#FFD60A' stroke='#5c4a00' stroke-width='1.3' stroke-linejoin='round'/></svg>")
-place_icons   <- c("Transport" = "plane", "Hospitals" = "plus-square")
-place_colours <- c("Transport" = "green", "Hospitals" = "red")
 
-#' Add the key places: stars for schools and work areas, icons for the rest
+#' Add the key places, one layer per entry of key_layers
 #' @noRd
 add_key_places <- function(map, places = key_places) {
-  stars  <- places[places$group %in% star_groups, ]
-  others <- places[!places$group %in% star_groups, ]
   star <- makeIcon(
     iconUrl = paste0("data:image/svg+xml;charset=UTF-8", ",",
                      utils::URLencode(star_svg, reserved = TRUE)),
     iconWidth = 26, iconHeight = 26, iconAnchorX = 13, iconAnchorY = 13)
-  map |>
-    addMarkers(data = stars, lng = ~lng, lat = ~lat, icon = star,
-               group = "Schools and work areas", label = ~paste0(name, " (", group, ")")) |>
-    addAwesomeMarkers(data = others, lng = ~lng, lat = ~lat,
-                      group = "Airport, ports and hospitals",
-                      label = ~paste0(name, " (", group, ")"),
-                      icon = awesomeIcons(icon = unname(place_icons[others$group]),
-                                          library = "fa", iconColor = "white",
-                                          markerColor = unname(place_colours[others$group])))
+  for (layer in names(key_layers)) {
+    k <- key_layers[[layer]]
+    p <- places[places$group %in% k$groups, ]
+    map <- if (is.null(k$icon)) {
+      addMarkers(map, data = p, lng = ~lng, lat = ~lat, icon = star, group = layer,
+                 label = ~paste0(name, " (", group, ")"))
+    } else {
+      addAwesomeMarkers(map, data = p, lng = ~lng, lat = ~lat, group = layer,
+                        label = ~paste0(name, " (", group, ")"),
+                        icon = awesomeIcons(icon = k$icon, library = "fa", iconColor = "white",
+                                            markerColor = k$colour))
+    }
+  }
+  map
+}
+
+#' The map's key: what each symbol means (shown in the top-right corner)
+#' @noRd
+map_key <- function() {
+  row <- function(symbol, text) div(class = "map-key-row", span(class = "map-key-symbol", symbol), text)
+  pin <- function(icon_name, hex) span(class = "map-key-pin", style = paste0("background:", hex),
+                                       icon(icon_name))
+  dot <- function(fill, line, size = 10) span(class = "map-key-dot", style = sprintf(
+    "width:%dpx;height:%dpx;background:%s;border:1.5px solid %s", size, size, fill, line))
+  ring <- function(line) span(class = "map-key-dot", style = sprintf(
+    "width:14px;height:14px;border:2.5px solid %s", line))
+  layers <- key_layers[!vapply(key_layers, function(k) is.null(k$icon), TRUE)]
+  tags$details(
+    class = "map-key", open = NA,
+    tags$summary("Map key"),
+    row(span(dot("#9ca3af", "#333", 8), dot("#9ca3af", "#333", 14)),
+        "A building with rentals; bigger = more rentals"),
+    row(ring("#000"), "Selected"),
+    row(span(ring(area_palette[1]), ring(area_palette[2])), "Saved areas, each in its own colour"),
+    row(pin("location-dot", "#d252b9"), "My places"),
+    row(HTML(star_svg), "Universities and polytechnics"),
+    lapply(names(layers), function(n) row(pin(layers[[n]]$icon, layers[[n]]$hex), n)),
+    row(dot("#fff", "#222"), "MRT/LRT station"),
+    row(dot("#cab2d6", "#6a3d9a"), "School"),
+    div(class = "map-key-note", "Only buildings and your places show at first; turn the ",
+        "others on with the layers button (bottom left).")
+  )
 }
 
 #' Add small white dots for MRT/LRT stations and purple dots for schools
@@ -124,13 +170,13 @@ base_map <- function() {
                                   '<a href="https://www.sla.gov.sg">Singapore Land Authority</a>')) |>
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
     addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
-                     overlayGroups = c("Buildings", "My places", "Schools and work areas",
-                                       "Airport, ports and hospitals", "Heatmap",
-                                       "MRT/LRT stations",
+                     overlayGroups = c("Buildings", "My places", names(key_layers),
+                                       "Heatmap", "MRT/LRT stations",
                                        if (!is.null(schools_data())) "Schools"),
                      options = layersControlOptions(collapsed = TRUE),
                      position = "bottomleft") |>
-    hideGroup(c("Airport, ports and hospitals", "Heatmap", "MRT/LRT stations", "Schools")) |>
+    hideGroup(c(names(key_layers), "Heatmap", "MRT/LRT stations", "Schools")) |>
+    addControl(map_key(), position = "topright", className = "map-key-control") |>
     addSearchOSM() |>
     add_draw_toolbar() |>
     setView(103.83, 1.33, zoom = 12) |>
@@ -189,4 +235,70 @@ location_labels <- function(d) {
     format(d$n, big.mark = ","), money(d$rent), d$psf,
     ifelse(is.na(d$mrt), "-", paste0(d$mrt, " (", format(d$mrt_m, big.mark = ","), " m)"))) |>
     lapply(HTML)
+}
+
+# ---- Saved areas (compared under the map) ---------------------------------
+
+# One colour per saved area, used for its outline, list dot and charts
+area_palette <- c("#1e3a8a", "#f59e0b", "#db2777", "#059669")
+max_areas <- length(area_palette)
+
+#' No saved areas yet: a list of areas, each list(id, name, colour, locs)
+#' where `locs` are map location ids
+#' @noRd
+new_saved_areas <- function() reactiveVal(list())
+
+#' A name for a selection of buildings
+#'
+#' One building: its project name. Several: the station nearest their centre,
+#' e.g. "Around Clementi MRT · 59 buildings".
+#' @param d Contracts in the selection (with loc_id, lat, lng, project, district).
+#' @noRd
+name_area <- function(d, mrt = mrt_stations()) {
+  d <- d[!is.na(d$loc_id), ]
+  n <- length(unique(d$loc_id))
+  if (n == 0) return("Empty area")
+  if (n == 1) return(paste(head(unique(d$project), 2), collapse = " / "))
+  where <- if (is.null(mrt)) names(which.max(table(d$district)))
+           else nearest_mrt(mean(d$lat), mean(d$lng), mrt)$mrt_station
+  paste0("Around ", where, " · ", n, " buildings")
+}
+
+#' Add an area to the saved list (NULL when the list is full), giving it the
+#' first colour not in use
+#' @noRd
+add_area <- function(areas, locs, name) {
+  if (length(areas) >= max_areas) return(NULL)
+  used <- vapply(areas, `[[`, "", "colour")
+  ids <- vapply(areas, `[[`, 0, "id")
+  c(areas, list(list(id = if (length(ids)) max(ids) + 1 else 1, name = name,
+                     colour = setdiff(area_palette, used)[1], locs = as.integer(locs))))
+}
+
+#' Saved areas as JSON for the browser and "Save search" links. Buildings are
+#' stored by their coordinates, which survive a rebuild of the data (the map
+#' location ids don't)
+#' @noRd
+areas_to_json <- function(areas, locs = map_locations()) {
+  keys <- paste(locs$lat, locs$lng)
+  jsonlite::toJSON(lapply(areas, function(a) list(
+    name = a$name, keys = I(keys[match(a$locs, locs$loc_id)]))),
+    auto_unbox = TRUE)
+}
+
+#' Saved areas back from areas_to_json(); areas whose buildings are no longer
+#' in the data are dropped, and anything unreadable gives no areas
+#' @noRd
+areas_from_json <- function(json, locs = map_locations()) {
+  x <- tryCatch(jsonlite::fromJSON(json, simplifyVector = FALSE), error = function(e) NULL)
+  if (!is.list(x)) return(list())
+  keys <- paste(locs$lat, locs$lng)
+  areas <- list()
+  for (a in head(x, max_areas)) {
+    ids <- locs$loc_id[match(unlist(a$keys), keys)]
+    ids <- ids[!is.na(ids)]
+    if (length(ids) == 0 || !is.character(a$name)) next
+    areas <- add_area(areas, ids, substr(a$name, 1, 80))
+  }
+  areas
 }

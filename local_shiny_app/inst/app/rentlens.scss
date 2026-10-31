@@ -1,7 +1,7 @@
 // RentLens look and feel, added on top of the bslib theme (app_theme())
 
 // ---- Navbar --------------------------------------------------------------
-// Stays at the top while scrolling, so the menu (and My settings) is always
+// Stays at the top while scrolling, so the menu (and My filters) is always
 // in reach, e.g. after the setup wizard scrolls down to the options list
 .navbar {
   position: sticky;
@@ -76,7 +76,7 @@
   a { text-decoration: none; font-weight: 500; }
 }
 
-// ---- My settings summary and quick filters (Search page) -----------------
+// ---- "My filters" box (every page) and quick filters (Search page) --------
 .settings-summary {
   display: flex;
   gap: 1rem;
@@ -96,8 +96,14 @@
 .settings-chip {
   padding: 0.15rem 0.65rem;
   border-radius: 999px;
-  background: rgba($primary, 0.08);
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
   font-size: 0.85rem;
+}
+.edit-filters { white-space: nowrap; flex: none; }
+@media (max-width: 575.98px) {
+  .settings-summary { flex-wrap: wrap; }
 }
 .quick-filters {
   display: grid;
@@ -106,9 +112,15 @@
   align-items: end;
   .shiny-input-container { width: 100% !important; }
 }
-.modal-body .nav-pills .nav-link { font-size: 0.9rem; }
+.modal-body .nav-pills .nav-link { font-size: 0.875rem; }
 
 // ---- Places that matter ---------------------------------------------------
+.place-search-tip {
+  font-size: 0.875rem;
+  color: $text-muted;
+  margin: -0.5rem 0 1rem;   // close under the search box, the usual gap below
+  svg { color: $warning; }
+}
 .place-form {
   padding: 0.9rem 1rem 0.25rem;
   border: 1px solid $border-color;
@@ -141,15 +153,24 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
-  .place-address { font-size: 0.85rem; color: $text-muted; }
+  .place-address { font-size: 0.875rem; color: $text-muted; }
+  .place-edit { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $primary; } }
   .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
+  &.is-editing { border-color: $primary; box-shadow: 0 0 0 1px $primary; }
+}
+.place-editing {
+  font-size: 0.875rem;
+  color: $text-muted;
+  margin-bottom: 0.75rem;
+  svg { color: $primary; }
 }
 .place-option {
   padding: 0.15rem 0;
   .place-option-name { font-weight: 600; }
-  .place-option-detail { font-size: 0.8rem; color: $text-muted; }
+  .place-option-detail { font-size: 0.875rem; color: $text-muted; }
+  .place-option-detail.is-road { color: $warning; font-style: italic; }
 }
-.place-empty { color: $text-muted; font-size: 0.9rem; padding: 0.25rem 0; }
+.place-empty { color: $text-muted; font-size: 0.875rem; padding: 0.25rem 0; }
 
 // ---- Optional settings: greyed out until used ----------------------------
 .optional-block {
@@ -183,7 +204,7 @@
   padding: 0.75rem 1rem;
   border-radius: $border-radius-lg;
   background: rgba($primary, 0.05);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   table { background: transparent; --bs-table-bg: transparent; }
 }
 .coach-popover {
@@ -193,19 +214,10 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
 }
 
-// ---- Sidebar filters -----------------------------------------------------
+// ---- Map side panel -------------------------------------------------------
 .bslib-sidebar-layout > .sidebar {
   background: #fff;
-  .filter-section {
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid $border-color;
-    > .shiny-input-container:last-child { margin-bottom: 0.75rem; }
-  }
   .form-label, .control-label { font-size: 0.85rem; font-weight: 500; }
-  .accordion-button { font-weight: 600; font-size: 0.9rem; padding: 0.65rem 0.25rem; }
-  .accordion-body { padding: 0.5rem 0.25rem; }
-  .accordion, .accordion-item { border: 0; background: transparent; }
-  .accordion-button:not(.collapsed) { background: transparent; box-shadow: none; }
 }
 
 // Checkbox and radio groups shown as clickable chips
@@ -222,7 +234,7 @@
     padding: 0.25rem 0.75rem;
     border: 1px solid $border-color;
     border-radius: 999px;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     background: #fff;
     transition: all 0.12s ease;
   }
@@ -276,6 +288,16 @@
   &.verdict-danger  { border-color: rgba($danger, 0.35);  background: rgba($danger, 0.05);  .verdict-icon { color: $danger; } }
   &.verdict-info    { border-color: rgba($info, 0.35);    background: rgba($info, 0.06);    .verdict-icon { color: $info; } }
   &.verdict-accent  { border-color: rgba(#7b3294, 0.35);  background: rgba(#7b3294, 0.05); .verdict-icon { color: #7b3294; } }
+  // The answer on Check a listing: hard to miss
+  &.verdict-strong {
+    border-width: 2px;
+    padding: 1.25rem 1.5rem;
+    .verdict-icon { font-size: 2rem; }
+    .verdict-title { font-size: 1.35rem; }
+    &.verdict-accent { border-color: #7b3294; background: rgba(#7b3294, 0.09); }
+    &.verdict-info { border-color: $info; }
+  }
+  .verdict-warning { margin-top: 0.5rem; font-weight: 600; color: #b45309; }
 }
 
 // ---- Empty states --------------------------------------------------------
@@ -300,18 +322,27 @@
 .map-panel {
   .selection-label { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; word-break: break-word; }
 }
-// Area A (navy) and Area B (orange): buttons, card headers and map outlines
-$area-a: #1e3a8a;
-$area-b: #f59e0b;
-.btn-area-a { background: $area-a; border-color: $area-a; color: #fff; &:hover { background: darken($area-a, 6%); color: #fff; } }
-.btn-area-b { background: $area-b; border-color: $area-b; color: #fff; &:hover { background: darken($area-b, 8%); color: #fff; } }
-.card-header.area-a { background: $area-a; color: #fff; }
-.card-header.area-b { background: $area-b; color: #fff; }
+// Saved areas: list in the map panel, comparison card under the map
+// (each area's colour is set inline from area_palette in fct_map.R)
+.saved-area-row {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0; border-bottom: 1px solid $border-color; font-size: 0.875rem;
+  .saved-area-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; flex: none; }
+  .saved-area-name { word-break: break-word; }
+  .saved-area-edit, .saved-area-remove { color: $text-muted; padding: 0 0.3rem; }
+  .saved-area-edit:hover { color: $primary; }
+  .saved-area-remove:hover { color: $danger; }
+}
+.saved-areas-table {
+  font-size: 0.9rem;
+  th[scope=row] { font-weight: 500; color: $text-muted; white-space: nowrap; }
+  thead th { vertical-align: bottom; font-weight: 600; min-width: 9rem; }
+}
 .leaflet-container { font-family: inherit; border-radius: 0 0 $border-radius-lg $border-radius-lg; }
 
 // ---- Tables --------------------------------------------------------------
 .dataTables_wrapper {
-  .dt-top { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+  .dt-top { display: flex; justify-content: flex-end; margin-bottom: 0.25rem; }
   .dataTables_filter input {
     border: 1px solid $border-color;
     border-radius: 999px;
@@ -322,7 +353,10 @@ $area-b: #f59e0b;
 }
 table.dataTable {
   font-size: 0.9rem;
-  thead th { font-weight: 600; color: $text-muted; border-bottom: 1px solid $border-color !important; }
+  // Headers on one line: wrapped headers made a tall, mostly empty header
+  // row above every table (wide tables scroll sideways instead)
+  thead th { font-weight: 600; color: $text-muted; border-bottom: 1px solid $border-color !important;
+             white-space: nowrap; }
   tbody tr.selected > * { box-shadow: inset 0 0 0 9999px rgba($primary, 0.12) !important; color: inherit !important; }
 }
 
@@ -332,4 +366,75 @@ table.dataTable {
   .settings-summary { flex-direction: column; align-items: flex-start; }
   .kpi .kpi-value { font-size: 1.3rem; }
   .verdict { flex-direction: column; gap: 0.5rem; }
+}
+
+// ---- "More options" (min. rentals and other rarely changed settings) ------
+.more-options {
+  font-size: 0.85rem;
+  summary { color: $text-muted; cursor: pointer; white-space: nowrap; }
+  .more-options-body { padding-top: 0.5rem; min-width: 16rem; }
+  .shiny-input-container { margin-bottom: 0; }
+}
+
+// ---- "How to use the map" guide ------------------------------------------
+.map-guide li { margin-bottom: 0.6rem; }
+
+// ---- Floor area: each handle's label in square feet and square metres ----
+.area-slider {
+  // .irs.irs--shiny outranks the slider's own stylesheet, which loads after ours
+  .irs.irs--shiny { margin-top: 1.75rem; }   // room for the two-line labels
+  .irs.irs--shiny .irs-from, .irs.irs--shiny .irs-to, .irs.irs--shiny .irs-single {
+    top: -1.4rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    text-align: center;
+    &::before { display: none; }
+  }
+  .val { display: inline-block; vertical-align: middle; }   // side by side when the labels merge
+  .sqm { display: block; }
+  .irs.irs--shiny .irs-min, .irs.irs--shiny .irs-max {
+    .unit, .sqm { display: none; }
+  }
+  // at the slider's end: the handle shows the upper limit, the end label the largest home
+  .irs.irs--shiny .irs-max .cur, .top { display: none; }
+  .irs.irs--shiny .irs-max .top { display: inline; }
+  .form-group, .shiny-input-container { margin-bottom: 0.5rem; }
+}
+// "Lower limit: [ ] ft² / [ ] m²"
+.area-limit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  .area-limit-label { width: 6.5rem; flex: none; }
+  input { width: 7rem; flex: none; }
+  .area-unit, .area-sep { color: $text-muted; }
+  .area-sep { margin: 0 0.25rem; }
+}
+
+// ---- Map key (top right of the map; map_key() in fct_map.R) --------------
+.leaflet-control.map-key-control {
+  background: rgba(#fff, 0.95);
+  border-radius: $border-radius;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  max-width: 15rem;
+}
+.map-key {
+  summary { font-weight: 600; cursor: pointer; }
+  .map-key-row { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.3rem; }
+  .map-key-symbol { width: 2.2rem; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; }
+  .map-key-symbol svg { width: 16px; height: 16px; }
+  .map-key-dot { display: inline-block; border-radius: 50%; }
+  .map-key-pin {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    color: #fff; font-size: 0.55rem;
+    .fa, .fas, svg { transform: rotate(45deg); }
+  }
+  .map-key-note { margin-top: 0.4rem; color: $text-muted; }
 }

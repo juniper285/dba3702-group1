@@ -19,10 +19,20 @@ district_names <- c(
 )
 
 bed_levels <- c("1", "2", "3", "4", "5+", "Unknown")
-area_max   <- 4000   # floor-area slider's top end means "4,000 sqft and above"
+# The bedroom choices people pick from. "Unknown" (every landed house, and some
+# flats URA gives no count for) is not one of them: those rentals only show
+# when no bedroom filter is set, i.e. every choice is picked
+bed_choices <- setdiff(bed_levels, "Unknown")
+area_max   <- 4000   # the floor-area slider's scale ends here; its top end means "up to the
+                     # largest home" (area_top()), and bigger limits are typed in
 
 # Data loaded once per R session and shared by every user of the app
 .cache <- new.env(parent = emptyenv())
+
+#' The largest floor area in the data (sq ft): the upper limit that means
+#' "no limit"
+#' @noRd
+area_top <- function(rentals = rentals_data()) ceiling(max(rentals$area_sqft))
 
 #' Compute `expr` once and keep the result for the rest of the R session
 #' @noRd
@@ -35,10 +45,14 @@ cached <- function(name, expr) {
 #'
 #' Reads inst/extdata/rentals.rds (built by data-raw/rentals.R) on first use
 #' and adds each contract's nearest MRT/LRT station.
+#'
+#' Contracts with no floor area (landed houses that URA only gives as "<=1000"
+#' or ">8000" sqft) are already left out of the file by data-raw/rentals.R.
 #' @noRd
 rentals_data <- function() {
   cached("rentals", {
-    prepare_rentals(readRDS(app_sys("extdata", "rentals.rds"))) |>
+    d <- readRDS(app_sys("extdata", "rentals.rds"))
+    prepare_rentals(d) |>
       add_location_mrt(mrt_stations())
   })
 }
@@ -70,7 +84,8 @@ prepare_rentals <- function(d) {
 #' The sidebar filters, applied to a set of contracts
 #'
 #' Every argument except `d` is a sidebar input. Empty `districts` = all.
-#' Contracts with no floor area are dropped.
+#' Contracts with no floor area are dropped. Picking every one of
+#' `bed_choices` means any bedrooms, including rentals with no bedroom count.
 #'
 #' @param near c(lat, lng) of a chosen MRT/LRT station, or NULL.
 #' @param mrt_dist Metres. With `near`: keep buildings within this distance
@@ -83,11 +98,12 @@ filter_market <- function(d, districts, beds, types, area, period,
                           near = NULL, mrt_dist = mrt_max,
                           places = NULL, place_km = place_km_max) {
   if (length(districts)) d <- d[d$district %in% districts, ]
+  if (all(bed_choices %in% beds)) beds <- bed_levels
   # which() drops rows with no floor area instead of returning NA rows
   d <- d[which(d$bed_group %in% beds &
                d$type %in% types &
                d$area_sqft >= area[1] &
-               (d$area_sqft <= area[2] | area[2] >= area_max) &
+               d$area_sqft <= area[2] &
                d$lease_date >= period[1] &
                d$lease_date <= period[2]), ]
   if (!is.null(near)) {

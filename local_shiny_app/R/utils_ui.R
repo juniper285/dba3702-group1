@@ -5,8 +5,9 @@ rl_colours <- c(
   ink     = "#1f2937",
   primary = "#0f766e",   # brand teal
   typical = "#14b8a6",   # typical range (middle 50%)
-  budget  = "#e11d48",   # the user's budget range
+  budget  = "#16a34a",   # the user's budget range (soft green when shaded)
   accent  = "#7b3294",   # the user's own pin and asking rent only
+  trend   = "#e11d48",   # fitted trend lines
   muted   = "#94a3b8",
   grid    = "#e5e7eb"
 )
@@ -51,18 +52,37 @@ page_intro <- function(title, ...) {
   div(class = "page-intro", h4(title), p(class = "text-muted mb-0", ...))
 }
 
-#' "Filters in use" line for pages that follow the renter's settings
+#' "My filters" box: one chip per filter and an "Edit my filters" button
+#'
+#' The same box tops every page that follows the renter's filters.
+#' @param chips Usually a uiOutput() filled with filter_chips().
+#' @param button The edit button; by default it opens the My filters dialog.
+#' @noRd
+filter_box_ui <- function(chips, button = edit_filters_button()) {
+  div(class = "settings-summary",
+      div(class = "settings-icon", icon("filter")),
+      div(class = "flex-fill", div(class = "section-title mb-1", "My filters"), chips),
+      button)
+}
+
+#' "Edit my filters" button that opens the My filters dialog from any page
+#' @noRd
+edit_filters_button <- function() {
+  tags$button(type = "button", class = "btn btn-sm btn-outline-primary edit-filters",
+              onclick = "Shiny.setInputValue('settings-open_nav', Date.now(), {priority: 'event'});",
+              icon("pen"), " Edit my filters")
+}
+
+#' The filter box on pages other than Search
 #'
 #' @param page Short page name; app_server() fills output `filter_note_<page>`.
 #' @noRd
-filter_note_ui <- function(page) {
-  div(class = "filter-note",
-      icon("filter"),
-      span(class = "text-muted", "Filters:"),
-      textOutput(paste0("filter_note_", page), inline = TRUE),
-      tags$a(href = "#", class = "ms-auto text-nowrap",
-             onclick = "Shiny.setInputValue('settings-open_nav', Date.now(), {priority: 'event'}); return false;",
-             icon("pen"), " Edit my settings"))
+filter_note_ui <- function(page) filter_box_ui(uiOutput(paste0("filter_note_", page)))
+
+#' One chip per filter (from settings_summary())
+#' @noRd
+filter_chips <- function(parts) {
+  div(class = "settings-chips", lapply(parts, function(x) span(class = "settings-chip", x)))
 }
 
 #' Consistent look for every plotly chart
@@ -107,23 +127,21 @@ vline <- function(x, colour, dash = "solid", width = 2) {
        line = list(color = colour, dash = dash, width = width))
 }
 
-#' Histogram of monthly rents with the typical range, median and optional
-#' budget band / marker line (used by Budget and Check a listing)
+#' Histogram of monthly rents with the median and an optional budget band /
+#' marker line (used by Search and Check a listing)
 #'
 #' @param rents Monthly rents.
 #' @param budget c(min, max) to shade, or NULL.
 #' @param mark A single rent to mark (e.g. the asking rent), or NA.
 #' @noRd
 rent_histogram <- function(rents, budget = NULL, mark = NA) {
-  q <- quantile(rents, c(0.25, 0.5, 0.75))
   shown <- rents[rents <= quantile(rents, 0.99)]   # hide extreme top 1%
   size <- max(100, round(diff(range(shown)) / 40, -2))
-  shapes <- list(band(q[1], q[3], rl_colours[["typical"]], 0.15),
-                 vline(q[2], rl_colours[["ink"]], "dot", 1.5))
+  shapes <- list(vline(median(rents), rl_colours[["ink"]], "dot", 1.5))
   if (!is.null(budget)) {
-    shapes <- c(shapes, list(band(budget[1], budget[2], rl_colours[["budget"]], 0.10),
-                             vline(budget[1], rl_colours[["budget"]], "dash"),
-                             vline(budget[2], rl_colours[["budget"]], "dash")))
+    shapes <- c(shapes, list(band(budget[1], budget[2], rl_colours[["budget"]], 0.12),
+                             vline(budget[1], rl_colours[["budget"]], "dash", 1.5),
+                             vline(budget[2], rl_colours[["budget"]], "dash", 1.5)))
   }
   if (!is.na(mark)) shapes <- c(shapes, list(vline(mark, rl_colours[["accent"]], width = 3)))
 
@@ -136,6 +154,20 @@ rent_histogram <- function(rents, budget = NULL, mark = NA) {
                    # keep a marked rent in view even if it is off the histogram
                    xaxis = if (!is.na(mark) && (mark < min(shown) || mark > max(shown)))
                      list(range = range(c(shown, mark)) + c(-1, 1) * size))
+}
+
+#' Settings most people never need, in a collapsed "More options" link
+#' @noRd
+more_options <- function(...) {
+  tags$details(class = "more-options",
+               tags$summary(icon("sliders"), " More options"),
+               div(class = "more-options-body", ...))
+}
+
+#' "Min. recent rentals" box: rows with fewer rentals are left out
+#' @noRd
+min_rentals_input <- function(id, label = "Leave out rows with fewer recent rentals than") {
+  more_options(numericInput(id, label, value = 3, min = 1, width = "100%"))
 }
 
 #' Dot (median) and line (typical range) chart, one row per label
@@ -169,12 +201,34 @@ range_dot_chart <- function(s, budget = NULL) {
 dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
 
 #' A DataTable with the app's defaults
+#'
+#' @param search What the search box looks in: "project" (the Project
+#'   column only; the default when there is one), "rental" (every column,
+#'   for tables of single rentals) or "table" (every column).
 #' @noRd
-rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE, ...) {
+rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE,
+                         search = if ("Project" %in% names(s)) "project" else "table", ...) {
+  search <- match.arg(search, c("project", "rental", "table"))
+  # Other columns can't be searched when the box is for projects
+  not_searched <- if (search == "project") which(names(s) != "Project") - 1
   datatable(s, rownames = FALSE, selection = selection, escape = escape,
+            colnames = short_colnames(names(s)),
             class = "compact hover row-border",
             options = list(pageLength = page_length, order = list(), scrollX = TRUE,
                            dom = '<"dt-top"f>t<"dt-bottom"ip>',
-                           language = list(search = "", searchPlaceholder = "Search table")),
+                           columnDefs = if (length(not_searched))
+                             list(list(searchable = FALSE, targets = not_searched)),
+                           language = list(search = "", searchPlaceholder = paste("Search", search))),
             ...)
+}
+
+#' Column headers short enough not to stretch a table's header row:
+#' "To NUS (Ridge View Residential College (RVRC)) (km)" -> "To NUS (Ridge View… (km)"
+#' @noRd
+short_colnames <- function(x, width = 24) {
+  long <- nchar(x) > width
+  km <- long & grepl("^To .* \\(km\\)$", x)
+  x[km] <- paste0(substr(x[km], 1, width - 6), "\u2026 (km)")
+  x[long & !km] <- paste0(substr(x[long & !km], 1, width - 1), "\u2026")
+  x
 }

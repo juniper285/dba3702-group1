@@ -11,6 +11,7 @@ importFrom(DT,
   formatPercentage,
   formatStyle,
   renderDT,
+  styleColorBar,
   styleEqual,
   styleInterval
 )

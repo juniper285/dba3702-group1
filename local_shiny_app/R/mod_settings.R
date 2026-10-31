@@ -1,4 +1,4 @@
-#' "My settings": the renter's budget, places that matter, type of home and
+#' "My filters" (called settings in the code): the renter's budget, places that matter, type of home and
 #' commute, kept in the browser (see fct_settings.R)
 #'
 #' On a first visit a setup wizard asks for them one section at a time,
@@ -13,25 +13,37 @@
 #' @noRd
 mod_settings_summary_ui <- function(id) {
   ns <- NS(id)
-  div(class = "settings-summary",
-      div(class = "settings-icon", icon("user")),
-      div(class = "flex-fill",
-          div(class = "section-title mb-1", "My settings"),
-          uiOutput(ns("summary"))),
-      actionButton(ns("open"), "Edit my settings", icon = icon("pen"),
-                   class = "btn-sm btn-outline-primary"))
+  filter_box_ui(uiOutput(ns("summary")),
+                actionButton(ns("open"), "Edit my filters", icon = icon("pen"),
+                             class = "btn-sm btn-outline-primary edit-filters"))
 }
 
-#' Link in the navbar that opens the settings dialog
+#' Link in the navbar that opens the My filters dialog
 #' @noRd
 mod_settings_nav_ui <- function(id) {
-  nav_item(actionLink(NS(id, "open_nav"), span(icon("user"), "My settings")))
+  nav_item(actionLink(NS(id, "open_nav"), span(icon("filter"), "My filters")))
 }
 
 # The settings dialog's sections, in wizard order
 settings_sections <- c(budget = "Budget", places = "Places that matter",
                        area = "Where to search", home = "Type of home",
                        commute = "Commute and MRT")
+
+#' One "Lower limit: [ ] ft² / [ ] m²" line under the floor-area slider
+#' @noRd
+area_limit_ui <- function(ns, which, label, value, top) {
+  box <- function(id, unit, v, step) {
+    tagList(tags$input(id = ns(id), type = "number", class = paste("form-control form-control-sm", unit),
+                       min = 0, max = if (unit == "sqft") top else round(top / sqft_per_sqm, 1),
+                       step = step, value = v, `aria-label` = paste(label, if (unit == "sqft") "in square feet" else "in square metres")),
+            span(class = "area-unit", if (unit == "sqft") "ft\u00B2" else "m\u00B2"))
+  }
+  div(class = paste("area-limit", which),
+      span(class = "area-limit-label", paste0(label, ":")),
+      box(paste0("area_", which), "sqft", value, 10),
+      span(class = "area-sep", "/"),
+      box(paste0("area_", which, "_sqm"), "sqm", round(value / sqft_per_sqm, 1), 0.1))
+}
 
 #' One section of the settings form
 #'
@@ -44,7 +56,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
     section,
     budget = tagList(
       p(class = "text-muted", "How much can you spend on rent each month?"),
-      sliderInput(ns("budget"), "Monthly budget", min = 1000, max = 15000,
+      sliderInput(ns("budget"), "Monthly budget", min = 0, max = 15000,
                   value = s$budget, step = 100, pre = "S$", width = "100%"),
       uiOutput(ns("budget_hint"))
     ),
@@ -52,6 +64,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
       p(class = "text-muted", "Add the places you travel to most, one at a time. Every list ",
         "shows the distance from each home to them."),
       div(class = "place-form",
+          uiOutput(ns("place_editing")),
           selectizeInput(
             ns("place_search"), "Search for a place, address or postal code", choices = NULL,
             width = "100%",
@@ -64,6 +77,9 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
               score = I("function () { return function () { return 1; }; }"),  # keep OneMap's order
               render = I("{ option: RentLens.renderPlace, option_create: RentLens.renderTyped }")
             )),
+          # OneMap matches from the start of an address, which begins with the block number
+          div(class = "place-search-tip", icon("lightbulb"),
+              " Tip: start with the block number, e.g. 105 Jurong East Street 13, or use the postal code."),
           div(class = "chips place-kinds",
               radioButtons(ns("place_kind"), "Icon", inline = TRUE, selected = "work",
                            choiceNames = lapply(seq_len(nrow(place_kinds)), function(i) {
@@ -72,7 +88,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
                            choiceValues = place_kinds$kind),
               conditionalPanel(
                 "input.place_kind == 'other'", ns = ns,
-                textInput(ns("place_kind_label"), "What kind of place?", width = "100%",
+                textInput(ns("place_kind_label"), "Type of place", width = "100%",
                           placeholder = "e.g. Church, Clinic, Partner's office"))),
           div(class = "d-flex gap-2 align-items-end",
               textInput(ns("place_name"), "Name", width = "100%",
@@ -95,13 +111,18 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
     home = tagList(
       p(class = "text-muted", "What kind of home are you after?"),
       div(class = "chips",
-          checkboxGroupInput(ns("beds"), "Bedrooms", choices = bed_levels,
+          checkboxGroupInput(ns("beds"), "Bedrooms", choices = bed_choices,
                              selected = s$beds, inline = TRUE),
           checkboxGroupInput(ns("types"), "Property type", choices = choices$types,
                              selected = s$types, inline = TRUE)),
-      sliderInput(ns("area"), "Floor area (sq ft)", min = 0, max = area_max,
-                  value = s$area, step = 100, width = "100%"),
-      uiOutput(ns("area_hint"))
+      # Each handle's label shows square feet and square metres (settings.js)
+      div(class = "area-slider", `data-top` = choices$area_top,
+          sliderInput(ns("area"), "Floor area", min = 0, max = area_max,
+                      value = pmin(s$area, area_max), step = 10, ticks = FALSE, width = "100%"),
+          # Exact limits, typed in either unit; settings.js keeps them in step
+          # with each other and the slider
+          area_limit_ui(ns, "lo", "Lower limit", s$area[1], choices$area_top),
+          area_limit_ui(ns, "hi", "Upper limit", s$area[2], choices$area_top))
     ),
     commute = tagList(
       p(class = "text-muted", "How far are you willing to travel? These are optional: just start ",
@@ -160,7 +181,15 @@ read_settings_form <- function(input, s, sections, places) {
   if ("home" %in% sections) {
     if (length(input$beds)) s$beds <- input$beds
     if (length(input$types)) s$types <- input$types
-    if (!is.null(input$area)) s$area <- input$area
+    # The typed limits are exact; the slider alone tops out at area_max,
+    # which means "up to the largest home"
+    top <- area_top()
+    typed <- suppressWarnings(as.numeric(c(input$area_lo, input$area_hi)))
+    if (length(typed) == 2 && !anyNA(typed)) {
+      s$area <- sort(pmin(pmax(typed, 0), top))
+    } else if (!is.null(input$area)) {
+      s$area <- c(input$area[1], if (input$area[2] >= area_max) top else input$area[2])
+    }
   }
   if ("commute" %in% sections) {
     # A switched-off option is stored as "any": the top of the range
@@ -187,8 +216,8 @@ mod_settings_server <- function(id) {
                          "finish", "start_over", names(default_settings(choices)),
                          "place_search", "place_name", "place_kind", "place_kind_label",
                          "mrt_limit", "station_on", "place_limit",
-                         "add_place",
-                         "remove_place"))
+                         "add_place", "edit_place", "cancel_edit",
+                         "remove_place", "area_lo", "area_hi", "area_lo_sqm", "area_hi_sqm"))
 
     # What this browser saved last time ("none" on a first visit)
     observeEvent(input$stored, once = TRUE, {
@@ -211,43 +240,91 @@ mod_settings_server <- function(id) {
     # ---- Places that matter: added one at a time ----
     # The list being edited (kept while the dialog or wizard is open)
     places <- reactiveVal(new_places())
+    # Name of the place loaded into the form for editing (NULL when adding)
+    editing <- reactiveVal(NULL)
+
+    clear_place_form <- function() {
+      editing(NULL)
+      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
+      updateTextInput(session, "place_name", value = "")
+      updateTextInput(session, "place_kind_label", value = "")
+      updateActionButton(session, "add_place", label = "Add place", icon = icon("plus"))
+    }
 
     observeEvent(input$add_place, {
-      if (!nzchar(trimws(if (is.null(input$place_search)) "" else input$place_search))) {
+      search <- trimws(if (is.null(input$place_search)) "" else input$place_search)
+      old <- places()[places()$name %in% editing(), ]
+      others <- places()[!places()$name %in% editing(), ]
+      if (!nzchar(search) && nrow(old) == 0) {
         showNotification("Search for a place first.", type = "warning")
         return()
       }
-      if (nrow(places()) >= max_places) {
+      if (nrow(old) == 0 && nrow(places()) >= max_places) {
         showNotification(paste("You can add up to", max_places, "places."), type = "warning")
         return()
       }
-      hit <- chosen_place(input$place_search)
-      if (nrow(hit) == 0) {
-        showNotification("No place found. Pick one from the suggestions, or try a postal code.",
-                         type = "warning")
-        return()
+      # When editing, an empty search keeps the place where it was
+      if (nzchar(search)) {
+        hit <- chosen_place(search)
+        if (nrow(hit) == 0) {
+          showNotification("No place found. Pick one from the suggestions, or try a postal code.",
+                           type = "warning")
+          return()
+        }
+        where <- list(address = place_address(hit[1, ]), lat = hit$lat[1], lng = hit$lng[1])
+      } else {
+        where <- list(address = old$address, lat = old$lat, lng = old$lng)
       }
       label <- place_label(input$place_kind, input$place_kind_label)
       name <- trimws(input$place_name)
       if (!nzchar(name)) {
         # A picked suggestion is named after the place; typed text after its kind
-        name <- if (startsWith(trimws(input$place_search), "{")) tools::toTitleCase(tolower(hit$name))
-                else default_place_name(input$place_kind, places()$name, label)
+        name <- if (startsWith(search, "{")) title_case_place(hit$name)
+                else if (nrow(old) == 1) old$name
+                else default_place_name(input$place_kind, others$name, label)
       }
-      if (name %in% places()$name) {
+      if (name %in% others$name) {
         showNotification(paste0("You already have a place called '", name, "'."), type = "warning")
         return()
       }
-      places(rbind(places(), new_places(name = name, kind = input$place_kind, label = label,
-                                        address = place_address(hit[1, ]),
-                                        lat = hit$lat[1], lng = hit$lng[1])))
-      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
-      updateTextInput(session, "place_name", value = "")
-      updateTextInput(session, "place_kind_label", value = "")
+      new <- new_places(name = name, kind = input$place_kind, label = label,
+                        address = where$address, lat = where$lat, lng = where$lng)
+      if (nrow(old) == 1) {
+        pl <- places()
+        pl[pl$name == old$name, ] <- new     # keep its place in the list
+        places(pl)
+      } else {
+        places(rbind(places(), new))
+      }
+      clear_place_form()
     })
 
     observeEvent(input$remove_place, {
       places(places()[places()$name != input$remove_place, ])
+      if (identical(editing(), input$remove_place)) clear_place_form()
+    })
+
+    # Editing loads the place into the form above; "Save changes" puts it back
+    observeEvent(input$edit_place, {
+      p <- places()[places()$name == input$edit_place, ]
+      req(nrow(p) == 1)
+      editing(p$name)
+      updateSelectizeInput(session, "place_search", choices = character(0), selected = character(0))
+      updateRadioButtons(session, "place_kind", selected = p$kind)
+      updateTextInput(session, "place_kind_label", value = if (p$kind == "other") p$label else "")
+      updateTextInput(session, "place_name", value = p$name)
+      updateActionButton(session, "add_place", label = "Save changes", icon = icon("check"))
+    })
+
+    observeEvent(input$cancel_edit, clear_place_form())
+
+    output$place_editing <- renderUI({
+      p <- places()[places()$name %in% editing(), ]
+      if (nrow(p) == 0) return(NULL)
+      where <- if (nzchar(p$address)) p$address else "its location"
+      div(class = "place-editing", icon("pen"), " Editing ", strong(p$name, .noWS = "after"),
+          paste0(". Search again to move it, or leave the search empty to keep ", where, "."),
+          actionLink(ns("cancel_edit"), "Cancel"))
     })
 
     output$place_list <- renderUI({
@@ -257,9 +334,11 @@ mod_settings_server <- function(id) {
       }
       div(class = "place-list",
           lapply(seq_len(nrow(pl)), function(i) {
-            remove <- sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'}); return false;",
-                              ns("remove_place"), jsonlite::toJSON(pl$name[i], auto_unbox = TRUE))
-            div(class = "place-row",
+            send <- function(id) {
+              sprintf("Shiny.setInputValue('%s', %s, {priority: 'event'}); return false;",
+                      ns(id), jsonlite::toJSON(pl$name[i], auto_unbox = TRUE))
+            }
+            div(class = paste("place-row", if (identical(editing(), pl$name[i])) "is-editing"),
                 div(class = "place-icon", icon(place_icon(pl$kind[i]))),
                 div(class = "flex-fill",
                     div(class = "place-name", pl$name[i],
@@ -267,8 +346,10 @@ mod_settings_server <- function(id) {
                         if (!startsWith(pl$name[i], pl$label[i]))
                           span(class = "place-kind", pl$label[i])),
                     if (nzchar(pl$address[i])) div(class = "place-address", pl$address[i])),
+                tags$a(href = "#", class = "place-edit", title = paste("Edit", pl$name[i]),
+                       onclick = send("edit_place"), icon("pen")),
                 tags$a(href = "#", class = "place-remove", title = paste("Remove", pl$name[i]),
-                       onclick = remove, icon("xmark")))
+                       onclick = send("remove_place"), icon("xmark")))
           }))
     })
 
@@ -283,22 +364,17 @@ mod_settings_server <- function(id) {
                 money(q[1]), money(q[2]), share))
     })
 
-    # Floor area in both units (the data is in square feet)
-    output$area_hint <- renderUI({
-      req(input$area)
-      p(class = "small text-muted", icon("ruler-combined"), " ", area_text(input$area),
-        if (input$area[2] >= area_max) ". The top of the slider means 4,000 sq ft (372 m\u00B2) and above.")
-    })
 
     # ---- The settings dialog ----
     open_dialog <- function() {
       s <- settings()
       places(s$places)
+      editing(NULL)
       tabs <- lapply(names(settings_sections), function(k) {
         nav_panel(settings_sections[[k]], div(class = "pt-3", settings_section_ui(ns, k, s, choices)))
       })
       showModal(modalDialog(
-        title = span(icon("user"), " My settings"),
+        title = span(icon("filter"), " My filters"),
         do.call(navset_pill, c(list(id = ns("tab")), tabs)),
         footer = tagList(
           actionLink(ns("start_over"), "Start over", icon = icon("rotate-left"),
@@ -349,6 +425,7 @@ mod_settings_server <- function(id) {
     open_wizard <- function(s) {
       draft(s)
       places(s$places)
+      editing(NULL)
       step(1)
       show_step()
     }
@@ -412,10 +489,7 @@ mod_settings_server <- function(id) {
             }))))
     })
 
-    output$summary <- renderUI({
-      div(class = "settings-chips",
-          lapply(settings_summary(settings(), choices), function(x) span(class = "settings-chip", x)))
-    })
+    output$summary <- renderUI(filter_chips(settings_summary(settings(), choices)))
 
     # Settings travel inside "Save search" links; a link's settings apply to
     # this visit only and don't replace what this browser saved

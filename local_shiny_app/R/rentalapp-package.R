@@ -8,7 +8,7 @@
 #' @importFrom dplyr distinct semi_join anti_join left_join n n_distinct first
 #' @importFrom dplyr case_when across all_of desc ungroup count slice_max
 #' @importFrom DT DTOutput renderDT datatable formatCurrency formatPercentage
-#' @importFrom DT formatStyle styleEqual styleInterval
+#' @importFrom DT formatStyle styleEqual styleInterval styleColorBar
 #' @importFrom leaflet.extras addSearchOSM addHeatmap addDrawToolbar
 #' @importFrom leaflet.extras removeDrawToolbar editToolbarOptions
 #' @importFrom sf st_as_sf st_buffer st_sfc st_point st_polygon st_intersects

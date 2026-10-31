@@ -41,14 +41,27 @@ test_that("budget_verdict() compares the budget with the typical range", {
   expect_equal(v$share, 60)
 })
 
-test_that("compare_two_areas() lines up the areas by bedrooms", {
-  a <- data.frame(bed_group = c("1", "1", "2"), rent = c(3000, 3200, 4000), psf = 5)
-  b <- data.frame(bed_group = c("1", "3"), rent = c(3300, 6000), psf = 4)
-  s <- compare_two_areas(a, b)
-  expect_equal(s$bed_group, c("1", "2", "3"))
-  expect_equal(s$a_median, c(3100, 4000, NA))
-  expect_equal(s$b_n, c(1, NA, 1))
-  expect_equal(s$diff[1], 200 / 3100)
+test_that("compare_areas() gives one row per area with renter figures", {
+  a <- data.frame(project = c("P", "P", "Q"), bed_group = c("1", "1", "2"),
+                  rent = c(3000, 3200, 4000), psf = 5, mrt_m = c(400, 400, 800),
+                  district = "D05 Pasir Panjang", lat = 1.30, lng = 103.80)
+  b <- data.frame(project = "R", bed_group = c("1", "3"), rent = c(3300, 6000), psf = 4,
+                  mrt_m = 160, district = "D09 Orchard", lat = 1.31, lng = 103.83)
+  places <- data.frame(name = "Office", lat = 1.30, lng = 103.80)
+  s <- compare_areas(list(West = a, Orchard = b), budget = c(3000, 3500), places = places)
+  expect_equal(s$area, c("West", "Orchard"))
+  expect_equal(s$n, c(3, 2))
+  expect_equal(s$projects, c(2, 1))
+  expect_equal(s$within, c(2 / 3, 1 / 2))
+  expect_equal(s$walk_min, c(5, 2))
+  expect_equal(s$district, c("D05 Pasir Panjang", "D09 Orchard"))
+  expect_equal(s[["To Office (km)"]][1], 0)
+  # no places: no distance columns
+  expect_false(any(startsWith(names(compare_areas(list(West = a), c(0, 1))), "To ")))
+
+  by_bed <- compare_areas_by_bed(list(West = a, Orchard = b))
+  expect_equal(levels(by_bed$area), c("West", "Orchard"))
+  expect_equal(by_bed$median[by_bed$area == "West"], c(3100, 4000))
 })
 
 test_that("summarise_projects() keeps the chosen order and empty projects", {

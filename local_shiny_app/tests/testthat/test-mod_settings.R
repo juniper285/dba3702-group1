@@ -91,11 +91,11 @@ test_that("a picked suggestion is added without another lookup", {
     pick <- jsonlite::toJSON(list(name = "KENT RIDGE HILL RESIDENCES", building = "KENT RIDGE HILL RESIDENCES",
                                   address = "50 SOUTH BUONA VISTA ROAD KENT RIDGE HILL RESIDENCES SINGAPORE 118167",
                                   postal = "118167", lat = 1.2905, lng = 103.7856), auto_unbox = TRUE)
-    session$setInputs(place_search = as.character(pick), place_name = "", place_kind = "home",
+    session$setInputs(place_search = as.character(pick), place_name = "", place_kind = "family",
                       place_kind_label = "", add_place = 1)
     expect_equal(places()$name, "Kent Ridge Hill Residences")
     expect_equal(places()$address, "50 South Buona Vista Road, Singapore 118167")
-    expect_equal(places()$kind, "home")
+    expect_equal(places()$kind, "family")
   })
 })
 
@@ -126,5 +126,49 @@ test_that("the preview works before any place is added", {
     session$setInputs(mrt_limit = TRUE, mrt_dist = 1000, station_on = FALSE, mrt_pick = "",
                       place_limit = FALSE, place_km = 5)
     expect_match(output$preview$html, "options in your budget")
+  })
+})
+
+test_that("an added place can be edited in place, keeping its location", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    places(new_places(name = c("Office", "Gym"), kind = c("work", "leisure"),
+                      address = c("1 Main Road", "2 Side Road"), lat = c(1.30, 1.31),
+                      lng = c(103.8, 103.81)))
+    session$setInputs(edit_place = "Office")
+    expect_equal(editing(), "Office")
+    expect_match(output$place_editing$html, "Editing")
+
+    # rename and change the icon; an empty search keeps the address
+    session$setInputs(place_search = "", place_name = "Church", place_kind = "other",
+                      place_kind_label = "Church", add_place = 1)
+    expect_equal(places()$name, c("Church", "Gym"))
+    expect_equal(places()$kind[1], "other")
+    expect_equal(places()$address[1], "1 Main Road")
+    expect_equal(places()$lat[1], 1.30)
+    expect_null(editing())
+
+    # a name another place already has is refused
+    session$setInputs(edit_place = "Church")
+    session$setInputs(place_name = "Gym", add_place = 2)
+    expect_equal(places()$name, c("Church", "Gym"))
+    session$setInputs(cancel_edit = 1)
+    expect_null(editing())
+  })
+})
+
+test_that("typed floor-area limits win over the slider, which tops out at 'no limit'", {
+  testServer(mod_settings_server, {
+    session$setInputs(stored = settings_to_json(default_settings()))
+    session$setInputs(open = 1)
+    session$setInputs(area = c(300, area_max), area_lo = 300, area_hi = 6000)
+    session$setInputs(save = 1)
+    expect_equal(settings()$area, c(300, 6000))
+
+    session$setInputs(open = 2)
+    session$setInputs(area = c(0, area_max), area_lo = NULL, area_hi = NULL)
+    session$setInputs(save = 2)
+    expect_equal(settings()$area, c(0, area_top()))
   })
 })

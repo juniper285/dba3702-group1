@@ -1,7 +1,8 @@
 choices <- list(districts = c("D01 Raffles Place, Marina", "D10 Bukit Timah, Holland, Tanglin"),
                 types = c("Landed Properties", "Non-Landed Properties"),
                 stations = c("Novena MRT", "Kent Ridge MRT"),
-                dates = as.Date(c("2021-09-01", "2026-08-01")))
+                dates = as.Date(c("2021-09-01", "2026-08-01")),
+                area_top = 24650)
 
 test_that("settings survive a round trip through JSON", {
   s <- default_settings(choices)
@@ -34,6 +35,8 @@ test_that("invalid fields fall back to their defaults one by one", {
   d <- default_settings(choices)
   expect_equal(s$budget, d$budget)          # min above max
   expect_equal(s$beds, "2")                 # unknown "9" dropped
+  old <- settings_from_json('{"beds": ["2", "Unknown"]}', choices)
+  expect_equal(old$beds, "2")               # "Unknown" is no longer a choice
   expect_equal(s$types, d$types)            # nothing valid left
   expect_equal(s$mrt_pick, "")
   expect_equal(s$mrt_dist, d$mrt_dist)
@@ -47,9 +50,14 @@ test_that("settings_summary() describes the settings", {
   s$places <- key_place(c("NTU", "SMU")); s$place_km <- 5; s$mrt_dist <- 500
   txt <- paste(settings_summary(s, choices), collapse = " · ")
   expect_match(txt, "S\\$3,000 - S\\$5,000")
-  expect_match(txt, "near NTU, SMU")
-  expect_match(txt, "within 5 km of them")
-  expect_match(txt, "within 500 m of an MRT/LRT")
+  expect_match(txt, "Near NTU, SMU")
+  expect_match(txt, "Within 5 km of them")
+  expect_match(txt, "Within 500 m of an MRT/LRT")
+  expect_match(txt, "Any bedrooms")
+  expect_match(txt, "Anywhere in Singapore")
+
+  s$districts <- choices$districts
+  expect_true("D01 Raffles Place, D10 Bukit Timah" %in% settings_summary(s, choices))
 })
 
 test_that("place icons are kept, and unknown icons become 'other'", {
@@ -117,4 +125,37 @@ test_that("period_for() covers the last N months of data, at most all of it", {
   p <- period_for(12, dates)
   expect_equal(latest_months(d, 12)$lease_date,
                d$lease_date[d$lease_date >= p[1] & d$lease_date <= p[2]])
+})
+
+test_that("title_case_place() keeps acronyms in capitals", {
+  expect_equal(title_case_place("NUS (RIDGE VIEW RESIDENTIAL COLLEGE (RVRC))"),
+               "NUS (Ridge View Residential College (RVRC))")
+  expect_equal(title_case_place("10A JLN BT MERAH"), "10A Jln Bt Merah")
+  expect_equal(title_case_place("ST ANDREW'S CATHEDRAL"), "St Andrew's Cathedral")
+  expect_equal(title_case_place("BANK OF SINGAPORE"), "Bank of Singapore")
+  expect_equal(title_case_place("KKH"), "KKH")
+})
+
+test_that("places saved with the old 'home' icon become 'Other', labelled Home", {
+  json <- '{"places": [{"name": "Flat", "kind": "home", "lat": 1.30, "lng": 103.80}]}'
+  s <- settings_from_json(json, choices)
+  expect_equal(s$places$kind, "other")
+  expect_equal(s$places$label, "Home")
+  expect_false("home" %in% place_kinds$kind)
+})
+
+test_that("the floor area's upper limit is exact, and the largest home means no limit", {
+  s <- default_settings(choices)
+  expect_equal(s$area, c(0, 24650))
+  expect_false(any(grepl("sq ft", settings_summary(s, choices))))
+  s$area <- c(0, 6000)
+  back <- settings_from_json(settings_to_json(s), choices)
+  expect_equal(back$area, c(0, 6000))
+  expect_true("0 - 6,000 sq ft (0 - 557 m²)" %in% settings_summary(back, choices))
+  # saved before version 2, the slider's top (4,000) meant "and above"
+  old <- settings_from_json('{"version": 1, "area": [500, 4000]}', choices)
+  expect_equal(old$area, c(500, 24650))
+  # from version 2 on, 4,000 is a real limit
+  s$area <- c(500, 4000)
+  expect_equal(settings_from_json(settings_to_json(s), choices)$area, c(500, 4000))
 })

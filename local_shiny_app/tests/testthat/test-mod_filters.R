@@ -31,6 +31,6 @@ test_that("a station in the settings keeps rentals near it", {
     st <- station_location("Novena MRT")
     expect_gt(nrow(market()), 0)
     expect_true(all(haversine_km(market()$lat, market()$lng, st[1], st[2]) <= 0.5))
-    expect_match(summary(), "within 500 m of Novena MRT")
+    expect_match(paste(summary(), collapse = " · "), "Within 500 m of Novena MRT")
   })
 })

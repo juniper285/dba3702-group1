@@ -13,8 +13,11 @@ test_that("base_map() has the key-place and MRT/LRT layers", {
   methods <- vapply(calls, `[[`, "", "method")
   expect_true(all(c("addMarkers", "addAwesomeMarkers", "addCircleMarkers") %in% methods))
   overlays <- calls[[which(methods == "addLayersControl")]]$args[[2]]
-  expect_true(all(c("My places", "Schools and work areas", "Airport, ports and hospitals",
-                    "MRT/LRT stations") %in% overlays))
+  expect_true(all(c("My places", "Universities and polytechnics", "Work areas", "Hospitals",
+                    "Airport and ports", "MRT/LRT stations") %in% overlays))
+  # every key place is on one layer
+  expect_setequal(unlist(lapply(key_layers, `[[`, "groups")), unique(key_places$group))
+  expect_true("addControl" %in% methods)   # the map key
 })
 
 test_that("budget_fit() places rents below, within or above the budget", {

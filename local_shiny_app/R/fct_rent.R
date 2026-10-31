@@ -67,24 +67,53 @@ budget_verdict <- function(rents, budget) {
 #' @noRd
 empty_shortlist <- function() data.frame(project = character(), bed_group = character())
 
-#' Two areas side by side, one row per bedroom type
+#' Saved areas side by side: one row per area
 #'
-#' @param a,b Contracts in Area A and Area B.
-#' @return Rentals, median rent and median psf for each area, plus
-#'   `diff` = how far B's median is above (+) or below (-) A's, as a share.
+#' @param sets Named list of contracts, one data frame per area (names are
+#'   the area names).
+#' @param places The renter's places (name, lat, lng): one "To <name> (km)"
+#'   column each, measured from the area's centre.
+#' @return `area`, `n`, `projects`, `median`, `q25`, `q75`, `within` (share of
+#'   rentals inside `budget`), `psf`, `walk_min` (median walk to the nearest
+#'   MRT/LRT), `district` (where most of its rentals are) and the place columns.
 #' @noRd
-compare_two_areas <- function(a, b) {
-  side <- function(d, tag) {
-    s <- d |>
+compare_areas <- function(sets, budget, places = new_places()) {
+  rows <- lapply(names(sets), function(nm) {
+    d <- sets[[nm]]
+    r <- data.frame(
+      area = nm, n = nrow(d), projects = n_distinct(d$project),
+      median = median(d$rent), q25 = unname(quantile(d$rent, 0.25)),
+      q75 = unname(quantile(d$rent, 0.75)),
+      within = mean(d$rent >= budget[1] & d$rent <= budget[2]),
+      psf = median(d$psf, na.rm = TRUE),
+      walk_min = walk_minutes(median(d$mrt_m, na.rm = TRUE)),
+      district = if (nrow(d)) names(which.max(table(d$district))) else NA_character_
+    )
+    for (i in seq_len(nrow(places))) {
+      r[[place_column(places$name[i])]] <-
+        round(haversine_km(mean(d$lat, na.rm = TRUE), mean(d$lng, na.rm = TRUE),
+                           places$lat[i], places$lng[i]), 1)
+    }
+    r
+  })
+  do.call(rbind, rows)
+}
+
+#' Saved areas side by side by bedrooms: one row per area and bedroom type
+#'
+#' @param sets Named list of contracts, one data frame per area.
+#' @return `area` (a factor in the order of `sets`), `bed_group`, `n`, `median`.
+#' @noRd
+compare_areas_by_bed <- function(sets) {
+  s <- do.call(rbind, lapply(names(sets), function(nm) {
+    if (nrow(sets[[nm]]) == 0) return(NULL)
+    sets[[nm]] |>
       group_by(bed_group) |>
-      summarise(n = n(), median = median(rent), psf = median(psf, na.rm = TRUE),
-                .groups = "drop")
-    names(s)[-1] <- paste0(tag, "_", names(s)[-1])
-    s
-  }
-  dplyr::full_join(side(a, "a"), side(b, "b"), by = "bed_group") |>
-    mutate(diff = (b_median - a_median) / a_median) |>
-    arrange(match(bed_group, bed_levels))
+      summarise(n = n(), median = median(rent), .groups = "drop") |>
+      mutate(area = nm)
+  }))
+  s$area <- factor(s$area, levels = names(sets))
+  s[order(s$area, match(s$bed_group, bed_levels)), c("area", "bed_group", "n", "median")]
 }
 
 #' Where a median rent sits against a budget range
