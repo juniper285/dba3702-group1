@@ -111,7 +111,7 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
     home = tagList(
       p(class = "text-muted", "What kind of home are you after?"),
       div(class = "chips",
-          checkboxGroupInput(ns("beds"), "Bedrooms", choices = bed_levels,
+          checkboxGroupInput(ns("beds"), "Bedrooms", choices = bed_choices,
                              selected = s$beds, inline = TRUE),
           checkboxGroupInput(ns("types"), "Property type", choices = choices$types,
                              selected = s$types, inline = TRUE)),

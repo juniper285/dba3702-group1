@@ -3175,7 +3175,7 @@
       "checksum": "e41351e00e94d6e3f7ef10537f7c4cc5"
     },
     "R/fct_data.R": {
-      "checksum": "fc054810c355691fa20bf84ed87290c2"
+      "checksum": "8d8164017d8a6f16b5562e30750dd530"
     },
     "R/fct_listing.R": {
       "checksum": "9804edf1d6d8828be14ee71cd009890e"
@@ -3190,10 +3190,10 @@
       "checksum": "0ad929a8d71890bff49d7b2f024bed9d"
     },
     "R/fct_settings.R": {
-      "checksum": "a38a6a592e168d35c91f3e02dd03f048"
+      "checksum": "6606b166ab34655a7d4459557882e7c9"
     },
     "R/mod_about.R": {
-      "checksum": "4a8db38de87c0b2906b7b170a552f7ce"
+      "checksum": "090525aed2285c946af48cb16dd2482d"
     },
     "R/mod_area_compare.R": {
       "checksum": "21a213dfd5fdec97b6130b1fa1661077"
@@ -3208,16 +3208,16 @@
       "checksum": "79f8a02931d80366bd5f282c2a0084c0"
     },
     "R/mod_listing_check.R": {
-      "checksum": "965c09ac505cb9a88c5f151e51728d91"
+      "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
       "checksum": "81f2ef95f73d13d5523058332d68187f"
     },
     "R/mod_properties.R": {
-      "checksum": "ada4a12f596ba6e37876d2d53f5e2839"
+      "checksum": "a84fd416a4261089e0bdcdb345d4f412"
     },
     "R/mod_settings.R": {
-      "checksum": "35d65021b39a206e7ad4cf1106a0fc32"
+      "checksum": "e82d9821d94f05bd3a06dfc51bd757c7"
     },
     "R/mod_shortlist.R": {
       "checksum": "faa41df73bd627b8751f4feaffe7db7c"

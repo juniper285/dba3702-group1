@@ -16,6 +16,16 @@ test_that("prepare_rentals() adds labels, bedroom groups, quarters and locations
   expect_equal(d$loc_id, c(1L, 1L, NA))
 })
 
+test_that("rentals with no bedroom count show only when every bedroom choice is picked", {
+  d <- prepare_rentals(raw)
+  d$area_sqft <- 500
+  period <- as.Date(c("2024-01-01", "2024-12-31"))
+  expect_false("Unknown" %in% bed_choices)
+  expect_equal(nrow(filter_market(d, NULL, bed_choices, d$type, c(0, area_max), period)), 3)
+  expect_equal(filter_market(d, NULL, c("1", "5+"), d$type, c(0, area_max), period)$bed_group,
+               c("1", "5+"))
+})
+
 test_that("filter_market() applies the sidebar filters and drops missing floor areas", {
   d <- prepare_rentals(raw)
   all <- filter_market(d, NULL, bed_levels, d$type, c(0, area_max),

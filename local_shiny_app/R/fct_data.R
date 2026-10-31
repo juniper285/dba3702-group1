@@ -19,6 +19,10 @@ district_names <- c(
 )
 
 bed_levels <- c("1", "2", "3", "4", "5+", "Unknown")
+# The bedroom choices people pick from. "Unknown" (every landed house, and some
+# flats URA gives no count for) is not one of them: those rentals only show
+# when no bedroom filter is set, i.e. every choice is picked
+bed_choices <- setdiff(bed_levels, "Unknown")
 area_max   <- 4000   # the floor-area slider's scale ends here; its top end means "up to the
                      # largest home" (area_top()), and bigger limits are typed in
 
@@ -81,7 +85,8 @@ prepare_rentals <- function(d) {
 #' The sidebar filters, applied to a set of contracts
 #'
 #' Every argument except `d` is a sidebar input. Empty `districts` = all.
-#' Contracts with no floor area are dropped.
+#' Contracts with no floor area are dropped. Picking every one of
+#' `bed_choices` means any bedrooms, including rentals with no bedroom count.
 #'
 #' @param near c(lat, lng) of a chosen MRT/LRT station, or NULL.
 #' @param mrt_dist Metres. With `near`: keep buildings within this distance
@@ -94,6 +99,7 @@ filter_market <- function(d, districts, beds, types, area, period,
                           near = NULL, mrt_dist = mrt_max,
                           places = NULL, place_km = place_km_max) {
   if (length(districts)) d <- d[d$district %in% districts, ]
+  if (all(bed_choices %in% beds)) beds <- bed_levels
   # which() drops rows with no floor area instead of returning NA rows
   d <- d[which(d$bed_group %in% beds &
                d$type %in% types &

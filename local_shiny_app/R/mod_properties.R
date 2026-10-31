@@ -25,7 +25,7 @@ mod_properties_ui <- function(id) {
       layout_columns(
         col_widths = c(3, 3, 3, 3),
         pick("a", "Property A"), pick("b", "Property B"), pick("c", "Property C"),
-        selectInput(ns("bed"), "Bedrooms", choices = c("All", bed_levels))
+        selectInput(ns("bed"), "Bedrooms", choices = c("All", bed_choices))
       ),
       card_footer("Uses the time period and budget from My filters; ",
                   "all three use the bedroom choice above.")

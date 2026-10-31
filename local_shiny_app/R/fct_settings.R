@@ -170,7 +170,7 @@ default_settings <- function(choices = settings_choices()) {
     budget    = c(3000, 5000),
     places    = new_places(),
     districts = character(),
-    beds      = bed_levels,
+    beds      = bed_choices,
     types     = choices$types,
     area      = c(0, choices$area_top),
     period    = period_for(12, choices$dates),
@@ -217,7 +217,7 @@ settings_from_json <- function(json, choices = settings_choices()) {
 
   keep("budget",    num_range(x$budget, 0, 1e5))
   keep("districts", pick(x$districts, choices$districts, allow_empty = TRUE))
-  keep("beds",      pick(x$beds, bed_levels))
+  keep("beds",      pick(x$beds, bed_choices))
   keep("types",     pick(x$types, choices$types))
   # Before version 2 the slider's top (area_max) meant "and above"
   if (!isTRUE(x$version >= 2) && isTRUE(as.numeric(x$area[2]) >= area_max)) x$area[2] <- choices$area_top
@@ -257,7 +257,7 @@ settings_from_json <- function(json, choices = settings_choices()) {
 settings_summary <- function(s, choices = settings_choices()) {
   parts <- c(
     paste0(money(s$budget[1]), " - ", money(s$budget[2])),
-    if (setequal(s$beds, bed_levels)) "any bedrooms"
+    if (all(bed_choices %in% s$beds)) "any bedrooms"
     else paste(paste(s$beds, collapse = ", "), "bedrooms"),
     if (!setequal(s$types, choices$types)) paste(s$types, collapse = ", "),
     if (s$area[1] > 0 || s$area[2] < choices$area_top)

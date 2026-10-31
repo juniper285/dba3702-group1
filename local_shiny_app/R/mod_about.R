@@ -56,7 +56,8 @@ mod_about_ui <- function(id) {
         p("URA reports floor area as a range; the midpoint is used for rent per sqft, ",
           "so psf figures are estimates. Rentals with no floor area (landed houses that ",
           "URA lists only as under 1,000 or over 8,000 sqft) are left out."),
-        p("Records with no bedroom count are shown as 'Unknown'. Distances are ",
+        p("URA gives no bedroom count for landed houses and some flats. These rentals ",
+          "show only when you haven't picked particular bedrooms. Distances are ",
           "straight-line estimates; walking times assume about 80 m per minute."),
         p("Medians based on few rentals are noisy: every figure shows how many rentals ",
           "it is based on.")

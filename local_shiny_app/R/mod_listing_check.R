@@ -52,7 +52,7 @@ mod_listing_check_ui <- function(id) {
         ),
         layout_columns(
           col_widths = c(4, 8),
-          selectInput(ns("beds"), "Bedrooms", c("Any", bed_levels[bed_levels != "Unknown"]),
+          selectInput(ns("beds"), "Bedrooms", c("Any", bed_choices),
                       selected = "2"),
           selectInput(ns("type"), "Property type", c("Any", sort(unique(rentals$type))),
                       selected = "Any")

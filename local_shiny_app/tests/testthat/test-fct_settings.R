@@ -35,6 +35,8 @@ test_that("invalid fields fall back to their defaults one by one", {
   d <- default_settings(choices)
   expect_equal(s$budget, d$budget)          # min above max
   expect_equal(s$beds, "2")                 # unknown "9" dropped
+  old <- settings_from_json('{"beds": ["2", "Unknown"]}', choices)
+  expect_equal(old$beds, "2")               # "Unknown" is no longer a choice
   expect_equal(s$types, d$types)            # nothing valid left
   expect_equal(s$mrt_pick, "")
   expect_equal(s$mrt_dist, d$mrt_dist)
