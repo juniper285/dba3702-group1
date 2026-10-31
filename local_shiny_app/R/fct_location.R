@@ -162,15 +162,6 @@ project_coords <- function() {
   })
 }
 
-#' Key places as a places table (name, lat, lng), in the order given
-#' @noRd
-key_place <- function(names) {
-  p <- key_places[match(names, key_places$name), c("name", "lat", "lng")]
-  p <- p[!is.na(p$name), ]
-  rownames(p) <- NULL
-  p
-}
-
 #' Name of the distance column for a place, e.g. "To NTU (km)"
 #' @noRd
 place_column <- function(name) paste0("To ", name, " (km)", recycle0 = TRUE)   # none for no places

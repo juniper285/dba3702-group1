@@ -70,12 +70,12 @@ nearest_locations <- function(locs, lat, lng) {
 #' @noRd
 comparable_sets <- function(d, place, radius_m = 500) {
   # Distances only use contracts placed at their building, not street-level matches
-  placed <- !is.na(d$lat) & !grepl("^Street only", d$geo_match %||% "")
+  placed <- !is.na(d$lat) & !grepl("^Street only", if (is.null(d$geo_match)) "" else d$geo_match)
   locs <- distinct(d[placed, ], project, district_no, lat, lng)
   near <- nearest_locations(locs, place$lat, place$lng)
 
   # Same project: the OneMap building name, or a project within 50 m
-  building <- toupper(trimws(place$building %||% ""))
+  building <- toupper(trimws(if (is.null(place$building)) "" else place$building))
   project <- if (nzchar(building) && building %in% d$project) building
              else if (nrow(near) && near$dist_m[1] <= 50) near$project[1]
              else NA_character_

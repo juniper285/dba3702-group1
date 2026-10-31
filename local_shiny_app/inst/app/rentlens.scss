@@ -214,19 +214,10 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
 }
 
-// ---- Sidebar filters -----------------------------------------------------
+// ---- Map side panel -------------------------------------------------------
 .bslib-sidebar-layout > .sidebar {
   background: #fff;
-  .filter-section {
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid $border-color;
-    > .shiny-input-container:last-child { margin-bottom: 0.75rem; }
-  }
   .form-label, .control-label { font-size: 0.85rem; font-weight: 500; }
-  .accordion-button { font-weight: 600; font-size: 0.9rem; padding: 0.65rem 0.25rem; }
-  .accordion-body { padding: 0.5rem 0.25rem; }
-  .accordion, .accordion-item { border: 0; background: transparent; }
-  .accordion-button:not(.collapsed) { background: transparent; box-shadow: none; }
 }
 
 // Checkbox and radio groups shown as clickable chips

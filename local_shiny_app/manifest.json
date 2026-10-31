@@ -3145,7 +3145,7 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "6d684f413813c12b2f718168b609c493"
+      "checksum": "7e8f328e8d9464279d79f5fc7fdfd202"
     },
     "inst/app/www/settings.js": {
       "checksum": "da9017f385a8850ccc520e697a625685"
@@ -3178,10 +3178,10 @@
       "checksum": "278429dc7c0db57a262064788c5a00ca"
     },
     "R/fct_listing.R": {
-      "checksum": "9804edf1d6d8828be14ee71cd009890e"
+      "checksum": "f91af693238a6732f1d82b2ecdc50fcc"
     },
     "R/fct_location.R": {
-      "checksum": "2fa113e2060b13141c7a6336ec8f58ae"
+      "checksum": "ce8af90cf7659ea4cd6ed39c09b7aa85"
     },
     "R/fct_map.R": {
       "checksum": "2448a2ff0511ad77eaebc742fb42f979"
