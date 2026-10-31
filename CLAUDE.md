@@ -62,13 +62,13 @@ Rscript -e 'pkgload::load_all(); run_app(options = list(port = 4321))'   # app a
 | `R/run_app.R` | `run_app()`, the only exported function. It enables URL bookmarking |
 | `R/app_config.R` | `app_sys()` builds paths into `inst/`. `app_theme()` is the bslib theme, plus `inst/app/rentlens.scss` |
 | `R/app_ui.R` | The navbar and its pages, listed below. The **Search** page has `value = "budget"` (an old name, kept for links and `nav_select`) |
-| `R/app_server.R` | Wires the modules together. It creates the shared `settings`, `filters`, `shortlist`, map selection and saved areas |
+| `R/app_server.R` | Wires the modules together. It creates the shared `settings`, `filters`, `shortlist` and map selection (the map module keeps the saved areas) |
 
 Pages in `R/app_ui.R`:
 - Search
 - Map
 - Check a listing
-- Market, with four sub-tabs: Compare areas, Area A vs B, Compare properties, Value for money
+- Market, with three sub-tabs: Compare areas, Compare properties, Value for money
 - Shortlist
 - My filters (the code calls them settings)
 - More → Rental records / About
@@ -78,7 +78,7 @@ Pages in `R/app_ui.R`:
 | File | Main contents |
 |------|---------------|
 | `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session (the 1,168 contracts with no floor area, landed houses listed as "<=1000"/">8000" sqft, are already dropped by `data-raw/rentals.R`), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels` (every bedroom group, for ordering and colours), `bed_choices` (the chips, without "Unknown"; picking all of them means any bedrooms, so unknown-bedroom rentals, including every landed house, show only then), `area_max` (4000, where the floor-area slider's scale ends). `area_top()` is the largest floor area, the "no limit" upper bound |
-| `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_two_areas()`, `empty_shortlist()` |
+| `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_areas()`/`compare_areas_by_bed()` (saved areas), `empty_shortlist()` |
 | `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
 | `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()`, `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
@@ -92,10 +92,10 @@ Pages in `R/app_ui.R`:
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
 | `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |
-| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", Save as Area A/B, "Only buildings within my budget" switch (on by default), "How to use the map" guide. Maps only Exact/Good geocodes (`well_located()` in `fct_map.R`). `new_map_selection()` |
+| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", saved areas ("Save this area", up to `max_areas` = 4, renamed/removed in the side panel, kept in `localStorage["rentlens-areas"]` and Save search links, stored by building coordinates), "Only buildings within my budget" switch (on by default), "How to use the map" guide. Maps only Exact/Good geocodes (`well_located()` in `fct_map.R`). `new_map_selection()` |
 | `mod_listing_check.R` | Check a listing: is an asking rent fair? Looks the address up with OneMap or takes a map pin. Flags verdicts based on fewer than `few_rentals` (5); `no_rentals_message()` in `fct_listing.R` |
 | `mod_compare.R` | Market → Compare areas (districts vs budget). Charts grow with the number of districts; heatmap numbers are placed by position, because plotly reads "1", "2" on a category axis as positions |
-| `mod_area_compare.R` | Market → Area A vs B (areas saved on the Map page), with the Singapore median for the same filters as a grey reference (needs `filters$settings`). `new_saved_areas()` |
+| `mod_saved_areas.R` | "Compare saved areas" card under the map (2+ saved areas): `compare_areas()` table (areas as columns, Singapore in grey), rent by bedrooms and by quarter. Uses `area_data` from `mod_map_server()`: the filters' mapped rentals, **ignoring** the within-budget switch. The area list helpers (`new_saved_areas()`, `add_area()`, `name_area()`, `areas_to_json()`/`areas_from_json()`, `area_palette`) are in `fct_map.R` |
 | `mod_properties.R` | Market → Compare properties (up to three projects side by side) |
 | `mod_value.R` | Market → Value for money (rent vs floor area, ranked by psf) |
 | `mod_shortlist.R` | Shortlist page; `add_to_shortlist()` |
@@ -123,7 +123,7 @@ Pages in `R/app_ui.R`:
 What `inst/app/www/settings.js` does:
 - Reads and writes `localStorage["rentlens-settings"]`.
 - Sends `input$"settings-stored"`, which is `"none"` on a first visit.
-- Handles the `rentlens-save-settings`, `rentlens-clear-settings` and `rentlens-coach` messages.
+- Handles the `rentlens-save-settings`, `rentlens-clear-settings`, `rentlens-coach` and `rentlens-save-areas` messages, and sends the stored saved areas as `input$"map-stored_areas"`.
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
 - Turns on a greyed optional block when you use it.
 - Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.

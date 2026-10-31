@@ -5,7 +5,7 @@ Live: https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.posit.cloud/
 A Shiny app for renters: a first-visit setup wizard and personal filters ("My
 filters"), budget check, listing check, options within budget, map
 (with key places, MRT/LRT stations and map selections applied to every page),
-area comparison (districts, Area A vs B), property comparison, value for
+area comparison (districts, and your own saved areas under the map), property comparison, value for
 money, shortlist and raw transactions. It is structured as
 an R package, following
 [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/structuring-project.html).
@@ -55,11 +55,13 @@ local_shiny_app/
 - The shortlist is a `reactiveVal` created in `app_server()` and passed to the
   modules that add to it (Within budget, Map) and show it (Shortlist,
   Compare properties).
-- The map selection (`new_map_selection()`) and saved areas
-  (`new_saved_areas()`) are `reactiveValues` created in `app_server()`. The
-  map writes them; `mod_filters_server()` applies the selection to `market`
-  (the map itself uses `base`, before the selection), and Area A vs B reads
-  the saved areas.
+- The map selection (`new_map_selection()`) is a `reactiveValues` created in
+  `app_server()`. The map writes it; `mod_filters_server()` applies it to
+  `market` (the map itself uses `base`, before the selection).
+- Saved areas (`new_saved_areas()`, a `reactiveVal` list) live inside the map
+  module, which passes them to `mod_saved_areas_server()` for the "Compare
+  saved areas" card under the map. They are kept in the browser by
+  `settings.js`.
 - Rental data is read once per R session by `rentals_data()` (`fct_data.R`),
   which also attaches each contract's nearest MRT/LRT station.
 

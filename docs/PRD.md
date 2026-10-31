@@ -95,11 +95,12 @@ Other parts:
 | Station ring | A ring around the station picked in My filters, and the map flies to it | `update_station_ring()` | **Keep** |
 | Click / draw selection | Click one building or draw a shape; the side panel and everything below follow it | `map_marker_click`, `map_draw_new_feature` → `map_sel` | **Keep** |
 | Apply map selection to all pages | Narrows Search, Market, Shortlist and Rental records to the selection | `map_sel$apply` → `filters$market()` | **Keep**. Shown as a chip so people know it is on |
-| Save as Area A / B | Stores two selections for Market → Area A vs B | `areas` (`new_saved_areas()`) | **Keep** |
-| Clear selection | Clears the selection **and also the saved Areas A and B** | `input$clear` | **Fix**: clearing A and B is surprising. It should only clear the selection |
+| Saved areas | 'Save this area' adds the selection to a list (up to 4) in the side panel, each with its own colour (map outline), an automatic name (the project, or 'Around <station> · N buildings'), ✎ rename and × remove. Kept in the browser and in Save search links | `new_saved_areas()`, `add_area()`, `name_area()`, `areas_to_json()` in `fct_map.R`; `settings.js` | **Keep** |
+| Compare saved areas | Card under the map, from 2 saved areas: rentals, projects, median and typical rent, share within budget, psf, walk to the nearest MRT/LRT, main district and distance to each of my places, plus rent by bedrooms and by quarter, with Singapore as a grey reference. Uses every rental in the areas' buildings, whatever the within-budget switch | `mod_saved_areas.R`; `compare_areas()`, `compare_areas_by_bed()` in `fct_rent.R` | **Keep** |
+| Clear selection | Clears the selection; saved areas stay | `input$clear` | **Keep** (fixed: it used to wipe the saved areas too) |
 | How to use the map | A 5-step guide in a dialog | `input$help` | **Keep** |
 | Side KPIs | Rentals, projects, median rent and median psf of the selection | `vb_*` | **Keep** |
-| Psf trend by month | Median psf per month, per bedroom and overall | `output$trend` | **Trim?** Area A vs B and Compare properties show trends too; this one is the noisiest (monthly) |
+| Psf trend by month | Median psf per month, per bedroom and overall | `output$trend` | **Trim?** Compare saved areas and Compare properties show trends too; this one is the noisiest (monthly) |
 | By bedrooms table | Rentals, median rent, sqft and psf per bedroom for the selection | `output$beds` | **Keep** (small and useful) |
 | Projects in the selection | Project and bedroom rows with add to shortlist | `table_data()` → `summarise_options()` | **Keep** |
 | Rentals in the selection | Raw contracts with a CSV download | `contracts()` | **Merge** into More → Rental records, which shows the same contracts (and follows the map selection when it is applied). Removing it shortens the page |
@@ -116,14 +117,13 @@ Other parts:
 | Comparables table, chart and map | Past rentals at each level, a chart with the asking rent, and dark circles for the comparable buildings | `output$table`, `output$plot`, map | **Keep** |
 | Add to shortlist | Adds the matched project with the chosen bedrooms | `add_to_shortlist()` | **Keep** |
 
-### 3.5 Market (`mod_compare.R`, `mod_area_compare.R`, `mod_properties.R`, `mod_value.R`)
+### 3.5 Market (`mod_compare.R`, `mod_properties.R`, `mod_value.R`)
 
 | Tab | Does | How | Verdict |
 |---|---|---|---|
 | Compare areas: district/project chart and table | Median and typical range per district (or per project), against the budget band. Share within budget is highlighted | `range_dot_chart()` | **Keep** |
 | Compare areas: district × bedroom heatmap | Median rent grid, soft green to red | `heat_data()` | **Keep** |
 | Compare areas: MRT premium | "Does being near an MRT/LRT station cost more?": psf vs distance per project, with a table | `nearest_mrt()` | **Keep?** Interesting, but not what a renter decides on. A candidate to **Cut** if the page feels long |
-| Area A vs B | KPIs, median by bedroom, quarterly trend and a table for the two saved map areas, with the Singapore median for reference | `compare_two_areas()` | **Keep**, but it only works after saving areas on the Map. The empty state explains how to do that |
 | Compare properties | Up to 3 projects side by side: cards, rent box plot, quarterly trend, table, "From shortlist", download | `mod_properties` | **Keep** |
 | Value for money | Median rent vs median floor area per project, and a table ranked by psf | `mod_value` | **Keep**. It is the only view that ranks by space for the money |
 
@@ -191,7 +191,6 @@ Tick one per row.
 | "Save search" wording | Rename | ☐ | ☐ | ☐ | ☐ |
 | Map → psf trend by month | Trim? | ☐ | ☐ | ☐ | ☐ |
 | Map → Rentals in the selection | Merge into Rental records | ☐ | ☐ | ☐ | ☐ |
-| Map → Clear selection also clears Areas A/B | Fix | ☐ | ☐ | ☐ | ☐ |
 | Map → heatmap / schools / hospitals / airport layers | Keep? | ☐ | ☐ | ☐ | ☐ |
 | Market → MRT premium chart and table | Keep? | ☐ | ☐ | ☐ | ☐ |
 | Shortlist saved in the browser | Add | ☐ | ☐ | ☐ | ☐ |
