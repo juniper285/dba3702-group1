@@ -91,7 +91,7 @@ Other parts:
 |---|---|---|---|
 | Building circles | One circle per mapped building. Size = rentals; colour = median rent vs budget (or median rent / psf) | `summarise_locations()`, `map_palette()`. Only Exact/Good geocodes are mapped (`well_located()`) | **Keep** |
 | Only buildings within my budget | Hides buildings whose median rent is outside the budget (on by default) | `map_data()` filters by the median per `loc_id` | **Keep** |
-| Layers | MRT/LRT stations, schools, key places (universities, business districts, hospitals), my places (purple pins), heatmap, satellite and OneMap basemaps | `add_station_layers()`, `add_key_places()`, `update_my_places()` | **Keep**, possibly with fewer layers: check whether the heatmap and schools are used |
+| Layers and map key | Universities and polytechnics (stars) and work areas (blue pins) on by default; hospitals, airport and ports, MRT/LRT stations, schools and the heatmap in the layers button; my places (purple pins); Light, OneMap and Satellite basemaps. A "Map key" box (top right) shows every symbol; the colour scale (bottom right) uses one colour, light = cheap, dark = dear. The side panel says how many filtered rentals have no exact location | `key_layers`, `add_key_places()`, `map_key()`, `add_station_layers()`, `update_my_places()`, `map_palette()` | **Keep**, possibly with fewer layers: check whether the heatmap and schools are used |
 | Station ring | A ring around the station picked in My filters, and the map flies to it | `update_station_ring()` | **Keep** |
 | Click / draw selection | Click one building or draw a shape; the side panel and everything below follow it | `map_marker_click`, `map_draw_new_feature` → `map_sel` | **Keep** |
 | Apply map selection to all pages | Narrows Search, Market, Shortlist and Rental records to the selection | `map_sel$apply` → `filters$market()` | **Keep**. Shown as a chip so people know it is on |
@@ -192,7 +192,7 @@ Tick one per row.
 | Map → psf trend by month | Trim? | ☐ | ☐ | ☐ | ☐ |
 | Map → Rentals in the selection | Merge into Rental records | ☐ | ☐ | ☐ | ☐ |
 | Map → Clear selection also clears Areas A/B | Fix | ☐ | ☐ | ☐ | ☐ |
-| Map → heatmap / schools layers | Keep? | ☐ | ☐ | ☐ | ☐ |
+| Map → heatmap / schools / hospitals / airport layers | Keep? | ☐ | ☐ | ☐ | ☐ |
 | Market → MRT premium chart and table | Keep? | ☐ | ☐ | ☐ | ☐ |
 | Shortlist saved in the browser | Add | ☐ | ☐ | ☐ | ☐ |
 | Everything else in section 3 | Keep | ☐ | ☐ | ☐ | ☐ |

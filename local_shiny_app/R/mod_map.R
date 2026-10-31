@@ -13,8 +13,6 @@
 #' @noRd
 mod_map_ui <- function(id) {
   ns <- NS(id)
-  rentals <- rentals_data()
-
   tagList(
     card(
       # Fits a laptop screen with the filter box above it; the side panel scrolls
@@ -41,6 +39,7 @@ mod_map_ui <- function(id) {
               kpi("Projects", textOutput(ns("vb_proj"))),
               kpi("Median rent", textOutput(ns("vb_rent"))),
               kpi("Median psf", textOutput(ns("vb_psf")))),
+          div(class = "small text-muted mt-2", textOutput(ns("unmapped"), inline = TRUE)),
           div(class = "section-title mt-3", "Map options"),
           input_switch(ns("in_budget"), "Only buildings within my budget", value = TRUE),
           div(class = "chips",
@@ -49,13 +48,8 @@ mod_map_ui <- function(id) {
         ),
         leafletOutput(ns("map"), height = "100%")
       ),
-      card_footer("The map follows your filters. Circle size = number of rentals; 'vs my budget' ",
-                  "colours each building by whether its median rent is below, within or above ",
-                  "your budget. Purple pins are your places; yellow stars mark universities and ",
-                  "work areas; the layers button adds MRT/LRT stations, hospitals, the heatmap ",
-                  "and other basemaps. ",
-                  format(sum(is.na(rentals$loc_id) | !well_located(rentals$geo_match)), big.mark = ","),
-                  " rentals with no exact location are not mapped.")
+      card_footer("The map follows your filters. The key (top right) explains the symbols, ",
+                  "and the colour scale (bottom right) the circle colours.")
     ),
     layout_columns(
       col_widths = c(7, 5),
@@ -108,6 +102,16 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     })
 
     loc_summary <- reactive(summarise_locations(map_data()))
+    # Rentals whose building couldn't be placed exactly: counted on every other
+    # page, but not on the map
+    output$unmapped <- renderText({
+      d <- filters$base()
+      if (length(filters$projects())) d <- d[d$project %in% filters$projects(), ]
+      n <- sum(is.na(d$loc_id) | !well_located(d$geo_match))
+      if (n == 0) "" else paste0(format(n, big.mark = ","), " of your ",
+                                 format(nrow(d), big.mark = ","), " rentals have no exact ",
+                                 "location, so they aren't on the map. Other pages still count them.")
+    })
 
     # Selection: a clicked building, a drawn area, or nothing (= everything mapped).
     # Shared with the filters, which apply it to every page when asked to
@@ -213,7 +217,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
                          color = "#333", weight = 0.5, label = location_labels(d)) |>
         addHeatmap(lng = ~lng, lat = ~lat, intensity = ~n, group = "Heatmap",
                    blur = 20, radius = 12, max = quantile(d$n, 0.9)) |>
-        addLegend("bottomright", pal = pal, values = vals, layerId = "legend",
+        addLegend("bottomright", pal = pal, values = vals, layerId = "legend", opacity = 0.8,
                   title = names(metric_choices)[metric_choices == m],
                   labFormat = if (m == "budget") labelFormat()
                               else labelFormat(prefix = "S$", big.mark = ","))

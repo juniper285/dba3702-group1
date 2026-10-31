@@ -3145,7 +3145,7 @@
       "checksum": "0a4186c96840b2c361611b8a90681f58"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "7e8f328e8d9464279d79f5fc7fdfd202"
+      "checksum": "0b1afd63987038e05915653c1eb66bea"
     },
     "inst/app/www/settings.js": {
       "checksum": "da9017f385a8850ccc520e697a625685"
@@ -3184,7 +3184,7 @@
       "checksum": "ce8af90cf7659ea4cd6ed39c09b7aa85"
     },
     "R/fct_map.R": {
-      "checksum": "2448a2ff0511ad77eaebc742fb42f979"
+      "checksum": "63c0a34be14777e5a31ce08afdda28ff"
     },
     "R/fct_rent.R": {
       "checksum": "0ad929a8d71890bff49d7b2f024bed9d"
@@ -3193,7 +3193,7 @@
       "checksum": "6606b166ab34655a7d4459557882e7c9"
     },
     "R/mod_about.R": {
-      "checksum": "090525aed2285c946af48cb16dd2482d"
+      "checksum": "879633b1f5b8367e7b3619628058d89c"
     },
     "R/mod_area_compare.R": {
       "checksum": "21a213dfd5fdec97b6130b1fa1661077"
@@ -3211,7 +3211,7 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "81f2ef95f73d13d5523058332d68187f"
+      "checksum": "a0fa201c8d86df80ef95d7c31b0e385d"
     },
     "R/mod_properties.R": {
       "checksum": "a84fd416a4261089e0bdcdb345d4f412"

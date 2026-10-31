@@ -404,3 +404,28 @@ table.dataTable {
   .area-unit, .area-sep { color: $text-muted; }
   .area-sep { margin: 0 0.25rem; }
 }
+
+// ---- Map key (top right of the map; map_key() in fct_map.R) --------------
+.leaflet-control.map-key-control {
+  background: rgba(#fff, 0.95);
+  border-radius: $border-radius;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  max-width: 15rem;
+}
+.map-key {
+  summary { font-weight: 600; cursor: pointer; }
+  .map-key-row { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.3rem; }
+  .map-key-symbol { width: 2.2rem; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; }
+  .map-key-symbol svg { width: 16px; height: 16px; }
+  .map-key-dot { display: inline-block; border-radius: 50%; }
+  .map-key-pin {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    color: #fff; font-size: 0.55rem;
+    .fa, .fas, svg { transform: rotate(45deg); }
+  }
+  .map-key-note { margin-top: 0.4rem; color: $text-muted; }
+}

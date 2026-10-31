@@ -18,7 +18,8 @@ map_palette <- function(metric) {
   if (metric == "budget") {
     colorFactor(c("#4575b4", "#1a9850", "#d73027"), levels = budget_levels)
   } else {
-    colorBin("RdYlBu", bins = map_bins[[metric]], reverse = TRUE)
+    # One colour, lightest = cheapest, darkest = dearest
+    colorBin(c("#c6dbef", "#08306b"), bins = map_bins[[metric]])
   }
 }
 
@@ -67,34 +68,71 @@ add_draw_toolbar <- function(map) {
                  editOptions = editToolbarOptions())
 }
 
-# Schools and work areas show as yellow stars (always on); airport, ports and
-# hospitals get their own layer with icons
-star_groups <- c("Universities", "Polytechnics", "Business districts")
+# Key-place layers on the map, built from the groups in destination_groups.
+# Universities and polytechnics are yellow stars; the others are pins with an
+# icon (`colour` is an awesome-markers colour, `hex` the same colour for the key)
+key_layers <- list(
+  "Universities and polytechnics" = list(groups = c("Universities", "Polytechnics"), on = TRUE),
+  "Work areas"        = list(groups = "Business districts", on = TRUE,
+                             icon = "briefcase", colour = "blue", hex = "#38aadd"),
+  "Hospitals"         = list(groups = "Hospitals", on = FALSE,
+                             icon = "plus-square", colour = "red", hex = "#d63e2a"),
+  "Airport and ports" = list(groups = "Transport", on = FALSE,
+                             icon = "plane", colour = "green", hex = "#72b026")
+)
 star_svg <- paste0(
   "<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>",
   "<path d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6 5.6 21.1 7 14l-5.3-5 7.2-.9z' ",
   "fill='#FFD60A' stroke='#5c4a00' stroke-width='1.3' stroke-linejoin='round'/></svg>")
-place_icons   <- c("Transport" = "plane", "Hospitals" = "plus-square")
-place_colours <- c("Transport" = "green", "Hospitals" = "red")
 
-#' Add the key places: stars for schools and work areas, icons for the rest
+#' Add the key places, one layer per entry of key_layers
 #' @noRd
 add_key_places <- function(map, places = key_places) {
-  stars  <- places[places$group %in% star_groups, ]
-  others <- places[!places$group %in% star_groups, ]
   star <- makeIcon(
     iconUrl = paste0("data:image/svg+xml;charset=UTF-8", ",",
                      utils::URLencode(star_svg, reserved = TRUE)),
     iconWidth = 26, iconHeight = 26, iconAnchorX = 13, iconAnchorY = 13)
-  map |>
-    addMarkers(data = stars, lng = ~lng, lat = ~lat, icon = star,
-               group = "Schools and work areas", label = ~paste0(name, " (", group, ")")) |>
-    addAwesomeMarkers(data = others, lng = ~lng, lat = ~lat,
-                      group = "Airport, ports and hospitals",
-                      label = ~paste0(name, " (", group, ")"),
-                      icon = awesomeIcons(icon = unname(place_icons[others$group]),
-                                          library = "fa", iconColor = "white",
-                                          markerColor = unname(place_colours[others$group])))
+  for (layer in names(key_layers)) {
+    k <- key_layers[[layer]]
+    p <- places[places$group %in% k$groups, ]
+    map <- if (is.null(k$icon)) {
+      addMarkers(map, data = p, lng = ~lng, lat = ~lat, icon = star, group = layer,
+                 label = ~paste0(name, " (", group, ")"))
+    } else {
+      addAwesomeMarkers(map, data = p, lng = ~lng, lat = ~lat, group = layer,
+                        label = ~paste0(name, " (", group, ")"),
+                        icon = awesomeIcons(icon = k$icon, library = "fa", iconColor = "white",
+                                            markerColor = k$colour))
+    }
+  }
+  map
+}
+
+#' The map's key: what each symbol means (shown in the top-right corner)
+#' @noRd
+map_key <- function() {
+  row <- function(symbol, text) div(class = "map-key-row", span(class = "map-key-symbol", symbol), text)
+  pin <- function(icon_name, hex) span(class = "map-key-pin", style = paste0("background:", hex),
+                                       icon(icon_name))
+  dot <- function(fill, line, size = 10) span(class = "map-key-dot", style = sprintf(
+    "width:%dpx;height:%dpx;background:%s;border:1.5px solid %s", size, size, fill, line))
+  ring <- function(line) span(class = "map-key-dot", style = sprintf(
+    "width:14px;height:14px;border:2.5px solid %s", line))
+  layers <- key_layers[!vapply(key_layers, function(k) is.null(k$icon), TRUE)]
+  tags$details(
+    class = "map-key", open = NA,
+    tags$summary("Map key"),
+    row(span(dot("#9ca3af", "#333", 8), dot("#9ca3af", "#333", 14)),
+        "A building with rentals; bigger = more rentals"),
+    row(ring("#000"), "Selected"),
+    row(span(ring(area_colours[["a"]]), ring(area_colours[["b"]])), "Saved Area A / Area B"),
+    row(pin("location-dot", "#d252b9"), "My places"),
+    row(HTML(star_svg), "Universities and polytechnics"),
+    lapply(names(layers), function(n) row(pin(layers[[n]]$icon, layers[[n]]$hex), n)),
+    row(dot("#fff", "#222"), "MRT/LRT station"),
+    row(dot("#cab2d6", "#6a3d9a"), "School"),
+    div(class = "map-key-note", "Turn layers on or off with the layers button (bottom left).")
+  )
 }
 
 #' Add small white dots for MRT/LRT stations and purple dots for schools
@@ -129,13 +167,14 @@ base_map <- function() {
                                   '<a href="https://www.sla.gov.sg">Singapore Land Authority</a>')) |>
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
     addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
-                     overlayGroups = c("Buildings", "My places", "Schools and work areas",
-                                       "Airport, ports and hospitals", "Heatmap",
-                                       "MRT/LRT stations",
+                     overlayGroups = c("Buildings", "My places", names(key_layers),
+                                       "Heatmap", "MRT/LRT stations",
                                        if (!is.null(schools_data())) "Schools"),
                      options = layersControlOptions(collapsed = TRUE),
                      position = "bottomleft") |>
-    hideGroup(c("Airport, ports and hospitals", "Heatmap", "MRT/LRT stations", "Schools")) |>
+    hideGroup(c(names(key_layers)[!vapply(key_layers, `[[`, TRUE, "on")],
+                "Heatmap", "MRT/LRT stations", "Schools")) |>
+    addControl(map_key(), position = "topright", className = "map-key-control") |>
     addSearchOSM() |>
     add_draw_toolbar() |>
     setView(103.83, 1.33, zoom = 12) |>
