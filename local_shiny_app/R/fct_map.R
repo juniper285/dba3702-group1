@@ -69,15 +69,17 @@ add_draw_toolbar <- function(map) {
 }
 
 # Key-place layers on the map, built from the groups in destination_groups.
-# Universities and polytechnics are yellow stars; the others are pins with an
-# icon (`colour` is an awesome-markers colour, `hex` the same colour for the key)
+# All start hidden, so the map shows only the renter's own places until they
+# turn a layer on. Universities and polytechnics are yellow stars; the others
+# are pins with an icon (`colour` is an awesome-markers colour, `hex` the same
+# colour for the key)
 key_layers <- list(
-  "Universities and polytechnics" = list(groups = c("Universities", "Polytechnics"), on = TRUE),
-  "Work areas"        = list(groups = "Business districts", on = TRUE,
+  "Universities and polytechnics" = list(groups = c("Universities", "Polytechnics")),
+  "Work areas"        = list(groups = "Business districts",
                              icon = "briefcase", colour = "blue", hex = "#38aadd"),
-  "Hospitals"         = list(groups = "Hospitals", on = FALSE,
+  "Hospitals"         = list(groups = "Hospitals",
                              icon = "plus-square", colour = "red", hex = "#d63e2a"),
-  "Airport and ports" = list(groups = "Transport", on = FALSE,
+  "Airport and ports" = list(groups = "Transport",
                              icon = "plane", colour = "green", hex = "#72b026")
 )
 star_svg <- paste0(
@@ -131,7 +133,8 @@ map_key <- function() {
     lapply(names(layers), function(n) row(pin(layers[[n]]$icon, layers[[n]]$hex), n)),
     row(dot("#fff", "#222"), "MRT/LRT station"),
     row(dot("#cab2d6", "#6a3d9a"), "School"),
-    div(class = "map-key-note", "Turn layers on or off with the layers button (bottom left).")
+    div(class = "map-key-note", "Only buildings and your places show at first; turn the ",
+        "others on with the layers button (bottom left).")
   )
 }
 
@@ -172,8 +175,7 @@ base_map <- function() {
                                        if (!is.null(schools_data())) "Schools"),
                      options = layersControlOptions(collapsed = TRUE),
                      position = "bottomleft") |>
-    hideGroup(c(names(key_layers)[!vapply(key_layers, `[[`, TRUE, "on")],
-                "Heatmap", "MRT/LRT stations", "Schools")) |>
+    hideGroup(c(names(key_layers), "Heatmap", "MRT/LRT stations", "Schools")) |>
     addControl(map_key(), position = "topright", className = "map-key-control") |>
     addSearchOSM() |>
     add_draw_toolbar() |>
