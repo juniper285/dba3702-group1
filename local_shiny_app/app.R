@@ -3,5 +3,7 @@
 # This file is also the entry point for deploying (e.g. shinyapps.io).
 # The app itself lives in R/ as an R package (see README.md).
 
+# The chatbot's key (git-ignored; on Posit Connect Cloud it's a secret variable)
+if (file.exists(".Renviron")) readRenviron(".Renviron")
 pkgload::load_all(export_all = FALSE, helpers = FALSE, attach_testthat = FALSE)
 run_app()

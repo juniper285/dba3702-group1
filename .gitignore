@@ -6,3 +6,7 @@
 rsconnect/
 *.xlsx
 ~$*
+
+# Secrets: the chatbot key lives in local_shiny_app/.Renviron
+.Renviron
+*.env

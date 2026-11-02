@@ -440,3 +440,44 @@ table.dataTable {
   }
   .map-key-note { margin-top: 0.4rem; color: $text-muted; }
 }
+
+// ---- Ask RentLens: chat button and pop-up window (mod_chat.R, chat.js) ---
+$chat-tint: mix(#fff, $success, 92%);   // faint green
+.chat-fab {
+  position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 1040;
+  border-radius: 2rem; padding: 0.6rem 1.1rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  display: inline-flex; align-items: center; gap: 0.45rem;
+}
+// A floating window (bottom right at first) that can be dragged by its title
+// bar. The modal's own full-screen layer darkens the page (its Bootstrap
+// backdrop is off; clicking the dark area closes the window, see chat.js)
+.chat-window { background: rgba(15, 23, 42, 0.5); }
+.chat-window .chat-dialog {
+  position: fixed; right: 1.5rem; bottom: 1.5rem; margin: 0;
+  width: unquote("min(28rem, calc(100vw - 2rem))"); max-width: none;
+  .modal-content {
+    height: unquote("min(40rem, calc(100vh - 3rem))");
+    background: $chat-tint;
+    border: 1px solid mix(#fff, $success, 70%);
+    border-radius: 1rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+  }
+  .modal-header {
+    cursor: move; user-select: none; touch-action: none;
+    background: mix(#fff, $success, 82%);
+    border-bottom: 1px solid mix(#fff, $success, 70%);
+    padding: 0.6rem 1rem;
+    .modal-title { font-size: 1rem; font-weight: 600; color: shade-color($success, 30%); }
+    .chat-grip { color: mix(#fff, $success, 45%); margin-right: 0.5rem; }
+  }
+  .modal-body { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; padding: 0.75rem 1rem; }
+  .chat-note { font-size: 0.75rem; color: $text-muted; }
+  shiny-chat-container { flex: 1 1 auto; min-height: 0; font-size: 0.9rem; background: transparent; }
+}
+// On phones, show only the button's icon, and the window fills the width
+@media (max-width: 575.98px) {
+  .chat-fab { padding: 0.75rem; .chat-fab-label { display: none; } }
+  .chat-window .chat-dialog { right: 1rem; bottom: 1rem; }
+}

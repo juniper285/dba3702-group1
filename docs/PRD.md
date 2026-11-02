@@ -145,6 +145,13 @@ The shortlist is kept only for the session and in Save search links; it is **not
 | Rental records | Every contract matching the filters (and the map selection), newest first, with a CSV download | **Keep**. It becomes the single raw-data table if the Map's contracts table is merged into it |
 | About the data | Sources, how figures are worked out, limitations | **Keep**. Update it when behaviour changes |
 
+### 3.8 Ask RentLens chatbot (`mod_chat.R`, `fct_chat.R`)
+
+| Feature | Does | How it works | Verdict |
+|---|---|---|---|
+| Chat button and panel | An "Ask RentLens" button (bottom right, every page) opens a faint-green chat window over the darkened page; drag it by its title bar (double-click puts it back), click outside or × to close; the conversation stays. A note says answers come from an AI model and can be wrong. Hidden when no key is set | Bootstrap modal + `chat.js` (dragging) + `shinychat::chat_ui()`/`chat_server()`, history off (nothing saved on the server) | **Keep** |
+| Answers from the data | The model (NUS SoC LLM service, default model) answers questions such as "2-bedroom near Novena MRT?", "cheapest districts for a 1-bedroom", "condos in Clementi under S$4,000", "is my budget enough in Holland?". It must call a tool for every figure and say the place, period and number of rentals | `ellmer::chat_openai_compatible()` with five tools: `rent_stats`, `rank_areas`, `find_projects`, `rent_trend`, `my_filters`. Places are matched by `chat_where()`: district code or name, MRT/LRT station, project, street | **Keep** |
+
 ## 4. Shared plumbing (no verdict needed)
 
 - **`filter_market()`** (`fct_data.R`). The single filter behind every page: districts, bedrooms, types, floor area, period, station, MRT distance and places.
@@ -180,6 +187,7 @@ Rows that are left out or limited:
 - Distances are straight lines; walking time assumes 80 m a minute.
 - My filters are per browser; the shortlist is per session.
 - The theme's CSS address doesn't change between deploys, so a returning visitor can see old styles until a hard refresh.
+- The chatbot depends on NUS SoC's LLM service and its key; if the service is down, the chat shows an error and the rest of the app still works. It only answers from contracts (no live listings, no HDB).
 - OneMap is called live: if it is down, place search and Check a listing lookups fail, but the rest of the app still works.
 
 ## 7. Decision table

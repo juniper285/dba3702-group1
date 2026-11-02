@@ -11,6 +11,7 @@ Imports:
     bslib,
     dplyr,
     DT,
+    ellmer,
     htmltools,
     httr2,
     jsonlite,
@@ -20,6 +21,7 @@ Imports:
     sass,
     sf,
     shiny (>= 1.7.0),
+    shinychat,
     stats,
     utils
 Suggests:

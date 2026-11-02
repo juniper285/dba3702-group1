@@ -115,6 +115,11 @@ The app is live at https://01a18a24-12d4-aa74-2e7f-2340d690bbe1.share.connect.po
   needs the repo to be public.
 - Nothing is written on the server: settings live in each visitor's browser,
   and OneMap/data.gov.sg need no keys.
+- The chatbot needs its key on Connect Cloud too: in the content's
+  **Settings → Variables**, add `SOCLAAS_API_KEY` as a secret (and
+  `SOCLAAS_BASE_URL`, `SOCLAAS_MODEL` if they differ from the defaults).
+  Without it the app deploys fine but hides the chat button. Never commit
+  `.Renviron`.
 
 ## Data sources
 

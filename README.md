@@ -16,9 +16,21 @@ worth keeping is described in the [PRD](docs/PRD.md).
 
 ```r
 install.packages(c("shiny", "bslib", "DT", "dplyr", "plotly", "sass",
-                   "leaflet", "leaflet.extras", "sf", "httr2", "pkgload"))
+                   "leaflet", "leaflet.extras", "sf", "httr2", "pkgload",
+                   "ellmer", "shinychat"))
 shiny::runApp("local_shiny_app")
 ```
+
+The "Ask RentLens" chatbot needs a key for NUS SoC's LLM service (SoCLaaS).
+Put it in `local_shiny_app/.Renviron`, which git ignores:
+
+```
+SOCLAAS_BASE_URL=https://soclaas-api.comp.nus.edu.sg/v1
+SOCLAAS_API_KEY=<your key>
+SOCLAAS_MODEL=default
+```
+
+Without a key the app runs as usual, just without the chat button.
 
 ## Data sources
 
@@ -36,9 +48,10 @@ Rebuild scripts live in `local_shiny_app/data-raw/` and write to
 | Address lookup ("Check a listing") | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live | `onemap_search()` in `local_shiny_app/R/fct_listing.R` | cached per R session |
 | Place suggestions ("Places that matter" in My filters) | [OneMap Search API](https://www.onemap.gov.sg/apidocs/), live, called from the browser as you type | `searchPlaces()` in `local_shiny_app/inst/app/www/settings.js` | not stored; the chosen place is saved in the browser with the settings |
 | Basemaps | Esri World Gray Canvas and World Imagery; [OneMap](https://www.onemap.gov.sg/) tiles (Singapore Land Authority) | `base_map()` in `local_shiny_app/R/fct_map.R` | loaded live |
+| Chatbot answers ("Ask RentLens") | [NUS SoC LLM service (SoCLaaS)](https://soclaas-api.comp.nus.edu.sg/v1), OpenAI-compatible, live; the model only writes the answer, every figure comes from the app's own data through tools | `new_rentlens_chat()` in `local_shiny_app/R/fct_chat.R` | not stored; needs `SOCLAAS_API_KEY` |
 | Map place search | OpenStreetMap Nominatim, via `leaflet.extras::addSearchOSM()` | `base_map()` | live |
 
-None of these sources needs an API key, except the URA API.
+None of these sources needs an API key, except the URA API and the chatbot.
 
 ### Rental contracts (URA)
 
