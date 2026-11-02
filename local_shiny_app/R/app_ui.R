@@ -12,6 +12,7 @@ app_ui <- function(request) {
     fillable = FALSE,   # let each page scroll instead of squeezing content to fit
     navbar_options = navbar_options(theme = "light"),
     header = settings_dependency(),   # loads and saves My filters in the browser
+    footer = mod_chat_ui("chat"),     # "Ask RentLens" button and chat panel, on every page
 
     # Every page that follows the renter's filters starts with the same
     # "My filters" box (mod_settings_summary_ui() on Search, filter_note_ui()

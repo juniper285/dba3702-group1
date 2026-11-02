@@ -79,9 +79,10 @@ Pages in `R/app_ui.R`:
 |------|---------------|
 | `fct_data.R` | `rentals_data()` loads `inst/extdata/rentals.rds` once per session (the 1,168 contracts with no floor area, landed houses listed as "<=1000"/">8000" sqft, are already dropped by `data-raw/rentals.R`), adds district names and the nearest MRT. `filter_market()` is the single filter used everywhere: districts, beds, types, area, period, near-station, MRT distance, places and `place_km`. Constants: `bed_levels` (every bedroom group, for ordering and colours), `bed_choices` (the chips, without "Unknown"; picking all of them means any bedrooms, so unknown-bedroom rentals, including every landed house, show only then), `area_max` (4000, where the floor-area slider's scale ends). `area_top()` is the largest floor area, the "no limit" upper bound |
 | `fct_rent.R` | Rent summaries: `latest_months()`, `summarise_rent()`, `summarise_options()`, `budget_verdict()`, `fits_budget()`, `summarise_projects()`, `compare_areas()`/`compare_areas_by_bed()` (saved areas), `empty_shortlist()` |
-| `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
+| `fct_location.R` | Distances: `haversine_km()`, `mrt_stations()`, `schools_data()`, `mrt_lines()` (the tracks, for the map), `nearest_mrt()`, `station_location()`, `walk_minutes()` (80 m per minute), `add_distance()` (one `To <place> (km)` column per place, named by `place_column()`). `destination_groups`/`key_places` are the hand-typed key places. `mrt_max` (2000 = "any distance") |
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
-| `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()`, `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
+| `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()` (MRT/LRT lines and stations, one layer: `mrt_group`), `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
+| `fct_chat.R` | The "Ask RentLens" chatbot: `chat_config()` (reads `SOCLAAS_*` env vars; NULL = no key, chat hidden), `chat_system_prompt()`, `new_rentlens_chat()` (ellmer client with five tools), and the tools' plain functions `chat_rent_stats()`, `chat_rank_areas()`, `chat_find_projects()`, `chat_rent_trend()`, plus `chat_where()` (district code/name, station, project, street → rentals), `chat_beds()`, `chat_types()`, `tool_json()` |
 | `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
 
 ### `local_shiny_app/R/`: modules (`mod_*`), each with `mod_x_ui(id)` and `mod_x_server(id, ...)`
@@ -100,6 +101,7 @@ Pages in `R/app_ui.R`:
 | `mod_value.R` | Market → Value for money (rent vs floor area, ranked by psf) |
 | `mod_shortlist.R` | Shortlist page; `add_to_shortlist()` |
 | `mod_transactions.R` | More → Rental records (raw table) |
+| `mod_chat.R` | "Ask RentLens": floating button on every page (`footer` of `page_navbar`) opening a faint-green pop-up window over the darkened page (a Bootstrap modal; `inst/app/www/chat.js` lets it be dragged by its title bar and remembers where in `localStorage["rentlens-chat-pos"]`), `shinychat::chat_ui()`/`chat_server()` with history off. The `my_filters` tool reads `filters` with `isolate()` |
 | `mod_about.R` | More → About the data (static text, so no server). Update it when a page's behaviour changes |
 
 ### `local_shiny_app/R/`: helpers (`utils_*`)
@@ -118,6 +120,7 @@ Pages in `R/app_ui.R`:
 | `inst/app/www/settings.js` | Browser side of My filters. See the next list |
 | `inst/extdata/rentals.rds` | URA rental contracts, cleaned and geocoded. Rebuilt by `data-raw/rentals.R` |
 | `inst/extdata/mrt_stations.csv` | 188 MRT/LRT stations (LTA exits averaged). Rebuilt by `data-raw/mrt_stations.R` |
+| `inst/extdata/mrt_lines.rds` | The track of each MRT/LRT line (sf, with its official colour), from OpenStreetMap. Rebuilt by `data-raw/mrt_lines.R` |
 | `inst/extdata/schools.csv` | MOE schools, geocoded with OneMap. Rebuilt by `data-raw/schools.R` |
 
 What `inst/app/www/settings.js` does:
@@ -134,6 +137,7 @@ What `inst/app/www/settings.js` does:
 |------|------------|
 | `data-raw/rentals.R` | `data-raw/URA_Union_Cleaned_with_Address.xlsx` (git-ignored, put it there yourself) → `inst/extdata/rentals.rds`, without contracts that have no floor area. Needs readxl |
 | `data-raw/mrt_stations.R` | data.gov.sg LTA station exits → `mrt_stations.csv` |
+| `data-raw/mrt_lines.R` | OpenStreetMap (Overpass API) line tracks → `mrt_lines.rds`. Needs httr2 |
 | `data-raw/schools.R` | data.gov.sg MOE schools + OneMap geocoding → `schools.csv` (about a minute) |
 | `dev/run_dev.R` | Development launcher |
 | `dev/check.R` | `roxygenise()` + `test_local()` + `rsconnect::writeManifest()` |
@@ -177,6 +181,7 @@ What `inst/app/www/settings.js` does:
 - **`testServer()` gets its own copies of default arguments.** Pass reactive arguments such as areas and places explicitly.
 - **Zero-length vectors.** Code must work with zero places. New users start with none, and `paste0()` needs `recycle0 = TRUE`; see `place_column()`.
 - **The test data has quirks.** Some project names are generic ("LANDED HOUSING DEVELOPMENT"). There are no private rentals within 500 m of Kent Ridge MRT, so tests use Novena.
+- **The chatbot key is a secret.** It lives in `local_shiny_app/.Renviron` (git-ignored, read by `app.R` and `dev/run_dev.R`) and as a secret variable on Posit Connect Cloud. Never commit it or print it. Tests never call the model: they test the tool functions and build the client with a fake config. ellmer: pass the key as `credentials = function() key` (the deprecated `api_key` argument gets a 401), and tools must return JSON text (`tool_json()`).
 - **OneMap is live and keyless.** Server side, call `onemap_search()`; in the browser it's `RentLens.searchPlaces`. Tests should pass a fake `search =` function rather than hit the network.
 
 ## Style

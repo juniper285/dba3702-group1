@@ -26,6 +26,7 @@ app_server <- function(input, output, session) {
   mod_value_server("value", filters)
   mod_shortlist_server("shortlist", filters, shortlist)
   mod_transactions_server("transactions", filters)
+  mod_chat_server("chat", filters)
 
   # Number of shortlisted options, shown next to "Shortlist" in the navbar
   output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")

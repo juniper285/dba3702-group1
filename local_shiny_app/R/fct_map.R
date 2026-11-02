@@ -131,6 +131,9 @@ map_key <- function() {
     row(pin("location-dot", "#d252b9"), "My places"),
     row(HTML(star_svg), "Universities and polytechnics"),
     lapply(names(layers), function(n) row(pin(layers[[n]]$icon, layers[[n]]$hex), n)),
+    row(span(class = "map-key-lines", lapply(unique(mrt_lines()$colour), function(c)
+          span(style = paste0("background:", c)))),
+        "MRT/LRT lines in their own colours; hover one for its name"),
     row(dot("#fff", "#222"), "MRT/LRT station"),
     row(dot("#cab2d6", "#6a3d9a"), "School"),
     div(class = "map-key-note", "Only buildings and your places show at first; turn the ",
@@ -138,11 +141,25 @@ map_key <- function() {
   )
 }
 
-#' Add small white dots for MRT/LRT stations and purple dots for schools
+#' The layer with the MRT/LRT lines and their stations
 #' @noRd
-add_station_layers <- function(map, mrt = mrt_stations(), schools = schools_data()) {
+mrt_group <- "MRT/LRT lines and stations"
+osm_credit <- 'MRT/LRT lines &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
+#' Add the MRT/LRT lines (in their own colours) with small white dots for the
+#' stations, and purple dots for schools
+#' @noRd
+add_station_layers <- function(map, mrt = mrt_stations(), schools = schools_data(),
+                               lines = mrt_lines()) {
+  if (!is.null(lines)) {
+    map <- addPolylines(map, data = lines, group = mrt_group, color = ~colour, weight = 3,
+                        opacity = 0.85, label = ~line,
+                        # OpenStreetMap's licence asks for this credit while the lines show
+                        options = c(pathOptions(), list(attribution = osm_credit)),
+                        highlightOptions = highlightOptions(weight = 6, opacity = 1))
+  }
   if (!is.null(mrt)) {
-    map <- addCircleMarkers(map, data = mrt, lng = ~lng, lat = ~lat, group = "MRT/LRT stations",
+    map <- addCircleMarkers(map, data = mrt, lng = ~lng, lat = ~lat, group = mrt_group,
                             radius = 4, color = "#222", weight = 1.5, fillColor = "#fff",
                             fillOpacity = 1, label = ~station)
   }
@@ -171,11 +188,11 @@ base_map <- function() {
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
     addLayersControl(baseGroups = c("Light", "OneMap", "Satellite"),
                      overlayGroups = c("Buildings", "My places", names(key_layers),
-                                       "Heatmap", "MRT/LRT stations",
+                                       "Heatmap", mrt_group,
                                        if (!is.null(schools_data())) "Schools"),
                      options = layersControlOptions(collapsed = TRUE),
                      position = "bottomleft") |>
-    hideGroup(c(names(key_layers), "Heatmap", "MRT/LRT stations", "Schools")) |>
+    hideGroup(c(names(key_layers), "Heatmap", mrt_group, "Schools")) |>
     addControl(map_key(), position = "topright", className = "map-key-control") |>
     addSearchOSM() |>
     add_draw_toolbar() |>

@@ -87,6 +87,18 @@ mrt_stations <- function() {
   })
 }
 
+#' MRT/LRT tracks (inst/extdata/mrt_lines.rds: one row per line with `ref`,
+#' `line`, `colour` and its track as an sf multi-line)
+#'
+#' @return The lines, or NULL if the file is missing.
+#' @noRd
+mrt_lines <- function() {
+  cached("mrt_lines", {
+    f <- app_sys("extdata", "mrt_lines.rds")
+    if (nzchar(f)) readRDS(f) else NULL
+  })
+}
+
 #' Schools (inst/extdata/schools.csv: name, lat, lng, optionally level)
 #'
 #' @return The schools, or NULL if the file is missing or lacks those columns.

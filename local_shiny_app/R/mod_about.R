@@ -51,7 +51,13 @@ mod_about_ui <- function(id) {
         p(strong("MRT/LRT"), ": every building gets its nearest station. Filter by distance ",
           "to the nearest station, or pick a station to keep buildings within a walking ",
           "distance of it (shown as a ring on the map). Station locations come from LTA's ",
-          "station exit data.")
+          "station exit data; the lines drawn on the map (in their own colours) come from ",
+          "OpenStreetMap."),
+        p(strong("Ask RentLens"), " (the chat button, bottom right) answers questions in ",
+          "plain English. An AI model from NUS SoC's LLM service reads your question and ",
+          "looks the figures up in this same rental data, so its numbers match the other ",
+          "pages, but it can misread a question: check important figures. Your messages go ",
+          "to that service and are not saved by RentLens.")
       ),
       card(
         card_header(icon("triangle-exclamation"), " Things to keep in mind"),

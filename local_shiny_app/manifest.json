@@ -537,6 +537,35 @@
         "Archs": "commonmark.so.dSYM"
       }
     },
+    "coro": {
+      "Source": "CRAN",
+      "Repository": "https://cloud.r-project.org",
+      "description": {
+        "Package": "coro",
+        "Title": "'Coroutines' for R",
+        "Version": "1.1.0",
+        "Authors@R": "c(\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Provides 'coroutines' for R, a family of functions that can\n    be suspended and resumed later on. This includes 'async' functions\n    (which await) and generators (which yield). 'Async' functions are\n    based on the concurrency framework of the 'promises' package.\n    Generators are based on a dependency free iteration protocol defined\n    in 'coro' and are compatible with iterators from the 'reticulate'\n    package.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/r-lib/coro, https://coro.r-lib.org/",
+        "BugReports": "https://github.com/r-lib/coro/issues",
+        "Depends": "R (>= 3.5.0)",
+        "Imports": "rlang (>= 0.4.12)",
+        "Suggests": "knitr, later (>= 1.1.0), magrittr (>= 2.0.0), promises,\nreticulate, rmarkdown, testthat (>= 3.0.0)",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-11-05 09:54:43 UTC; lionel",
+        "Author": "Lionel Henry [aut, cre],\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Lionel Henry <lionel@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-11-05 10:30:09 UTC",
+        "Built": "R 4.6.0; ; 2026-04-25 17:06:36 UTC; unix"
+      }
+    },
     "cpp11": {
       "Source": "CRAN",
       "Repository": "https://cloud.r-project.org",
@@ -788,6 +817,39 @@
         "Date/Publication": "2025-12-18 13:06:03 UTC",
         "Built": "R 4.6.0; aarch64-apple-darwin23; 2026-04-25 23:17:21 UTC; unix",
         "Archs": "e1071.so.dSYM"
+      }
+    },
+    "ellmer": {
+      "Source": "CRAN",
+      "Repository": "https://cloud.r-project.org",
+      "description": {
+        "Package": "ellmer",
+        "Title": "Chat with Large Language Models",
+        "Version": "0.5.0",
+        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Joe\", \"Cheng\", role = \"aut\"),\n    person(\"Aaron\", \"Jacobs\", role = \"aut\"),\n    person(\"Garrick\", \"Aden-Buie\", , \"garrick@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-7111-0077\")),\n    person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0001-9986-114X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "Chat with large language models from a range of providers\n    including 'Claude' <https://claude.ai>, 'OpenAI'\n    <https://chatgpt.com>, and more. Supports streaming, asynchronous\n    calls, tool calling, and structured data extraction.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://ellmer.tidyverse.org, https://github.com/tidyverse/ellmer",
+        "BugReports": "https://github.com/tidyverse/ellmer/issues",
+        "Depends": "R (>= 4.1)",
+        "Imports": "cli, coro (>= 1.1.0), glue, httr2 (>= 1.2.3), jsonlite, later\n(>= 1.4.0), lifecycle, promises (>= 1.5.0), R6, rlang (>=\n1.3.0), S7 (>= 0.2.0), tibble, vctrs",
+        "Suggests": "connectcreds, curl (>= 6.0.1), gargle, jose, knitr, magick,\nopenssl, otel (>= 0.2.0), otelsdk (>= 0.2.0), paws.common, png,\nrmarkdown, shiny, shinychat (>= 0.3.0), testthat (>= 3.0.0),\nvcr (>= 2.0.0), withr",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/prices": "cli, dplyr, jsonlite, jsonvalidate, stringr,\ntidyr, usethis",
+        "Config/Needs/website": "tidyverse/tidytemplate, rmarkdown",
+        "Config/roxygen2/version": "8.1.0",
+        "Config/testthat/edition": "3",
+        "Config/testthat/parallel": "true",
+        "Config/testthat/start-first": "chat, provider*",
+        "Encoding": "UTF-8",
+        "Collate": "'utils-S7.R' 'types.R' 'ellmer-package.R' 'tools-def.R'\n'content.R' 'provider.R' 'as-json.R' 'batch-chat.R'\n'chat-structured.R' 'chat-tools-content.R' 'turns.R'\n'chat-tools.R' 'chat-utils.R' 'utils-coro.R' 'chat.R' 'files.R'\n'content-document.R' 'content-image.R' 'content-pdf.R'\n'content-replay.R' 'httr2.R' 'import-standalone-defer.R'\n'import-standalone-obj-type.R' 'import-standalone-purrr.R'\n'import-standalone-types-check.R' 'interpolate.R' 'live.R'\n'model.R' 'otel.R' 'parallel-chat.R' 'params.R' 'prices.R'\n'provider-any.R' 'provider-aws-api.R'\n'provider-openai-compatible.R' 'provider-openai.R'\n'provider-claude.R' 'provider-aws.R' 'provider-azure.R'\n'provider-claude-files.R' 'provider-claude-tools.R'\n'provider-google.R' 'provider-cloudflare.R'\n'provider-databricks.R' 'provider-deepseek.R'\n'provider-github.R' 'provider-google-tools.R'\n'provider-google-upload.R' 'provider-groq.R'\n'provider-huggingface.R' 'provider-lmstudio.R'\n'provider-mistral.R' 'provider-ollama.R'\n'provider-openai-tools.R' 'provider-openrouter.R'\n'provider-perplexity.R' 'provider-portkey.R' 'provider-posit.R'\n'provider-snowflake.R' 'provider-vllm.R' 'rounds.R' 'schema.R'\n'stream-controller.R' 'tokens.R' 'tool-context.R'\n'tools-built-in.R' 'tools-def-auto.R' 'utils-auth.R'\n'utils-callbacks.R' 'utils-cat.R' 'utils-merge.R'\n'utils-prettytime.R' 'utils.R' 'zzz.R'",
+        "NeedsCompilation": "no",
+        "Packaged": "2026-09-03 08:15:15 UTC; nic",
+        "Author": "Hadley Wickham [aut, cre] (ORCID:\n    <https://orcid.org/0000-0003-4757-117X>),\n  Joe Cheng [aut],\n  Aaron Jacobs [aut],\n  Garrick Aden-Buie [aut] (ORCID:\n    <https://orcid.org/0000-0002-7111-0077>),\n  Barret Schloerke [aut] (ORCID: <https://orcid.org/0000-0001-9986-114X>),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Hadley Wickham <hadley@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2026-09-04 06:30:02 UTC",
+        "Built": "R 4.6.1; ; 2026-09-06 14:59:33 UTC; unix"
       }
     },
     "evaluate": {
@@ -2509,6 +2571,34 @@
         "Built": "R 4.6.0; ; 2026-06-21 15:41:33 UTC; unix"
       }
     },
+    "shinychat": {
+      "Source": "CRAN",
+      "Repository": "https://cloud.r-project.org",
+      "description": {
+        "Package": "shinychat",
+        "Title": "Chat UI Component for 'shiny'",
+        "Version": "0.5.0",
+        "Authors@R": "c(\n    person(\"Joe\", \"Cheng\", , \"joe@posit.co\", role = \"aut\"),\n    person(\"Carson\", \"Sievert\", , \"carson@posit.co\", role = \"aut\"),\n    person(\"Garrick\", \"Aden-Buie\", , \"garrick@adenbuie.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-7111-0077\")),\n    person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0001-9986-114X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "Provides a scrolling chat interface with multiline input,\n    suitable for creating chatbot apps based on Large Language Models\n    (LLMs). Designed to work particularly well with the 'ellmer' R package\n    for calling LLMs.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://posit-dev.github.io/shinychat/r/,\nhttps://github.com/posit-dev/shinychat",
+        "BugReports": "https://github.com/posit-dev/shinychat/issues",
+        "Imports": "base64enc, bslib (>= 0.12.0), cli, coro, ellmer (>= 0.4.1),\nfastmap, htmltools, jsonlite, lifecycle, promises (>= 1.3.2),\nR6 (>= 2.5.0), rlang (>= 1.2.0), S7, shiny (>= 1.10.0)",
+        "Suggests": "chromote, covr, knitr, later, rmarkdown, shinytest2, testthat\n(>= 3.0.0), withr",
+        "VignetteBuilder": "knitr, rmarkdown",
+        "Config/Needs/website": "tidyverse/tidytemplate, rmarkdown, weathR, gt,\nglue, bsicons, reactable, htmlwidgets",
+        "Config/roxygen2/version": "8.1.0",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "no",
+        "Packaged": "2026-09-09 17:39:07 UTC; garrick",
+        "Author": "Joe Cheng [aut],\n  Carson Sievert [aut],\n  Garrick Aden-Buie [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-7111-0077>),\n  Barret Schloerke [aut] (ORCID: <https://orcid.org/0000-0001-9986-114X>),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Garrick Aden-Buie <garrick@adenbuie.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2026-09-09 18:50:02 UTC",
+        "Built": "R 4.6.1; ; 2026-09-16 23:55:41 UTC; unix"
+      }
+    },
     "sourcetools": {
       "Source": "CRAN",
       "Repository": "https://cloud.r-project.org",
@@ -3138,17 +3228,26 @@
     ".Rbuildignore": {
       "checksum": "abdb0baef892b64701b9bd0cd25a73b8"
     },
+    ".Renviron": {
+      "checksum": "7a2e5e9e255e98e33cb8a73eda8a6b14"
+    },
     "app.R": {
-      "checksum": "4f8a9ca8e3a9aa054894805e83a85ce0"
+      "checksum": "0f71338f16ac66f51f8eaf4789600721"
     },
     "DESCRIPTION": {
-      "checksum": "0a4186c96840b2c361611b8a90681f58"
+      "checksum": "f4704e301b783f5b91dd294273b72f4e"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "081b60943ae58257faaeedc773fa77c9"
+      "checksum": "f7aa0267db08d748f5319a5b87b3e75e"
+    },
+    "inst/app/www/chat.js": {
+      "checksum": "76559049cd1753212c9f485c2647bac3"
     },
     "inst/app/www/settings.js": {
       "checksum": "d9ca572b5e8049061d3ba7108500679b"
+    },
+    "inst/extdata/mrt_lines.rds": {
+      "checksum": "da18d217946f2341e1bf2415dfed3d65"
     },
     "inst/extdata/mrt_stations.csv": {
       "checksum": "52fe080b38b73179897adc29d2c7edb3"
@@ -3169,10 +3268,13 @@
       "checksum": "fad792fc499bb6da453d96cc57fc6def"
     },
     "R/app_server.R": {
-      "checksum": "feda78d4792214ea9cfbb23b0aad02c2"
+      "checksum": "4f4638fffa2aa4e1db5f2092d3392748"
     },
     "R/app_ui.R": {
-      "checksum": "36abf8d0d9f7d912be7f1dd0f75fe20a"
+      "checksum": "9f3c9ec8d2206d433f6d70dc27494c7a"
+    },
+    "R/fct_chat.R": {
+      "checksum": "5c3dba19e5aa60a4d7f0a59da9be32f8"
     },
     "R/fct_data.R": {
       "checksum": "278429dc7c0db57a262064788c5a00ca"
@@ -3181,10 +3283,10 @@
       "checksum": "f91af693238a6732f1d82b2ecdc50fcc"
     },
     "R/fct_location.R": {
-      "checksum": "ce8af90cf7659ea4cd6ed39c09b7aa85"
+      "checksum": "1acedaa770d976a965e0fc2a16772d0a"
     },
     "R/fct_map.R": {
-      "checksum": "e65e74e62355509c817a2c90326c62c5"
+      "checksum": "af3f572d3f1eed1211725f23e35b54ca"
     },
     "R/fct_rent.R": {
       "checksum": "a93a748d90de907995a58f8d2abeda7f"
@@ -3193,10 +3295,13 @@
       "checksum": "6606b166ab34655a7d4459557882e7c9"
     },
     "R/mod_about.R": {
-      "checksum": "d5764347facaebe4d09352defee8e79e"
+      "checksum": "16137c43451ff2e5be80cdafa17906a2"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
+    },
+    "R/mod_chat.R": {
+      "checksum": "79906c90d9844fff036d64414d639f5f"
     },
     "R/mod_compare.R": {
       "checksum": "dd4c833e73427793446e0e5ad68c7c33"
@@ -3208,7 +3313,7 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "ffffd2730de2adb2e7e7815f3f536a36"
+      "checksum": "c7d24d8407dbc5f9b5e5802562ddb63e"
     },
     "R/mod_properties.R": {
       "checksum": "a84fd416a4261089e0bdcdb345d4f412"
@@ -3232,7 +3337,7 @@
       "checksum": "d16f059ce90af26e6ccf21a796e61eec"
     },
     "R/rentalapp-package.R": {
-      "checksum": "2b88cf0f4e58dce5a2a29620b14fd92c"
+      "checksum": "d195669a517fb7cf7586f15e3bc0d7cd"
     },
     "R/run_app.R": {
       "checksum": "8fab8141f3ea83813478e23aad9c9803"
@@ -3247,7 +3352,7 @@
       "checksum": "07a828182a2d192ffe0b5f7642b0abd4"
     },
     "README.md": {
-      "checksum": "ad38fcdba99a6b94b7d5e866af4bf93f"
+      "checksum": "b2ece2ab0fb86ed97103721410ced942"
     }
   },
   "users": null
