@@ -7,7 +7,7 @@ mod_shortlist_ui <- function(id) {
   ns <- NS(id)
   tagList(
     page_intro("Your shortlist",
-               "Compare the options you saved from Budget, Map and Check a listing."),
+               "Compare the options you saved from Search, Map and Check a listing."),
     conditionalPanel(
       "output.is_empty", ns = ns,
       card(empty_state("star", "Nothing shortlisted yet",
@@ -20,14 +20,13 @@ mod_shortlist_ui <- function(id) {
       card(
         header_with_actions(
           "Saved options",
-          actionButton(ns("remove"), "Remove selected", icon = icon("trash-can"),
-                       class = "btn-sm btn-outline-secondary"),
           actionButton(ns("clear"), "Clear all", icon = icon("xmark"),
                        class = "btn-sm btn-outline-secondary"),
           downloadButton(ns("download"), "Download CSV", class = "btn-sm btn-primary")
         ),
         DTOutput(ns("table"), fill = FALSE),
-        card_footer("Figures use each option's rentals in the most recent period, ",
+        card_footer("Press a star to take that option off your shortlist. ",
+                    "Figures use each option's rentals in the most recent period, ",
                     "regardless of the other filters, so your shortlist stays comparable. ",
                     "Use 'Save search' on the Search page to keep a link to it.")
       ),
@@ -37,7 +36,7 @@ mod_shortlist_ui <- function(id) {
           card_header("Shortlist at a glance"),
           plotly::plotlyOutput(ns("plot"), height = 420),
           card_footer("Dot = median rent, line = typical range (middle 50%). ",
-                      "Red band = your budget range.")
+                      "Green band = your budget range.")
         ),
         card(
           card_header("How their rents have moved"),
@@ -52,7 +51,7 @@ mod_shortlist_ui <- function(id) {
 #' @noRd
 mod_shortlist_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
-    setBookmarkExclude(c(dt_bookmark_inputs("table"), "remove", "clear"))
+    setBookmarkExclude(c(dt_bookmark_inputs("table"), "star", "clear"))
 
     # Fill in the stars in every table (settings.js, "rentlens-shortlist")
     observe({
@@ -92,7 +91,8 @@ mod_shortlist_server <- function(id, filters, shortlist) {
 
     output$table <- renderDT({
       s <- prettify(short_data())
-      rl_datatable(s, page_length = 25, escape = FALSE, hide = character()) |>
+      rl_datatable(s, page_length = 25, escape = FALSE, selection = "none",
+                   star = session$ns("star")) |>
         format_money_cols(s) |>
         formatStyle("Budget fit",
                     color = styleEqual(c("Within range", "Below range", "Above range"),
@@ -100,15 +100,8 @@ mod_shortlist_server <- function(id, filters, shortlist) {
                     fontWeight = "bold")
     })
 
-    observeEvent(input$remove, {
-      rows <- input$table_rows_selected
-      if (length(rows) == 0) {
-        showNotification("Select rows in your shortlist to remove.", type = "warning")
-        return()
-      }
-      gone <- short_data()[rows, c("project", "bed_group")]
-      shortlist(anti_join(shortlist(), gone, by = c("project", "bed_group")))
-    })
+    # Every star here is on; pressing one takes that option off
+    observeEvent(input$star, toggle_shortlist(shortlist, input$star$key))
 
     observeEvent(input$clear, shortlist(empty_shortlist()))
 

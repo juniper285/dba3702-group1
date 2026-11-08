@@ -133,7 +133,7 @@ Other parts:
 
 | Feature | Does | Verdict |
 |---|---|---|
-| Table | Each shortlisted project and bedroom with median rent, range and distances; remove, clear, download | **Keep** |
+| Table | Each shortlisted project and bedroom with median rent, budget fit, distances and a listings link (more under Columns); a filled star takes one off; clear, download | **Keep** |
 | At a glance | Median rent and typical range per option against the budget | **Keep** |
 | How their rents have moved | Quarterly median per option | **Keep** (the only trend left after Price trends was removed) |
 | Navbar badge | Count next to "Shortlist" | **Keep** |
