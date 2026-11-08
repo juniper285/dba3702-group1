@@ -223,9 +223,11 @@ detail_cols <- c("Average rent", "25th percentile", "75th percentile", "Median S
 #' A DataTable with the app's defaults
 #'
 #' Columns named in `hide` start hidden, and a "Columns" button lets people
-#' show them (the choice is remembered in the browser, `rememberColumns()` in
-#' settings.js). The Project column is always shown. District cells show the
-#' code and first area ("D19 Serangoon Garden"), with the full name on hover.
+#' show them (the choice is remembered in the browser, `setupTable()` in
+#' settings.js). The Project column is always shown. District cells stay on
+#' one line, cut short with "…" (full name on hover). Every column can be
+#' made wider or narrower by dragging the edge of its header
+#' (`RentLens.setupTable()`).
 #'
 #' @param search What the search box looks in: "project" (the Project
 #'   column only; the default when there is one), "rental" (every column,
@@ -264,8 +266,7 @@ rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = T
     render = DT::JS(
       "function (d, type) {",
       "  if (type !== 'display' || d == null) return d;",
-      "  var i = String(d).indexOf(',');",
-      "  return i < 0 ? d : '<span title=\"' + d + '\">' + d.slice(0, i) + '\u2026</span>';",
+      "  return '<span class=\"dt-clip\" title=\"' + d + '\">' + d + '</span>';",
       "}"))))
   options <- list(pageLength = page_length, order = list(), scrollX = TRUE,
                   dom = '<"dt-top"f>t<"dt-bottom"ip>',
@@ -277,9 +278,10 @@ rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = T
     options$dom <- '<"dt-top"Bf>t<"dt-bottom"ip>'
     options$buttons <- list(list(extend = "colvis", text = "Columns", className = "dt-columns",
                                  columns = idx(setdiff(names(s), c("Project", star_col)))))
-    options$initComplete <- DT::JS(
-      "function () { if (window.RentLens) RentLens.rememberColumns(this.api()); }")
   }
+  # Column widths can be dragged; widths and shown columns are remembered
+  options$initComplete <- DT::JS(
+    "function () { if (window.RentLens) RentLens.setupTable(this.api()); }")
   datatable(s, rownames = FALSE, selection = selection, escape = escape,
             colnames = short_colnames(names(s)),
             class = "compact hover row-border",

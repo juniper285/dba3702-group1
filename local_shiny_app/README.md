@@ -68,7 +68,8 @@ local_shiny_app/
   (`detail_cols`) start hidden behind a "Columns" button; a table keeps one in
   view with `hide = setdiff(detail_cols, ...)`, or shows all with
   `hide = character()`. Which columns each table shows is remembered in the
-  browser by `settings.js` (`RentLens.rememberColumns()`).
+  browser by `settings.js` (`RentLens.setupTable()`), with any column widths
+  set by dragging a header's edge (double-click resets it).
 
 ### My filters and the setup wizard
 

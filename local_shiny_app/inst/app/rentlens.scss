@@ -423,6 +423,21 @@ table.dataTable td.rl-star-cell { padding: 0 !important; width: 2rem; text-align
   &:focus-visible { outline: 2px solid rgba($primary, 0.5); outline-offset: 1px; }
 }
 
+// Resizable columns (RentLens.setupTable()): a handle on each header's right edge
+table.dataTable thead th { position: relative; }
+.dt-resize {
+  position: absolute; top: 0; right: -4px; bottom: 0; width: 9px; z-index: 2;
+  cursor: col-resize;
+  &::after {   // a thin line that shows on hover
+    content: ""; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px;
+    background: $border-color; transition: background-color 0.1s ease-out;
+  }
+  &:hover::after { background: $primary; top: 0; bottom: 0; width: 2px; }
+}
+body.dt-resizing, body.dt-resizing * { cursor: col-resize !important; user-select: none; }
+// District names: one line, cut with "…" (full name on hover); wider when the column is widened
+.dt-clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 11rem; }
+
 // Shortlist toasts (shortlist_toast()): the link reads on the coloured background
 .toast .toast-link { color: inherit; font-weight: 600; text-decoration: underline; margin-left: 0.25rem; white-space: nowrap; }
 

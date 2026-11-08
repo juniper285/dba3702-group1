@@ -22,7 +22,7 @@ test_that("rl_datatable() hides detail columns behind a Columns button", {
   expect_equal(opts$buttons[[1]]$columns, 1:4)          # Project can't be hidden
   expect_match(opts$dom, "B")
   expect_true(any(vapply(dt$dependencies, function(d) d$name == "dt-ext-buttons", logical(1))))
-  # the District cell shows the code and first area, the full name on hover
+  # the District cell stays on one line, cut with an ellipsis
   district <- Filter(function(d) identical(d$className, "dt-district"), opts$columnDefs)[[1]]
   expect_equal(district$targets, 1)
   # nothing hidden: no button, same as before
@@ -30,6 +30,8 @@ test_that("rl_datatable() hides detail columns behind a Columns button", {
   expect_null(plain$buttons)
   expect_false(grepl("B", plain$dom))
   expect_false(any(vapply(plain$columnDefs, function(d) isFALSE(d$visible), logical(1))))
+  # every table can have its columns resized
+  expect_match(as.character(plain$initComplete), "setupTable")
   # Project is never hidden, even when asked
   p <- rl_datatable(s, hide = "Project")$x$options
   expect_null(p$buttons)

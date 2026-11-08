@@ -188,29 +188,93 @@
   });
 
   // ---- Tables (rl_datatable() in R): remember which columns each table
-  // shows, by column name, so a new place's distance column doesn't shift
-  // the others. Called on every render, so the choice survives new filters.
-  function rememberColumns(api) {
+  // shows and how wide they are, by column name, so a new place's distance
+  // column doesn't shift the others. Called on every render, so the choice
+  // survives new filters.
+  function tableStore(api) {
     var id = $(api.table().container()).closest(".datatables").attr("id");
-    if (!id) return;
+    if (!id) return null;
     var key = "rentlens-columns-" + id;
-    var name = function (i) { return $(api.column(i).header()).text(); };
-    var saved = null;
-    try { saved = JSON.parse(window.localStorage.getItem(key) || "null"); } catch (e) { /* blocked */ }
-    if (saved) {
-      api.columns().every(function (i) {
-        var n = name(i);
-        if ((saved.shown || []).indexOf(n) >= 0) this.visible(true, false);
-        if ((saved.hidden || []).indexOf(n) >= 0) this.visible(false, false);
-      });
-      api.columns.adjust();
-    }
+    return {
+      read: function () {
+        try { return JSON.parse(window.localStorage.getItem(key) || "null") || {}; }
+        catch (e) { return {}; }
+      },
+      write: function (s) {
+        try { window.localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* this session only */ }
+      }
+    };
+  }
+  function colName(api, i) { return $(api.column(i).header()).text(); }
+
+  // Give column i a fixed width (px), or null for its natural width. Body
+  // cells hold the width; adjust() then copies it to the scrolling header.
+  function setWidth(api, i, w) {
+    var css = w ? w + "px" : "";
+    $(api.column(i).header()).css({ width: css, minWidth: css });
+    $(api.column(i).nodes()).css({ width: css, minWidth: css })
+      .find(".dt-clip").css("max-width", w ? (w - 16) + "px" : "");
+  }
+
+  function setupTable(api) {
+    var store = tableStore(api);
+    if (!store) return;
+    var saved = store.read();
+    api.columns().every(function (i) {
+      var n = colName(api, i);
+      if ((saved.shown || []).indexOf(n) >= 0) this.visible(true, false);
+      if ((saved.hidden || []).indexOf(n) >= 0) this.visible(false, false);
+      if (saved.widths && saved.widths[n]) setWidth(api, i, saved.widths[n]);
+    });
+    api.columns.adjust();
+
+    var save = function (change) {
+      var s = store.read();
+      change(s);
+      store.write(s);
+    };
     $(api.table().node()).off("column-visibility.dt.rentlens")
       .on("column-visibility.dt.rentlens", function () {
-        var s = { shown: [], hidden: [] };
-        api.columns().every(function (i) { (this.visible() ? s.shown : s.hidden).push(name(i)); });
-        try { window.localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* this session only */ }
+        save(function (s) {
+          s.shown = []; s.hidden = [];
+          api.columns().every(function (i) { (this.visible() ? s.shown : s.hidden).push(colName(api, i)); });
+        });
       });
+
+    // A drag handle on the right edge of each header (not the star column)
+    api.columns().every(function (i) {
+      var th = this.header();
+      if (!th || th.querySelector(".dt-resize") || !colName(api, i).trim()) return;
+      var grip = document.createElement("span");
+      grip.className = "dt-resize";
+      grip.title = "Drag to resize; double-click to reset";
+      th.appendChild(grip);
+      grip.addEventListener("click", function (e) { e.stopPropagation(); });   // don't sort
+      grip.addEventListener("dblclick", function (e) {
+        e.stopPropagation();
+        setWidth(api, i, null);
+        api.columns.adjust();
+        save(function (s) { if (s.widths) delete s.widths[colName(api, i)]; });
+      });
+      grip.addEventListener("mousedown", function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var x0 = e.clientX, w0 = th.getBoundingClientRect().width, w = w0, frame = null;
+        document.body.classList.add("dt-resizing");
+        var move = function (ev) {
+          w = Math.max(48, Math.round(w0 + ev.clientX - x0));
+          if (frame) return;
+          frame = requestAnimationFrame(function () { frame = null; setWidth(api, i, w); api.columns.adjust(); });
+        };
+        var up = function () {
+          document.removeEventListener("mousemove", move);
+          document.removeEventListener("mouseup", up);
+          document.body.classList.remove("dt-resizing");
+          save(function (s) { s.widths = s.widths || {}; s.widths[colName(api, i)] = w; });
+        };
+        document.addEventListener("mousemove", move);
+        document.addEventListener("mouseup", up);
+      });
+    });
   }
 
   // ---- Stars (rl_datatable(star =) in R): one per row, adds the option to
@@ -242,7 +306,7 @@
   });
 
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped,
-                      rememberColumns: rememberColumns, starButton: starButton };
+                      setupTable: setupTable, starButton: starButton };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out
   // control turns its option on, "Clear" turns it off ----

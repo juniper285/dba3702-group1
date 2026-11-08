@@ -129,7 +129,7 @@ What `inst/app/www/settings.js` does:
 - Handles the `rentlens-save-settings`, `rentlens-clear-settings`, `rentlens-coach` and `rentlens-save-areas` messages, and sends the stored saved areas as `input$"map-stored_areas"`.
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
 - Draws the shortlist stars (`RentLens.starButton()`), sends clicks as the table's `star` input, and fills them in from the `rentlens-shortlist` message.
-- Remembers which table columns are shown (`RentLens.rememberColumns()`, `localStorage["rentlens-columns-<output id>"]`, by column name).
+- Sets up every table (`RentLens.setupTable()`): remembers which columns are shown and their widths (`localStorage["rentlens-columns-<output id>"]`, by column name), and adds the drag handle on each header's edge to resize a column (double-click resets).
 - Turns on a greyed optional block when you use it.
 - Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.
 

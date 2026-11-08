@@ -3238,13 +3238,13 @@
       "checksum": "f4704e301b783f5b91dd294273b72f4e"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "b73eca3ed0b13525e83fe9e017c3e225"
+      "checksum": "3c0f95edcb904869cab4d06750d26859"
     },
     "inst/app/www/chat.js": {
       "checksum": "76559049cd1753212c9f485c2647bac3"
     },
     "inst/app/www/settings.js": {
-      "checksum": "1342cbc028ea8dc3c175e084ea7e9efa"
+      "checksum": "06e01221b3d943b4290f2da9e31d6261"
     },
     "inst/extdata/mrt_lines.rds": {
       "checksum": "da18d217946f2341e1bf2415dfed3d65"
@@ -3295,7 +3295,7 @@
       "checksum": "f57e547d11103f82896de48f7941f770"
     },
     "R/mod_about.R": {
-      "checksum": "7694edf9e095dfc1078d3331f7d93a36"
+      "checksum": "f017f52aa9b0a1b9b0ff60b412547c4d"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
@@ -3349,10 +3349,10 @@
       "checksum": "8a1dc86355e66fae25b3fbf51b0c6d69"
     },
     "R/utils_ui.R": {
-      "checksum": "3e5eb4d5325f758af6ab0a3bb13e63fb"
+      "checksum": "d92282de515eea2ff20caa03408acad7"
     },
     "README.md": {
-      "checksum": "37a5b9025fb1004683b579e266792a55"
+      "checksum": "b5f003f6e0e33ac8c8315c68ca5bfefb"
     }
   },
   "users": null
