@@ -438,6 +438,17 @@ body.dt-resizing, body.dt-resizing * { cursor: col-resize !important; user-selec
 // District names: one line, cut with "…" (full name on hover); wider when the column is widened
 .dt-clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 11rem; }
 
+// Star chips (star_chip()): "☆ 2 bedrooms" under a selected building on the map
+.sel-stars { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: -0.25rem 0 0.75rem; .small { width: 100%; } }
+.rl-star.rl-star-chip {
+  width: auto; height: auto; gap: 0.35rem; padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+  background: #fff; box-shadow: var(--rl-shadow-border);
+  font-size: 0.85rem; color: $body-color;
+  svg { color: $text-muted; }
+  &:hover { background: rgba(#f59e0b, 0.1); svg { color: #b45309; } }
+  &.is-on { background: rgba(#f59e0b, 0.14); box-shadow: 0 0 0 1px rgba(#f59e0b, 0.6); svg { color: #f59e0b; } }
+}
+
 // Shortlist toasts (shortlist_toast()): the link reads on the coloured background
 .toast .toast-link { color: inherit; font-weight: 600; text-decoration: underline; margin-left: 0.25rem; white-space: nowrap; }
 

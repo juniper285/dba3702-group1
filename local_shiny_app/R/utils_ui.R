@@ -211,6 +211,23 @@ range_dot_chart <- function(s, budget = NULL) {
 #' @noRd
 dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
 
+#' A shortlist star with a label, outside a table (e.g. "2 bedrooms" on the map)
+#'
+#' Works like the table stars: settings.js sends clicks as `input$<id>` with
+#' the `shortlist_key()`, and `toggle_shortlist()` handles them.
+#' @param key A `shortlist_key()`.
+#' @param input_id The namespaced input id, e.g. `session$ns("star")`.
+#' @noRd
+star_chip <- function(key, input_id, label, on = FALSE) {
+  tags$button(
+    type = "button", class = paste("rl-star rl-star-chip", if (on) "is-on"),
+    `data-key` = key, `data-input` = input_id, `aria-pressed` = tolower(on),
+    title = if (on) "Remove from shortlist" else "Add to shortlist",
+    HTML(paste0('<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="',
+                'M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>')),
+    span(label))
+}
+
 #' Columns hidden at first in every table (shown with the "Columns" button)
 #'
 #' Rarely needed detail: rent spread, psf, counts and dates, raw addresses.

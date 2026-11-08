@@ -179,7 +179,8 @@ toggle_shortlist <- function(shortlist, key) {
   parts <- strsplit(key, " | ", fixed = TRUE)[[1]]
   beds <- parts[length(parts)]
   what <- paste0(paste(parts[-length(parts)], collapse = " | "), " (",
-                 if (beds == "Unknown") "bedrooms unknown" else paste(beds, "bedroom"), ")")
+                 if (beds == "Unknown") "bedrooms unknown"
+                 else paste(beds, if (beds == "1") "bedroom" else "bedrooms"), ")")
   if (any(have)) {
     shortlist(sl[!have, , drop = FALSE])
     shortlist_toast(paste(what, "removed from your shortlist."), added = FALSE)

@@ -29,6 +29,7 @@ mod_map_ui <- function(id) {
           position = "right", width = 300, class = "map-panel",
           div(class = "section-title", "Selection"),
           div(class = "selection-label", textOutput(ns("sel_label"))),
+          uiOutput(ns("sel_stars")),
           input_switch(ns("apply_sel"), "Apply map selection to all pages", value = TRUE),
           div(class = "kpi-stack",
               kpi("Rentals", textOutput(ns("vb_n"))),
@@ -165,7 +166,8 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
                 "(up to ", max_areas, "). 'Compare saved areas', just below the map, shows them ",
                 "side by side. Rename (pencil) or remove (cross) them in the panel."),
         tags$li(strong("Shortlist what you like. "),
-                "Press the star next to a project in 'Projects in the map selection'."),
+                "Click a building and press the star for a bedroom type under its name ",
+                "(right), or the star next to a project in 'Projects in the map selection'."),
         tags$li(strong("See more. "),
                 "Switch off 'Only buildings within my budget' to see every building, change ",
                 "what the colours show, or use the layers button (bottom left of the map) for ",
@@ -333,6 +335,23 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     })
 
     output$sel_label <- renderText(if (is.null(sel$label)) "all mapped rentals" else sel$label)
+
+    # One building (project) selected: a star per bedroom type to shortlist it
+    output$sel_stars <- renderUI({
+      d <- selected()
+      if (is.null(sel$ids) || n_distinct(d$project) != 1) return(NULL)
+      project <- d$project[1]
+      beds <- intersect(bed_levels, unique(d$bed_group))
+      sl <- shortlist()
+      starred <- shortlist_key(sl$project, sl$bed_group)
+      div(class = "sel-stars",
+          div(class = "small text-muted mb-1", "Add to shortlist"),
+          lapply(beds, function(b) star_chip(shortlist_key(project, b),
+                                              session$ns("star"),
+                                              if (b == "Unknown") "Bedrooms unknown"
+                                              else paste(b, if (b == "1") "bedroom" else "bedrooms"),
+                                              on = shortlist_key(project, b) %in% starred)))
+    })
     output$vb_n    <- renderText(format(nrow(selected()), big.mark = ","))
     output$vb_proj <- renderText(format(n_distinct(selected()$project), big.mark = ","))
     output$vb_rent <- renderText(

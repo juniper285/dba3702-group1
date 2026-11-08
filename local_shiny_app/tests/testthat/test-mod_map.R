@@ -22,6 +22,10 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     expect_true(all(selected()$loc_id == loc))
     expect_equal(output$vb_proj, "1")
     expect_equal(nrow(contracts()), nrow(selected()))
+    # one building: a star per bedroom type, to shortlist it from the panel
+    expect_match(output$sel_stars$html, "rl-star-chip")
+    expect_match(output$sel_stars$html, shortlist_key(selected()$project[1], selected()$bed_group[1]),
+                 fixed = TRUE)
     expect_true(all(contracts()$Project == selected()$project[1]))
 
     key <- shortlist_key(table_data()$project[1], table_data()$bed_group[1])

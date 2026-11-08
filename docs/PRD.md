@@ -104,6 +104,7 @@ Other parts:
 | Side KPIs | Rentals, projects, median rent and median psf of the selection | `vb_*` | **Keep** |
 | Psf trend by month | Median psf per month, per bedroom and overall | `output$trend` | **Trim?** Compare saved areas and Compare properties show trends too; this one is the noisiest (monthly) |
 | By bedrooms table | Rentals, median rent, sqft and psf per bedroom for the selection | `output$beds` | **Keep** (small and useful) |
+| Shortlist from the panel | With one building selected, a star chip per bedroom type ("☆ 2 bedrooms") under its name adds it to the shortlist or takes it off | `output$sel_stars`, `star_chip()`, `toggle_shortlist()` | **Keep** |
 | Projects in the selection | Project and bedroom rows, each with a shortlist star | `table_data()` → `summarise_options()` | **Keep** |
 | Rentals in the selection | Raw contracts with a CSV download | `contracts()` | **Merge** into More → Rental records, which shows the same contracts (and follows the map selection when it is applied). Removing it shortens the page |
 

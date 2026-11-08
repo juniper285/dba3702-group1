@@ -3238,7 +3238,7 @@
       "checksum": "f4704e301b783f5b91dd294273b72f4e"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "3c0f95edcb904869cab4d06750d26859"
+      "checksum": "1388cb92a8bcacd465af76471dc08078"
     },
     "inst/app/www/chat.js": {
       "checksum": "76559049cd1753212c9f485c2647bac3"
@@ -3295,7 +3295,7 @@
       "checksum": "f57e547d11103f82896de48f7941f770"
     },
     "R/mod_about.R": {
-      "checksum": "f017f52aa9b0a1b9b0ff60b412547c4d"
+      "checksum": "d6ba1aa303db440f07724d6d9e1174b2"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
@@ -3313,7 +3313,7 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "329775b05b811c66fb290c0bef929283"
+      "checksum": "de7baec0062c552c37f15a51e7981791"
     },
     "R/mod_properties.R": {
       "checksum": "4d6eebaac29b7e35a6ea054c0757f742"
@@ -3325,7 +3325,7 @@
       "checksum": "38adbf527181b4cee37278e3c926fcc1"
     },
     "R/mod_shortlist.R": {
-      "checksum": "53253d3c6cc623195a4dddc82b84d8ba"
+      "checksum": "cbd5070c21916f9e03605788b941f40b"
     },
     "R/mod_transactions.R": {
       "checksum": "034e9b46971349e97ef9a50f1992d76d"
@@ -3349,7 +3349,7 @@
       "checksum": "8a1dc86355e66fae25b3fbf51b0c6d69"
     },
     "R/utils_ui.R": {
-      "checksum": "d92282de515eea2ff20caa03408acad7"
+      "checksum": "1b88a8d877a38639de821fa21821eeb7"
     },
     "README.md": {
       "checksum": "b5f003f6e0e33ac8c8315c68ca5bfefb"
