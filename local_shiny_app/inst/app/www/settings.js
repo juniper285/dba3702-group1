@@ -277,6 +277,14 @@
     });
   }
 
+  // ---- The "My filters" box at the top of each page: a click anywhere on it
+  // opens My filters, like its "Edit my filters" button (filter_box_ui())
+  $(document).on("click", ".settings-summary", function (e) {
+    if ($(e.target).closest(".edit-filters, a, button, input").length) return;
+    var btn = this.querySelector(".edit-filters");
+    if (btn) btn.click();
+  });
+
   // ---- Stars (rl_datatable(star =) in R): one per row, adds the option to
   // the shortlist or takes it off. The server sends the starred options
   // ("rentlens-shortlist") whenever the shortlist changes.

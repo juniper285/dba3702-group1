@@ -65,6 +65,7 @@ filter_box_ui <- function(chips, button = edit_filters_button()) {
       button)
 }
 
+#' (A click anywhere on the box presses its button too, see settings.js.)
 #' "Edit my filters" button that opens the My filters dialog from any page
 #' @noRd
 edit_filters_button <- function() {

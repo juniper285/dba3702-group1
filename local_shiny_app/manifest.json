@@ -3238,13 +3238,13 @@
       "checksum": "f4704e301b783f5b91dd294273b72f4e"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "d1888fb5b1ce39f65ddb3621caf27108"
+      "checksum": "f795c47e34b00ad2faead085b5d49d85"
     },
     "inst/app/www/chat.js": {
       "checksum": "76559049cd1753212c9f485c2647bac3"
     },
     "inst/app/www/settings.js": {
-      "checksum": "06e01221b3d943b4290f2da9e31d6261"
+      "checksum": "559498e54c549a143c641c5055d7b641"
     },
     "inst/extdata/mrt_lines.rds": {
       "checksum": "da18d217946f2341e1bf2415dfed3d65"
@@ -3349,7 +3349,7 @@
       "checksum": "8a1dc86355e66fae25b3fbf51b0c6d69"
     },
     "R/utils_ui.R": {
-      "checksum": "fd61e41dfb1736d675bb4f46c6c8b43d"
+      "checksum": "ce760ba0044e20a36240143fb31b5745"
     },
     "README.md": {
       "checksum": "b5f003f6e0e33ac8c8315c68ca5bfefb"

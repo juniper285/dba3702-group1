@@ -130,6 +130,7 @@ What `inst/app/www/settings.js` does:
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
 - Draws the shortlist stars (`RentLens.starButton()`), sends clicks as the table's `star` input, and fills them in from the `rentlens-shortlist` message.
 - Sets up every table (`RentLens.setupTable()`): remembers which columns are shown and their widths (`localStorage["rentlens-columns-<output id>"]`, by column name), and adds the drag handle on each header's edge to resize a column (double-click resets).
+- Opens My filters when you click anywhere on the "My filters" box at the top of a page (it presses the box's "Edit my filters" button).
 - Turns on a greyed optional block when you use it.
 - Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.
 
