@@ -1,5 +1,41 @@
 // RentLens look and feel, added on top of the bslib theme (app_theme())
 
+// ---- Rendering details ---------------------------------------------------
+// Crisper, lighter text on macOS (other systems ignore these)
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+// Raised surfaces (cards, tiles, place rows) get a see-through shadow ring
+// instead of a solid grey border: it looks right on any background
+:root {
+  --rl-shadow-border:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --rl-shadow-border-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 2px -1px rgba(0, 0, 0, 0.08),
+    0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+// Headings break into even lines; short text avoids a lone last word
+h1, h2, h3, h4, h5, h6, .verdict-title, .wizard-title, .modal-title { text-wrap: balance; }
+.page-intro p, .verdict-body, .kpi-note, .empty-state p, .card-footer,
+.place-search-tip, .chat-note { text-wrap: pretty; }
+// Numbers that change in place keep their width, so nothing jumps
+.kpi-value, .nav-badge, table.dataTable, .saved-areas-table,
+.area-slider .irs, .area-limit input { font-variant-numeric: tabular-nums; }
+// A slight press-in on buttons (none for people who ask for less motion)
+@media (prefers-reduced-motion: no-preference) {
+  .btn:not(.btn-link), .example-chip, .chips span {
+    transition-property: color, background-color, border-color, box-shadow, scale;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+  }
+  .btn:not(.btn-link):not(:disabled):active, .example-chip:active,
+  .chips label:active span { scale: 0.96; }
+}
+
 // ---- Navbar --------------------------------------------------------------
 // Stays at the top while scrolling, so the menu (and My filters) is always
 // in reach, e.g. after the setup wizard scrolls down to the options list
@@ -37,7 +73,7 @@
   margin: 0.25rem 0 0.5rem;
   h4 { font-weight: 700; margin-bottom: 0.15rem; letter-spacing: -0.01em; }
 }
-.card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.card { border: 0; box-shadow: var(--rl-shadow-border); }
 .card-header {
   background: #fff;
   font-weight: 600;
@@ -83,8 +119,8 @@
   align-items: center;
   padding: 0.9rem 1.1rem;
   margin-bottom: 1rem;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   .settings-icon {
     width: 2.5rem; height: 2.5rem; flex: none;
@@ -135,8 +171,8 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   .place-icon {
     width: 2.1rem; height: 2.1rem; flex: none;
@@ -154,9 +190,15 @@
     font-weight: 500;
   }
   .place-address { font-size: 0.875rem; color: $text-muted; }
-  .place-edit { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $primary; } }
-  .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
-  &.is-editing { border-color: $primary; box-shadow: 0 0 0 1px $primary; }
+  // icon-only links: a 40 px square to click, not just the icon
+  .place-edit, .place-remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2.5rem; min-height: 2.5rem; border-radius: $border-radius;
+    color: $text-muted;
+  }
+  .place-edit:hover { color: $primary; }
+  .place-remove:hover { color: $danger; }
+  &.is-editing { box-shadow: 0 0 0 2px $primary; }
 }
 .place-editing {
   font-size: 0.875rem;
@@ -236,7 +278,6 @@
     border-radius: 999px;
     font-size: 0.875rem;
     background: #fff;
-    transition: all 0.12s ease;
   }
   label:hover span { border-color: $primary; }
   input:checked + span { background: $primary; border-color: $primary; color: #fff; }
@@ -247,8 +288,8 @@
 // ---- Headline tiles ------------------------------------------------------
 .kpi {
   background: #fff;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   padding: 0.9rem 1.1rem;
   height: 100%;
   .kpi-label {
@@ -308,14 +349,15 @@
   h5 { font-weight: 700; }
 }
 .example-chip {
-  border: 1px solid $border-color;
+  border: 0;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   border-radius: 999px;
   padding: 0.2rem 0.75rem;
   margin: 0.2rem;
   font-size: 0.85rem;
   color: $primary;
-  &:hover { border-color: $primary; background: rgba($primary, 0.06); }
+  &:hover { box-shadow: 0 0 0 1px $primary; background: rgba($primary, 0.06); }
 }
 
 // ---- Map -----------------------------------------------------------------
@@ -329,7 +371,12 @@
   padding: 0.3rem 0; border-bottom: 1px solid $border-color; font-size: 0.875rem;
   .saved-area-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; flex: none; }
   .saved-area-name { word-break: break-word; }
-  .saved-area-edit, .saved-area-remove { color: $text-muted; padding: 0 0.3rem; }
+  // as big as the row allows without the rows' buttons overlapping
+  .saved-area-edit, .saved-area-remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2rem; min-height: 2rem; border-radius: $border-radius;
+    color: $text-muted;
+  }
   .saved-area-edit:hover { color: $primary; }
   .saved-area-remove:hover { color: $danger; }
 }
