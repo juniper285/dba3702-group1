@@ -39,3 +39,15 @@ test_that("short_colnames() shortens long headers, keeping the unit", {
   expect_equal(short_colnames(c("Project", "To NUS (Ridge View Residential College (RVRC)) (km)")),
                c("Project", "To NUS (Ridge View… (km)"))
 })
+
+test_that("rl_datatable(star =) adds a star cell that isn't a real column", {
+  s <- data.frame(Project = "A", Bedrooms = "2", `Recent rentals` = 1, check.names = FALSE)
+  dt <- rl_datatable(s, star = "within_budget-star")
+  expect_equal(dt$x$data[[1]], shortlist_key("A", "2"))
+  opts <- dt$x$options
+  star <- Filter(function(d) identical(d$className, "rl-star-cell"), opts$columnDefs)[[1]]
+  expect_equal(star$targets, 0)
+  expect_false(star$orderable)
+  expect_match(as.character(star$render), "within_budget-star")
+  expect_equal(opts$buttons[[1]]$columns, 2:3)          # not the star, not Project
+})

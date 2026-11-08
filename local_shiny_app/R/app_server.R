@@ -30,6 +30,9 @@ app_server <- function(input, output, session) {
 
   # Number of shortlisted options, shown next to "Shortlist" in the navbar
   output$shortlist_n <- renderText(if (nrow(shortlist()) > 0) nrow(shortlist()) else "")
+  # The badge is hidden while empty, and Shiny pauses hidden outputs, so it
+  # would never show the first count
+  outputOptions(output, "shortlist_n", suspendWhenHidden = FALSE)
 
   # "My filters" box on the pages that follow the renter's filters
   for (page in c("map", "market", "shortlist", "records")) {

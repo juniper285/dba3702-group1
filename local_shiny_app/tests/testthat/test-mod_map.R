@@ -24,9 +24,12 @@ test_that("clicking a building selects it and its rows can be shortlisted", {
     expect_equal(nrow(contracts()), nrow(selected()))
     expect_true(all(contracts()$Project == selected()$project[1]))
 
-    session$setInputs(table_rows_selected = 1, add_short = 1)
+    key <- shortlist_key(table_data()$project[1], table_data()$bed_group[1])
+    session$setInputs(star = list(key = key, at = 1))
     expect_equal(nrow(shortlist()), 1)
     expect_equal(shortlist()$project, table_data()$project[1])
+    session$setInputs(star = list(key = key, at = 2))   # again: taken off
+    expect_equal(nrow(shortlist()), 0)
 
     session$setInputs(save_area = 1)
     expect_equal(length(areas()), 1)

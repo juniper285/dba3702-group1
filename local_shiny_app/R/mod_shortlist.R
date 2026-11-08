@@ -11,9 +11,9 @@ mod_shortlist_ui <- function(id) {
     conditionalPanel(
       "output.is_empty", ns = ns,
       card(empty_state("star", "Nothing shortlisted yet",
-                       p(HTML(paste0("On the <b>Search</b> or <b>Map</b> page, select rows in a ",
-                                     "table and press <b>Add to shortlist</b>. On <b>Check a ",
-                                     "listing</b>, add the project you are checking.")))))
+                       p(HTML(paste0("On the <b>Search</b> or <b>Map</b> page, press the star ",
+                                     "next to a home. On <b>Check a listing</b>, add the ",
+                                     "project you are checking.")))))
     ),
     conditionalPanel(
       "!output.is_empty", ns = ns,
@@ -53,6 +53,12 @@ mod_shortlist_ui <- function(id) {
 mod_shortlist_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
     setBookmarkExclude(c(dt_bookmark_inputs("table"), "remove", "clear"))
+
+    # Fill in the stars in every table (settings.js, "rentlens-shortlist")
+    observe({
+      sl <- shortlist()
+      session$sendCustomMessage("rentlens-shortlist", as.list(shortlist_key(sl$project, sl$bed_group)))
+    })
 
     # Every rental of the shortlisted options in the chosen time period
     short_contracts <- reactive({
@@ -157,10 +163,47 @@ mod_shortlist_server <- function(id, filters, shortlist) {
 #' @noRd
 add_to_shortlist <- function(shortlist, options, rows) {
   if (length(rows) == 0) {
-    showNotification("Select one or more rows in the table first.", type = "warning")
+    shortlist_toast("Select one or more rows in the table first.", added = FALSE)
     return(invisible())
   }
   new <- as.data.frame(options[rows, c("project", "bed_group")])
   shortlist(unique(rbind(shortlist(), new)))
-  showNotification(paste(length(rows), "option(s) added to your shortlist."), type = "message")
+  shortlist_toast(paste(length(rows), "option(s) added to your shortlist."))
+}
+
+#' One text key per shortlist option, used by the table stars
+#' @noRd
+shortlist_key <- function(project, bed_group) paste(project, bed_group, sep = " | ")
+
+#' Star or unstar one option (a star in a table, see `rl_datatable(star =)`)
+#'
+#' @param key A `shortlist_key()`.
+#' @return TRUE if it was added, FALSE if removed (invisibly).
+#' @noRd
+toggle_shortlist <- function(shortlist, key) {
+  sl <- shortlist()
+  have <- shortlist_key(sl$project, sl$bed_group) == key
+  parts <- strsplit(key, " | ", fixed = TRUE)[[1]]
+  beds <- parts[length(parts)]
+  what <- paste0(paste(parts[-length(parts)], collapse = " | "), " (",
+                 if (beds == "Unknown") "bedrooms unknown" else paste(beds, "bedroom"), ")")
+  if (any(have)) {
+    shortlist(sl[!have, , drop = FALSE])
+    shortlist_toast(paste(what, "removed from your shortlist."), added = FALSE)
+  } else {
+    new <- data.frame(project = paste(parts[-length(parts)], collapse = " | "), bed_group = beds)
+    shortlist(rbind(sl, new))
+    shortlist_toast(paste(what, "added to your shortlist."))
+  }
+  invisible(!any(have))
+}
+
+#' A small pop-up message (top right) after the shortlist changes, with a link to it
+#' @noRd
+shortlist_toast <- function(text, added = TRUE) {
+  go <- "document.querySelector('.navbar a[data-value=\"shortlist\"]').click(); return false;"
+  show_toast(toast(
+    text, if (added) tags$a(href = "#", class = "toast-link", onclick = go, "View shortlist"),
+    icon = icon(if (added) "star" else "star-half-stroke"),
+    type = if (added) "success" else "secondary", duration_s = 4))
 }

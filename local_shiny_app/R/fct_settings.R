@@ -277,6 +277,6 @@ settings_summary <- function(s, choices = settings_choices()) {
 #' Script that loads and saves the settings in the browser (inst/app/www/settings.js)
 #' @noRd
 settings_dependency <- function() {
-  htmltools::htmlDependency("rentlens-settings", "1.0.0", src = app_sys("app", "www"),
+  htmltools::htmlDependency("rentlens-settings", asset_version("settings.js"), src = app_sys("app", "www"),
                             script = "settings.js")
 }

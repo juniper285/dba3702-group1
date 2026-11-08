@@ -12,3 +12,16 @@ test_that("the shortlist summarises each option and draws its rent trend", {
     expect_no_error(output$trend)
   })
 })
+
+test_that("toggle_shortlist() stars and unstars one option", {
+  sl <- reactiveVal(empty_shortlist())
+  key <- shortlist_key("THE SAIL @ MARINA BAY", "2")
+  session <- MockShinySession$new()
+  withReactiveDomain(session, {
+    expect_true(isolate(toggle_shortlist(sl, key)))
+    expect_equal(isolate(sl())$project, "THE SAIL @ MARINA BAY")
+    expect_equal(isolate(sl())$bed_group, "2")
+    expect_false(isolate(toggle_shortlist(sl, key)))
+    expect_equal(nrow(isolate(sl())), 0)
+  })
+})

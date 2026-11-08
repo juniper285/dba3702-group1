@@ -407,6 +407,25 @@ h1, h2, h3, h4, h5, h6, .verdict-title, .wizard-title, .modal-title { text-wrap:
   }
   .dt-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.85rem; }
 }
+// Shortlist stars at the left of a table (rl_datatable(star =)): one SVG,
+// outline when off and filled when on; a 32 px target in a dense table
+table.dataTable td.rl-star-cell { padding: 0 !important; width: 2rem; text-align: center; vertical-align: top; }
+.rl-star {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 999px;
+  background: none; color: $text-muted; cursor: pointer;
+  transition-property: color, background-color, scale;
+  transition-duration: 0.15s; transition-timing-function: ease-out;
+  svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+  &:hover { color: #b45309; background: rgba(#f59e0b, 0.12); }
+  &:active { scale: 0.96; }
+  &.is-on { color: #f59e0b; svg { fill: currentColor; } }
+  &:focus-visible { outline: 2px solid rgba($primary, 0.5); outline-offset: 1px; }
+}
+
+// Shortlist toasts (shortlist_toast()): the link reads on the coloured background
+.toast .toast-link { color: inherit; font-weight: 600; text-decoration: underline; margin-left: 0.25rem; white-space: nowrap; }
+
 // The colvis menu: one row per column, a tick for those shown
 div.dt-button-collection {
   border-radius: $border-radius-lg; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);

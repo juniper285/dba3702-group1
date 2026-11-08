@@ -84,7 +84,7 @@ calls them "My filters".
 - Nothing saved = first visit: `mod_settings_server()` opens the setup wizard
   (budget, places, where to search, type of home, commute and MRT, with a
   preview of the closest homes). Finishing saves the settings, opens the Search
-  page and shows a tip on the options list and "Add to shortlist".
+  page and shows a tip on the options list and its shortlist stars.
 - "My filters" (navbar) or "Edit my filters" (the My filters box at the top
   of every page) opens the same sections as tabs. "Start over" clears the saved settings and reruns the
   wizard. To see the wizard again while developing, run

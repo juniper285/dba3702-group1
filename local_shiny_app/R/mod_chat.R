@@ -12,7 +12,7 @@ mod_chat_ui <- function(id) {
   if (is.null(chat_config())) return(NULL)
   ns <- NS(id)
   tagList(
-    htmltools::htmlDependency("rentlens-chat", "1.0.0", src = app_sys("app", "www"),
+    htmltools::htmlDependency("rentlens-chat", asset_version("chat.js"), src = app_sys("app", "www"),
                               script = "chat.js"),
     tags$button(
       type = "button", class = "btn btn-primary chat-fab",

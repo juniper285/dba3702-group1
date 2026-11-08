@@ -18,9 +18,12 @@
 
   // Point at an element with a one-off popover (after the setup wizard);
   // it closes on the next click anywhere
-  function coach(m) {
+  function coach(m, tries) {
+    tries = tries || 0;
     setTimeout(function () {
       var el = document.querySelector(m.selector);
+      // the table may still be drawing: try again for a few seconds
+      if (!el && tries < 10) { coach(m, tries + 1); return; }
       if (!el || !window.bootstrap) return;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       var pop = bootstrap.Popover.getOrCreateInstance(el, {
@@ -210,8 +213,36 @@
       });
   }
 
+  // ---- Stars (rl_datatable(star =) in R): one per row, adds the option to
+  // the shortlist or takes it off. The server sends the starred options
+  // ("rentlens-shortlist") whenever the shortlist changes.
+  var starred = {};
+  var STAR_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '<path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>';
+  function starButton(key, inputId) {
+    var on = !!starred[key];
+    var safe = String(key).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    return '<button type="button" class="rl-star' + (on ? " is-on" : "") + '" data-key="' + safe +
+      '" data-input="' + inputId + '" aria-pressed="' + on + '" title="' +
+      (on ? "Remove from shortlist" : "Add to shortlist") + '">' + STAR_SVG + "</button>";
+  }
+  function paintStars() {
+    $(".rl-star").each(function () {
+      var on = !!starred[this.getAttribute("data-key")];
+      this.classList.toggle("is-on", on);
+      this.setAttribute("aria-pressed", on);
+      this.title = on ? "Remove from shortlist" : "Add to shortlist";
+    });
+  }
+  $(document).on("click", ".rl-star", function (e) {
+    e.stopPropagation();   // a star click shouldn't also select the row
+    this.classList.toggle("is-on");   // at once; the server confirms
+    Shiny.setInputValue(this.getAttribute("data-input"),
+                        { key: this.getAttribute("data-key"), at: Date.now() }, { priority: "event" });
+  });
+
   window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped,
-                      rememberColumns: rememberColumns };
+                      rememberColumns: rememberColumns, starButton: starButton };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out
   // control turns its option on, "Clear" turns it off ----
@@ -244,6 +275,11 @@
   Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });
   Shiny.addCustomMessageHandler("rentlens-clear-settings", function (_) { write(null); });
   Shiny.addCustomMessageHandler("rentlens-coach", function (m) { coach(m); });
+  Shiny.addCustomMessageHandler("rentlens-shortlist", function (keys) {
+    starred = {};
+    (keys || []).forEach(function (k) { starred[k] = true; });
+    paintStars();
+  });
   // Saved map areas (mod_map.R), kept like the settings
   var AREAS_KEY = "rentlens-areas";
   Shiny.addCustomMessageHandler("rentlens-save-areas", function (json) {

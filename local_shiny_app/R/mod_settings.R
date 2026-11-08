@@ -447,11 +447,11 @@ mod_settings_server <- function(id) {
       # Steps 6 and 7: the list of options, and how to shortlist them
       nav_select("nav", "budget", session = session$rootScope())
       session$sendCustomMessage("rentlens-coach", list(
-        selector = "#within_budget-add_short",
+        selector = "#within_budget-table .rl-star",
         title = "Your options",
-        text = paste("The list below shows homes that fit your settings, with the distance",
-                     "to each of your places. Tick the rows you like, then press",
-                     "'Add to shortlist' to save them.")))
+        text = paste("The list shows homes that fit your settings, with the distance",
+                     "to each of your places. Press the star next to one you like to",
+                     "add it to your shortlist.")))
     })
     observeEvent(input$start_over, {
       session$sendCustomMessage("rentlens-clear-settings", TRUE)

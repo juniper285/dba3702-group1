@@ -83,6 +83,7 @@ Other parts:
 | KPI tiles | Median rent, typical range (middle 50%), number of comparable rentals | `mod_budget_check` | **Keep** |
 | Budget histogram | Recent rents with the budget band and the median line | `rent_histogram()` in `utils_ui.R` | **Keep** |
 | Options within budget: List | One row per project and bedroom type whose recent median rent is in the budget, with distance columns to each place. Shows Project, District, Bedrooms, size, Median rent, nearest MRT, walk and place distances; the rest sit behind **Columns** | `summarise_options()` + `add_distance()`; "Min. recent rentals" under More options | **Keep**. This is the core answer |
+| Shortlist stars | A star at the left of each row (Search options and Map selection) adds that project and bedroom type to the shortlist, or takes it off; a toast confirms it with a "View shortlist" link. The navbar badge counts the shortlist | `rl_datatable(star =)`, `toggle_shortlist()`, `shortlist_toast()`; the server sends starred keys to `settings.js` (`rentlens-shortlist`) | **Keep**. Replaces "select rows, then press Add to shortlist" |
 | Table columns picker | Every wide table starts with its main columns; a **Columns** button shows the detail ones (`detail_cols`: rent spread, psf, counts, last rented, street/address). The choice is kept per table in the browser. District cells show "D19 Serangoon Garden…" with the full name on hover | `rl_datatable(hide =)`, `RentLens.rememberColumns()` in `settings.js` | **Keep**. Cuts the information overload |
 | Options within budget: By district | Stacked bars counting options per district and bedroom | `mod_within_budget` `plot` | **Trim?** Market → Compare areas already compares districts. Useful as a quick overview, but you could cut it |
 
@@ -103,7 +104,7 @@ Other parts:
 | Side KPIs | Rentals, projects, median rent and median psf of the selection | `vb_*` | **Keep** |
 | Psf trend by month | Median psf per month, per bedroom and overall | `output$trend` | **Trim?** Compare saved areas and Compare properties show trends too; this one is the noisiest (monthly) |
 | By bedrooms table | Rentals, median rent, sqft and psf per bedroom for the selection | `output$beds` | **Keep** (small and useful) |
-| Projects in the selection | Project and bedroom rows with add to shortlist | `table_data()` → `summarise_options()` | **Keep** |
+| Projects in the selection | Project and bedroom rows, each with a shortlist star | `table_data()` → `summarise_options()` | **Keep** |
 | Rentals in the selection | Raw contracts with a CSV download | `contracts()` | **Merge** into More → Rental records, which shows the same contracts (and follows the map selection when it is applied). Removing it shortens the page |
 
 ### 3.4 Check a listing (`mod_listing_check.R`, `fct_listing.R`)

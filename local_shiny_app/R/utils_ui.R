@@ -231,16 +231,32 @@ detail_cols <- c("Average rent", "25th percentile", "75th percentile", "Median S
 #'   column only; the default when there is one), "rental" (every column,
 #'   for tables of single rentals) or "table" (every column).
 #' @param hide Names of columns to hide at first; `character()` hides none.
+#' @param star An input id (already namespaced, `session$ns("star")`): adds a
+#'   star at the left of each row that adds that option to the shortlist or
+#'   takes it off. Clicks arrive as `input$star$key`, a `shortlist_key()`.
+#'   Needs Project and Bedrooms columns. The star isn't a real column: no
+#'   header, no sorting, not in the Columns menu.
 #' @noRd
 rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE,
                          search = if ("Project" %in% names(s)) "project" else "table",
-                         hide = detail_cols, ...) {
+                         hide = detail_cols, star = NULL, ...) {
   search <- match.arg(search, c("project", "rental", "table"))
+  star_col <- if (!is.null(star)) " "
+  if (!is.null(star)) {
+    s <- cbind(data.frame(` ` = shortlist_key(s$Project, s$Bedrooms), check.names = FALSE), s)
+  }
   idx <- function(cols) which(names(s) %in% cols) - 1   # DataTables counts from 0
   # Other columns can't be searched when the box is for projects
-  not_searched <- if (search == "project") idx(setdiff(names(s), "Project"))
-  hidden <- idx(setdiff(hide, "Project"))
+  not_searched <- if (search == "project") idx(setdiff(names(s), "Project")) else idx(star_col)
+  hidden <- idx(setdiff(hide, c("Project", star_col)))
   defs <- list()
+  if (!is.null(star)) defs <- c(defs, list(list(
+    targets = 0, orderable = FALSE, className = "rl-star-cell", width = "1.75rem",
+    render = DT::JS(sprintf(paste(
+      "function (d, type) {",
+      "  if (type !== 'display') return d;",
+      "  return window.RentLens ? RentLens.starButton(d, '%s') : '';",
+      "}"), star)))))
   if (length(not_searched)) defs <- c(defs, list(list(searchable = FALSE, targets = not_searched)))
   if (length(hidden)) defs <- c(defs, list(list(visible = FALSE, targets = hidden)))
   if ("District" %in% names(s)) defs <- c(defs, list(list(
@@ -260,7 +276,7 @@ rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = T
     extensions <- "Buttons"
     options$dom <- '<"dt-top"Bf>t<"dt-bottom"ip>'
     options$buttons <- list(list(extend = "colvis", text = "Columns", className = "dt-columns",
-                                 columns = idx(setdiff(names(s), "Project"))))
+                                 columns = idx(setdiff(names(s), c("Project", star_col)))))
     options$initComplete <- DT::JS(
       "function () { if (window.RentLens) RentLens.rememberColumns(this.api()); }")
   }
