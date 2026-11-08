@@ -53,3 +53,13 @@ test_that("rl_datatable(star =) adds a star cell that isn't a real column", {
   expect_match(as.character(star$render), "within_budget-star")
   expect_equal(opts$buttons[[1]]$columns, 2:3)          # not the star, not Project
 })
+
+test_that("rl_datatable() marks the renter's place columns", {
+  s <- data.frame(Project = "A", `Median rent` = 1, `To Mum's (km)` = 2.5, `To NUS (km)` = 3,
+                  check.names = FALSE)
+  defs <- rl_datatable(s)$x$options$columnDefs
+  place <- Filter(function(d) identical(d$className, "dt-place"), defs)[[1]]
+  expect_equal(place$targets, 2:3)
+  expect_length(Filter(function(d) identical(d$className, "dt-place"),
+                       rl_datatable(s[1:2])$x$options$columnDefs), 0)
+})

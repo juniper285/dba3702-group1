@@ -109,7 +109,7 @@ Pages in `R/app_ui.R`:
 | File | Main contents |
 |------|---------------|
 | `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
-| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short; columns in `hide`, by default `detail_cols`, start hidden behind a "Columns" button, and District cells show the code and first area), `detail_cols`, `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
+| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short; columns in `hide`, by default `detail_cols`, start hidden behind a "Columns" button, District cells stay on one line, and place-distance columns get the light-green `dt-place` class), `detail_cols`, `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
 | `utils_bookmark.R` | `dt_bookmark_inputs()`: DataTable inputs to leave out of "Save search" links |
 
 ### `local_shiny_app/inst/`: files shipped with the app

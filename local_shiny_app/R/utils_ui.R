@@ -244,7 +244,8 @@ detail_cols <- c("Average rent", "25th percentile", "75th percentile", "Median S
 #' settings.js). The Project column is always shown. District cells stay on
 #' one line, cut short with "…" (full name on hover). Every column can be
 #' made wider or narrower by dragging the edge of its header
-#' (`RentLens.setupTable()`).
+#' (`RentLens.setupTable()`). Distance columns to the renter's own places
+#' ("To Mum's (km)") are tinted light green.
 #'
 #' @param search What the search box looks in: "project" (the Project
 #'   column only; the default when there is one), "rental" (every column,
@@ -278,6 +279,10 @@ rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = T
       "}"), star)))))
   if (length(not_searched)) defs <- c(defs, list(list(searchable = FALSE, targets = not_searched)))
   if (length(hidden)) defs <- c(defs, list(list(visible = FALSE, targets = hidden)))
+  # Distance to the renter's own places ("To Mum's (km)", place_column()):
+  # tinted green, so their own columns stand out from the data's
+  places <- idx(grep("^To .* \\(km\\)$", names(s), value = TRUE))
+  if (length(places)) defs <- c(defs, list(list(targets = places, className = "dt-place")))
   if ("District" %in% names(s)) defs <- c(defs, list(list(
     targets = idx("District"), className = "dt-district",
     render = DT::JS(

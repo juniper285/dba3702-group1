@@ -423,6 +423,13 @@ table.dataTable td.rl-star-cell { padding: 0 !important; width: 2rem; text-align
   &:focus-visible { outline: 2px solid rgba($primary, 0.5); outline-offset: 1px; }
 }
 
+// The renter's own places ("To Mum's (km)"): light green, like the My filters chips
+table.dataTable {
+  td.dt-place { background-color: #f0fdf4; color: #166534; text-align: right; }
+  thead th.dt-place { background-color: #dcfce7; color: #166534; text-align: right; }
+  tbody tr:hover td.dt-place { background-color: #dcfce7; }
+}
+
 // Resizable columns (RentLens.setupTable()): a handle on each header's right edge
 table.dataTable thead th { position: relative; }
 .dt-resize {
