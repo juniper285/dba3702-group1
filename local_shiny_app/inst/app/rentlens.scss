@@ -389,7 +389,16 @@ h1, h2, h3, h4, h5, h6, .verdict-title, .wizard-title, .modal-title { text-wrap:
 
 // ---- Tables --------------------------------------------------------------
 .dataTables_wrapper {
-  .dt-top { display: flex; justify-content: flex-end; margin-bottom: 0.25rem; }
+  .dt-top { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; }
+  // "Columns" (rl_datatable()): left, the search box right
+  .dt-buttons { margin-right: auto; }
+  .dt-buttons .dt-columns {
+    border: 0; border-radius: 999px; padding: 0.3rem 0.85rem;
+    background: #fff; box-shadow: var(--rl-shadow-border);
+    font-size: 0.85rem; font-weight: 500; color: $primary;
+    &::before { content: "\2630"; margin-right: 0.4rem; }   // a small "list" glyph
+    &:hover { box-shadow: 0 0 0 1px $primary; background: rgba($primary, 0.06); }
+  }
   .dataTables_filter input {
     border: 1px solid $border-color;
     border-radius: 999px;
@@ -398,14 +407,30 @@ h1, h2, h3, h4, h5, h6, .verdict-title, .wizard-title, .modal-title { text-wrap:
   }
   .dt-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.85rem; }
 }
+// The colvis menu: one row per column, a tick for those shown
+div.dt-button-collection {
+  border-radius: $border-radius-lg; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  .dt-button {
+    text-align: left; border: 0; background: none; border-radius: $border-radius;
+    font-size: 0.875rem; color: $text-muted;
+    &::before { content: ""; display: inline-block; width: 1.2rem; }
+    &.dt-button-active { color: $body-color; background: none; }
+    &.dt-button-active::before { content: "\2713"; color: $primary; font-weight: 700; }
+    &:hover { background: rgba($primary, 0.08); }
+  }
+}
 table.dataTable {
   font-size: 0.9rem;
+  td.dt-district { white-space: nowrap; }
   // Headers on one line: wrapped headers made a tall, mostly empty header
   // row above every table (wide tables scroll sideways instead)
   thead th { font-weight: 600; color: $text-muted; border-bottom: 1px solid $border-color !important;
              white-space: nowrap; }
   tbody tr.selected > * { box-shadow: inset 0 0 0 9999px rgba($primary, 0.12) !important; color: inherit !important; }
 }
+
+// While a chart or table updates, Shiny fades it out; keep it readable
+:root { --shiny-fade-opacity: 0.6; }
 
 // ---- Small screens -------------------------------------------------------
 @media (max-width: 576px) {

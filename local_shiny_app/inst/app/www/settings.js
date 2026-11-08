@@ -184,7 +184,34 @@
     setTimeout(function () { setupArea(el); }, 0);
   });
 
-  window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };
+  // ---- Tables (rl_datatable() in R): remember which columns each table
+  // shows, by column name, so a new place's distance column doesn't shift
+  // the others. Called on every render, so the choice survives new filters.
+  function rememberColumns(api) {
+    var id = $(api.table().container()).closest(".datatables").attr("id");
+    if (!id) return;
+    var key = "rentlens-columns-" + id;
+    var name = function (i) { return $(api.column(i).header()).text(); };
+    var saved = null;
+    try { saved = JSON.parse(window.localStorage.getItem(key) || "null"); } catch (e) { /* blocked */ }
+    if (saved) {
+      api.columns().every(function (i) {
+        var n = name(i);
+        if ((saved.shown || []).indexOf(n) >= 0) this.visible(true, false);
+        if ((saved.hidden || []).indexOf(n) >= 0) this.visible(false, false);
+      });
+      api.columns.adjust();
+    }
+    $(api.table().node()).off("column-visibility.dt.rentlens")
+      .on("column-visibility.dt.rentlens", function () {
+        var s = { shown: [], hidden: [] };
+        api.columns().every(function (i) { (this.visible() ? s.shown : s.hidden).push(name(i)); });
+        try { window.localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* this session only */ }
+      });
+  }
+
+  window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped,
+                      rememberColumns: rememberColumns };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out
   // control turns its option on, "Clear" turns it off ----

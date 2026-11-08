@@ -86,7 +86,7 @@ mod_shortlist_server <- function(id, filters, shortlist) {
 
     output$table <- renderDT({
       s <- prettify(short_data())
-      rl_datatable(s, page_length = 25, escape = FALSE) |>
+      rl_datatable(s, page_length = 25, escape = FALSE, hide = character()) |>
         format_money_cols(s) |>
         formatStyle("Budget fit",
                     color = styleEqual(c("Within range", "Below range", "Above range"),

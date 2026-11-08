@@ -62,7 +62,8 @@ mod_value_server <- function(id, filters) {
         add_distance(filters$places())
       names(s)[names(s) == "sqft"] <- "Typical size (sqft)"
       s <- prettify(s)
-      rl_datatable(s, page_length = 15, selection = "none") |> format_money_cols(s)
+      rl_datatable(s, page_length = 15, selection = "none",
+                   hide = setdiff(detail_cols, "Median S$ psf")) |> format_money_cols(s)
     })
   })
 }

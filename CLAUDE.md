@@ -109,7 +109,7 @@ Pages in `R/app_ui.R`:
 | File | Main contents |
 |------|---------------|
 | `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
-| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short), `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
+| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short; columns in `hide`, by default `detail_cols`, start hidden behind a "Columns" button, and District cells show the code and first area), `detail_cols`, `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
 | `utils_bookmark.R` | `dt_bookmark_inputs()`: DataTable inputs to leave out of "Save search" links |
 
 ### `local_shiny_app/inst/`: files shipped with the app
@@ -128,6 +128,7 @@ What `inst/app/www/settings.js` does:
 - Sends `input$"settings-stored"`, which is `"none"` on a first visit.
 - Handles the `rentlens-save-settings`, `rentlens-clear-settings`, `rentlens-coach` and `rentlens-save-areas` messages, and sends the stored saved areas as `input$"map-stored_areas"`.
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
+- Remembers which table columns are shown (`RentLens.rememberColumns()`, `localStorage["rentlens-columns-<output id>"]`, by column name).
 - Turns on a greyed optional block when you use it.
 - Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.
 

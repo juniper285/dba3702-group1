@@ -82,7 +82,8 @@ Other parts:
 | Budget verdict | "Your budget is realistic / below typical / above typical", with the % of comparable rentals in range and advice | `budget_verdict()` in `fct_rent.R` | **Keep** |
 | KPI tiles | Median rent, typical range (middle 50%), number of comparable rentals | `mod_budget_check` | **Keep** |
 | Budget histogram | Recent rents with the budget band and the median line | `rent_histogram()` in `utils_ui.R` | **Keep** |
-| Options within budget: List | One row per project and bedroom type whose recent median rent is in the budget, with distance columns to each place | `summarise_options()` + `add_distance()`; "Min. recent rentals" under More options | **Keep**. This is the core answer |
+| Options within budget: List | One row per project and bedroom type whose recent median rent is in the budget, with distance columns to each place. Shows Project, District, Bedrooms, size, Median rent, nearest MRT, walk and place distances; the rest sit behind **Columns** | `summarise_options()` + `add_distance()`; "Min. recent rentals" under More options | **Keep**. This is the core answer |
+| Table columns picker | Every wide table starts with its main columns; a **Columns** button shows the detail ones (`detail_cols`: rent spread, psf, counts, last rented, street/address). The choice is kept per table in the browser. District cells show "D19 Serangoon Garden…" with the full name on hover | `rl_datatable(hide =)`, `RentLens.rememberColumns()` in `settings.js` | **Keep**. Cuts the information overload |
 | Options within budget: By district | Stacked bars counting options per district and bedroom | `mod_within_budget` `plot` | **Trim?** Market → Compare areas already compares districts. Useful as a quick overview, but you could cut it |
 
 ### 3.3 Map page (`mod_map.R`, `fct_map.R`)
@@ -173,7 +174,7 @@ The shortlist is kept only for the session and in Save search links; it is **not
 | `mrt_lines.rds` | 9 lines (NSL, EWL, NEL, CCL, DTL, TEL and the three LRTs) | ref, line, colour, geometry (sf multi-line) | `data-raw/mrt_lines.R` |
 | `schools.csv` | 337 schools | name, level, postal, lat, lng | `data-raw/schools.R` |
 
-All columns are used: `street`, `area_band` and `geo_match` appear in the records tables, and `postal` identifies a school.
+All columns are used: `street` and `area_band` appear in the records tables, `geo_match` decides which buildings are mapped, and `postal` identifies a school.
 
 Rows that are left out or limited:
 

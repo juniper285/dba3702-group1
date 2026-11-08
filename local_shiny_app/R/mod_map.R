@@ -355,7 +355,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     output$table <- renderDT({
       s <- table_data() |> mutate(last = format(last, "%b %Y"))
       s <- prettify(s)
-      rl_datatable(s) |> format_money_cols(s)
+      rl_datatable(s, hide = setdiff(detail_cols, "Recent rentals")) |> format_money_cols(s)
     })
 
     observeEvent(input$add_short, {
@@ -408,8 +408,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         transmute(Month = format(lease_date, "%Y-%m"), Project = project, Street = street,
                   District = district, Type = type, Bedrooms = bed_group,
                   `Area (sqft)` = area_band, Rent = rent, PSF = round(psf, 2),
-                  Address = address, `Nearest MRT/LRT` = mrt_station,
-                  `Geocode quality` = geo_match)
+                  Address = address, `Nearest MRT/LRT` = mrt_station)
     })
 
     output$contracts <- renderDT({

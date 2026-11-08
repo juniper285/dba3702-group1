@@ -185,13 +185,24 @@ range_dot_chart <- function(s, budget = NULL) {
                    format(s$n, big.mark = ","))
   plotly::plot_ly(s, y = ~label) |>
     plotly::add_segments(x = ~p25, xend = ~p75, yend = ~label, hoverinfo = "skip",
-                         line = list(color = "#cbd5e1", width = 5)) |>
+                         line = list(color = "#94a3b8", width = 6)) |>
     plotly::add_markers(x = ~median, text = hover, hoverinfo = "text",
-                        marker = list(color = colour, size = 11,
-                                      line = list(color = "white", width = 1.5))) |>
+                        marker = list(color = colour, size = 13,
+                                      line = list(color = "white", width = 2))) |>
     rl_plotly("Monthly rent", NULL, money_x = TRUE) |>
-    plotly::layout(showlegend = FALSE,
-                   shapes = if (!is.null(budget)) list(band(budget[1], budget[2], rl_colours[["budget"]], 0.08)))
+    plotly::layout(
+      showlegend = FALSE,
+      margin = list(l = 10, r = 10, t = if (is.null(budget)) 10 else 30, b = 10),
+      # the budget: a green band with solid edges and a label on top
+      shapes = if (!is.null(budget)) c(
+        list(band(budget[1], budget[2], rl_colours[["budget"]], 0.14)),
+        lapply(budget, function(x) list(type = "line", yref = "paper", y0 = 0, y1 = 1,
+                                         x0 = x, x1 = x, layer = "below",
+                                         line = list(color = rl_colours[["budget"]], width = 1.5)))),
+      annotations = if (!is.null(budget)) list(list(
+        x = mean(budget), y = 1, xref = "x", yref = "paper", yanchor = "bottom",
+        text = "<b>Your budget</b>", showarrow = FALSE,
+        font = list(color = rl_colours[["budget"]], size = 12))))
 }
 
 #' Marker sizes (pixels) for counts, by area: biggest count = `max` pixels
@@ -200,26 +211,63 @@ range_dot_chart <- function(s, budget = NULL) {
 #' @noRd
 dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
 
+#' Columns hidden at first in every table (shown with the "Columns" button)
+#'
+#' Rarely needed detail: rent spread, psf, counts and dates, raw addresses.
+#' A table keeps one visible by passing e.g. `hide = setdiff(detail_cols, "Recent rentals")`.
+#' @noRd
+detail_cols <- c("Average rent", "25th percentile", "75th percentile", "Median S$ psf",
+                 "Recent rentals", "Last rented", "Distance to MRT/LRT (m)",
+                 "Street", "Address", "S$ psf", "PSF")
+
 #' A DataTable with the app's defaults
+#'
+#' Columns named in `hide` start hidden, and a "Columns" button lets people
+#' show them (the choice is remembered in the browser, `rememberColumns()` in
+#' settings.js). The Project column is always shown. District cells show the
+#' code and first area ("D19 Serangoon Garden"), with the full name on hover.
 #'
 #' @param search What the search box looks in: "project" (the Project
 #'   column only; the default when there is one), "rental" (every column,
 #'   for tables of single rentals) or "table" (every column).
+#' @param hide Names of columns to hide at first; `character()` hides none.
 #' @noRd
 rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE,
-                         search = if ("Project" %in% names(s)) "project" else "table", ...) {
+                         search = if ("Project" %in% names(s)) "project" else "table",
+                         hide = detail_cols, ...) {
   search <- match.arg(search, c("project", "rental", "table"))
+  idx <- function(cols) which(names(s) %in% cols) - 1   # DataTables counts from 0
   # Other columns can't be searched when the box is for projects
-  not_searched <- if (search == "project") which(names(s) != "Project") - 1
+  not_searched <- if (search == "project") idx(setdiff(names(s), "Project"))
+  hidden <- idx(setdiff(hide, "Project"))
+  defs <- list()
+  if (length(not_searched)) defs <- c(defs, list(list(searchable = FALSE, targets = not_searched)))
+  if (length(hidden)) defs <- c(defs, list(list(visible = FALSE, targets = hidden)))
+  if ("District" %in% names(s)) defs <- c(defs, list(list(
+    targets = idx("District"), className = "dt-district",
+    render = DT::JS(
+      "function (d, type) {",
+      "  if (type !== 'display' || d == null) return d;",
+      "  var i = String(d).indexOf(',');",
+      "  return i < 0 ? d : '<span title=\"' + d + '\">' + d.slice(0, i) + '\u2026</span>';",
+      "}"))))
+  options <- list(pageLength = page_length, order = list(), scrollX = TRUE,
+                  dom = '<"dt-top"f>t<"dt-bottom"ip>',
+                  columnDefs = if (length(defs)) defs,
+                  language = list(search = "", searchPlaceholder = paste("Search", search)))
+  extensions <- character()
+  if (length(hidden)) {
+    extensions <- "Buttons"
+    options$dom <- '<"dt-top"Bf>t<"dt-bottom"ip>'
+    options$buttons <- list(list(extend = "colvis", text = "Columns", className = "dt-columns",
+                                 columns = idx(setdiff(names(s), "Project"))))
+    options$initComplete <- DT::JS(
+      "function () { if (window.RentLens) RentLens.rememberColumns(this.api()); }")
+  }
   datatable(s, rownames = FALSE, selection = selection, escape = escape,
             colnames = short_colnames(names(s)),
             class = "compact hover row-border",
-            options = list(pageLength = page_length, order = list(), scrollX = TRUE,
-                           dom = '<"dt-top"f>t<"dt-bottom"ip>',
-                           columnDefs = if (length(not_searched))
-                             list(list(searchable = FALSE, targets = not_searched)),
-                           language = list(search = "", searchPlaceholder = paste("Search", search))),
-            ...)
+            extensions = extensions, options = options, ...)
 }
 
 #' Column headers short enough not to stretch a table's header row:

@@ -77,7 +77,7 @@ mod_compare_server <- function(id, filters) {
       b <- filters$budget()
       s$label <- s$district
       s$colour <- ifelse(s$median >= b[1] & s$median <= b[2],
-                         rl_colours[["typical"]], rl_colours[["muted"]])
+                         rl_colours[["primary"]], "#475569")
       range_dot_chart(s, b)
     })
 
@@ -160,13 +160,17 @@ mod_compare_server <- function(id, filters) {
         arrange(mrt_m) |>
         select(project, district, mrt_station, mrt_m, walk_min, median, psf, n) |>
         prettify()
-      rl_datatable(s, selection = "none") |> format_money_cols(s)
+      # this table is about station distance and price, so those stay
+      keep <- c("Recent rentals", "Median S$ psf", "Distance to MRT/LRT (m)")
+      rl_datatable(s, selection = "none", hide = setdiff(detail_cols, keep)) |>
+        format_money_cols(s)
     })
 
     output$table <- renderDT({
       b <- filters$budget()
       s <- prettify(compare_data())
-      rl_datatable(s, page_length = 15, selection = "none") |>
+      rl_datatable(s, page_length = 15, selection = "none",
+                   hide = setdiff(detail_cols, "Recent rentals")) |>
         format_money_cols(s) |>
         formatStyle("Median rent", target = "row",
                     backgroundColor = styleInterval(c(b[1] - 0.5, b[2] + 0.5),

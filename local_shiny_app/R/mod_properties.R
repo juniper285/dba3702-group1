@@ -164,7 +164,8 @@ mod_properties_server <- function(id, filters, shortlist) {
 
     output$table <- renderDT({
       s <- prettify(table_data())
-      rl_datatable(s, selection = "none", escape = FALSE) |> format_money_cols(s)
+      rl_datatable(s, selection = "none", escape = FALSE, hide = character()) |>
+        format_money_cols(s)
     })
 
     output$download <- downloadHandler(

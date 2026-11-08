@@ -64,6 +64,11 @@ local_shiny_app/
   `settings.js`.
 - Rental data is read once per R session by `rentals_data()` (`fct_data.R`),
   which also attaches each contract's nearest MRT/LRT station.
+- Every table goes through `rl_datatable()` (`utils_ui.R`). Detail columns
+  (`detail_cols`) start hidden behind a "Columns" button; a table keeps one in
+  view with `hide = setdiff(detail_cols, ...)`, or shows all with
+  `hide = character()`. Which columns each table shows is remembered in the
+  browser by `settings.js` (`RentLens.rememberColumns()`).
 
 ### My filters and the setup wizard
 
