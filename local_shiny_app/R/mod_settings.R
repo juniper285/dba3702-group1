@@ -140,12 +140,13 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
         helpText("Homes within the distance above of this station (up to 2 km if that's off).")),
       optional_block(
         ns("place_limit"), "Close to one of my places", on = s$place_km < place_km_max,
-        # 1-29 km: Shiny's own tick count leaves a short last gap (..., 25, 28, 29),
-        # so ask for 7 even gaps instead (1, 5, 9, ..., 29).
+        # The scale runs 0-30 km so the ticks fall every 5 km (6 even gaps);
+        # `data-from-min` stops the handle at 1 km.
         htmltools::tagQuery(
-          sliderInput(ns("place_km"), "Within (km)", min = 1, max = place_km_max - 1, step = 1,
+          sliderInput(ns("place_km"), "Within (km)", min = 0, max = place_km_max - 1, step = 1,
                       value = if (s$place_km >= place_km_max) 5 else s$place_km, width = "100%")
-        )$find("input")$removeAttrs("data-grid-num")$addAttrs(`data-grid-num` = 7)$allTags(),
+        )$find("input")$removeAttrs("data-grid-num")$
+          addAttrs(`data-grid-num` = 6, `data-from-min` = 1)$allTags(),
         helpText("Straight-line distance to the nearest of your places."))
     )
   )
@@ -202,7 +203,7 @@ read_settings_form <- function(input, s, sections, places) {
     else if (!is.null(input$mrt_dist)) s$mrt_dist <- min(input$mrt_dist, mrt_max - 100)
     s$mrt_pick <- if (isFALSE(input$station_on) || is.null(input$mrt_pick)) "" else input$mrt_pick
     if (isFALSE(input$place_limit)) s$place_km <- place_km_max
-    else if (!is.null(input$place_km)) s$place_km <- min(input$place_km, place_km_max - 1)
+    else if (!is.null(input$place_km)) s$place_km <- min(max(input$place_km, 1), place_km_max - 1)
   }
   s
 }

@@ -83,7 +83,7 @@ Pages in `R/app_ui.R`:
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
 | `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()` (MRT/LRT lines and stations, one layer: `mrt_group`), `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
 | `fct_chat.R` | The "Ask RentLens" chatbot: `chat_config()` (reads `SOCLAAS_*` env vars; NULL = no key, chat hidden), `chat_system_prompt()`, `new_rentlens_chat()` (ellmer client with five tools), and the tools' plain functions `chat_rent_stats()`, `chat_rank_areas()`, `chat_find_projects()`, `chat_rent_trend()`, plus `chat_where()` (district code/name, station, project, street → rentals), `chat_beds()`, `chat_types()`, `tool_json()` |
-| `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
+| `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (31 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
 
 ### `local_shiny_app/R/`: modules (`mod_*`), each with `mod_x_ui(id)` and `mod_x_server(id, ...)`
 
@@ -174,7 +174,7 @@ What `inst/app/www/settings.js` does:
   | Constant | Value | Means | Slider range shown |
   |---|---|---|---|
   | `mrt_max` | 2000 | any distance | 100–1,900 m |
-  | `place_km_max` | 30 | any distance | 1–29 km |
+  | `place_km_max` | 31 | any distance | 1–30 km (scale drawn from 0 so ticks fall every 5 km) |
   | `area_top()` | 24,650 (largest home in the data) | no upper limit on floor area; `area_max` (4000) is only where the slider's scale ends | |
 
 - **Settings live in the browser, not the server.** There are no accounts. To see the wizard again, use My filters → Start over, or run `localStorage.removeItem("rentlens-settings")` in the console. The period is always recomputed from `recent` and never stored on its own.
