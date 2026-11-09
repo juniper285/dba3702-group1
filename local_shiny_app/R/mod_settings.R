@@ -140,8 +140,12 @@ settings_section_ui <- function(ns, section, s, choices = settings_choices()) {
         helpText("Homes within the distance above of this station (up to 2 km if that's off).")),
       optional_block(
         ns("place_limit"), "Close to one of my places", on = s$place_km < place_km_max,
-        sliderInput(ns("place_km"), "Within (km)", min = 1, max = place_km_max - 1, step = 1,
-                    value = if (s$place_km >= place_km_max) 5 else s$place_km, width = "100%"),
+        # 1-29 km: Shiny's own tick count leaves a short last gap (..., 25, 28, 29),
+        # so ask for 7 even gaps instead (1, 5, 9, ..., 29).
+        htmltools::tagQuery(
+          sliderInput(ns("place_km"), "Within (km)", min = 1, max = place_km_max - 1, step = 1,
+                      value = if (s$place_km >= place_km_max) 5 else s$place_km, width = "100%")
+        )$find("input")$removeAttrs("data-grid-num")$addAttrs(`data-grid-num` = 7)$allTags(),
         helpText("Straight-line distance to the nearest of your places."))
     )
   )
