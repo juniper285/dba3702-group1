@@ -4,7 +4,7 @@
 # browser's localStorage (settings.js) and turned into filters by
 # mod_filters_server().
 
-place_km_max <- 30   # "max distance to my places" slider's top end means "any distance"
+place_km_max <- 31   # "any distance" to my places (the slider stops at 30 km; off = any)
 max_places   <- 6
 
 # How far back to look, in months: one window for every page (the data
@@ -277,6 +277,6 @@ settings_summary <- function(s, choices = settings_choices()) {
 #' Script that loads and saves the settings in the browser (inst/app/www/settings.js)
 #' @noRd
 settings_dependency <- function() {
-  htmltools::htmlDependency("rentlens-settings", "1.0.0", src = app_sys("app", "www"),
+  htmltools::htmlDependency("rentlens-settings", asset_version("settings.js"), src = app_sys("app", "www"),
                             script = "settings.js")
 }

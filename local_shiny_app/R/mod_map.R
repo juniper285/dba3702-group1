@@ -29,6 +29,7 @@ mod_map_ui <- function(id) {
           position = "right", width = 300, class = "map-panel",
           div(class = "section-title", "Selection"),
           div(class = "selection-label", textOutput(ns("sel_label"))),
+          uiOutput(ns("sel_stars")),
           input_switch(ns("apply_sel"), "Apply map selection to all pages", value = TRUE),
           div(class = "kpi-stack",
               kpi("Rentals", textOutput(ns("vb_n"))),
@@ -60,13 +61,9 @@ mod_map_ui <- function(id) {
       card(card_header("By bedrooms"), DTOutput(ns("beds"), fill = FALSE))
     ),
     card(
-      header_with_actions(
-        "Projects in the map selection",
-        actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
-                     class = "btn-sm btn-primary")
-      ),
+      card_header("Projects in the map selection"),
       DTOutput(ns("table"), fill = FALSE),
-      card_footer("Select rows, then press 'Add to shortlist'.")
+      card_footer("Press the star to add a project to your shortlist.")
     ),
     card(
       header_with_actions(
@@ -84,7 +81,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
   moduleServer(id, function(input, output, session) {
     # Leaflet adds its own inputs (map_bounds, map_marker_click, map_draw_*, ...)
     observe(setBookmarkExclude(c(dt_bookmark_inputs(c("table", "beds", "contracts")),
-                                 "add_short", "clear", "save_area", "rename_area",
+                                 "star", "clear", "save_area", "rename_area",
                                  "remove_area", "rename_to", "rename_ok", "stored_areas", "help",
                                  grep("^map_", names(input), value = TRUE))))
 
@@ -169,7 +166,8 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
                 "(up to ", max_areas, "). 'Compare saved areas', just below the map, shows them ",
                 "side by side. Rename (pencil) or remove (cross) them in the panel."),
         tags$li(strong("Shortlist what you like. "),
-                "Tick rows in 'Projects in the map selection' and press 'Add to shortlist'."),
+                "Click a building and press the star for a bedroom type under its name ",
+                "(right), or the star next to a project in 'Projects in the map selection'."),
         tags$li(strong("See more. "),
                 "Switch off 'Only buildings within my budget' to see every building, change ",
                 "what the colours show, or use the layers button (bottom left of the map) for ",
@@ -337,6 +335,23 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     })
 
     output$sel_label <- renderText(if (is.null(sel$label)) "all mapped rentals" else sel$label)
+
+    # One building (project) selected: a star per bedroom type to shortlist it
+    output$sel_stars <- renderUI({
+      d <- selected()
+      if (is.null(sel$ids) || n_distinct(d$project) != 1) return(NULL)
+      project <- d$project[1]
+      beds <- intersect(bed_levels, unique(d$bed_group))
+      sl <- shortlist()
+      starred <- shortlist_key(sl$project, sl$bed_group)
+      div(class = "sel-stars",
+          div(class = "small text-muted mb-1", "Add to shortlist"),
+          lapply(beds, function(b) star_chip(shortlist_key(project, b),
+                                              session$ns("star"),
+                                              if (b == "Unknown") "Bedrooms unknown"
+                                              else paste(b, if (b == "1") "bedroom" else "bedrooms"),
+                                              on = shortlist_key(project, b) %in% starred)))
+    })
     output$vb_n    <- renderText(format(nrow(selected()), big.mark = ","))
     output$vb_proj <- renderText(format(n_distinct(selected()$project), big.mark = ","))
     output$vb_rent <- renderText(
@@ -355,12 +370,11 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
     output$table <- renderDT({
       s <- table_data() |> mutate(last = format(last, "%b %Y"))
       s <- prettify(s)
-      rl_datatable(s) |> format_money_cols(s)
+      rl_datatable(s, selection = "none", star = session$ns("star"),
+                   hide = setdiff(detail_cols, "Recent rentals")) |> format_money_cols(s)
     })
 
-    observeEvent(input$add_short, {
-      add_to_shortlist(shortlist, table_data(), input$table_rows_selected)
-    })
+    observeEvent(input$star, toggle_shortlist(shortlist, input$star$key))
 
     # ---- Breakdown of the selection ----
     output$trend_title <- renderText(paste(
@@ -408,8 +422,7 @@ mod_map_server <- function(id, filters, shortlist, map_sel = new_map_selection()
         transmute(Month = format(lease_date, "%Y-%m"), Project = project, Street = street,
                   District = district, Type = type, Bedrooms = bed_group,
                   `Area (sqft)` = area_band, Rent = rent, PSF = round(psf, 2),
-                  Address = address, `Nearest MRT/LRT` = mrt_station,
-                  `Geocode quality` = geo_match)
+                  Address = address, `Nearest MRT/LRT` = mrt_station)
     })
 
     output$contracts <- renderDT({

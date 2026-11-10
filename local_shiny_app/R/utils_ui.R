@@ -65,6 +65,7 @@ filter_box_ui <- function(chips, button = edit_filters_button()) {
       button)
 }
 
+#' (A click anywhere on the box presses its button too, see settings.js.)
 #' "Edit my filters" button that opens the My filters dialog from any page
 #' @noRd
 edit_filters_button <- function() {
@@ -185,13 +186,24 @@ range_dot_chart <- function(s, budget = NULL) {
                    format(s$n, big.mark = ","))
   plotly::plot_ly(s, y = ~label) |>
     plotly::add_segments(x = ~p25, xend = ~p75, yend = ~label, hoverinfo = "skip",
-                         line = list(color = "#cbd5e1", width = 5)) |>
+                         line = list(color = "#94a3b8", width = 6)) |>
     plotly::add_markers(x = ~median, text = hover, hoverinfo = "text",
-                        marker = list(color = colour, size = 11,
-                                      line = list(color = "white", width = 1.5))) |>
+                        marker = list(color = colour, size = 13,
+                                      line = list(color = "white", width = 2))) |>
     rl_plotly("Monthly rent", NULL, money_x = TRUE) |>
-    plotly::layout(showlegend = FALSE,
-                   shapes = if (!is.null(budget)) list(band(budget[1], budget[2], rl_colours[["budget"]], 0.08)))
+    plotly::layout(
+      showlegend = FALSE,
+      margin = list(l = 10, r = 10, t = if (is.null(budget)) 10 else 30, b = 10),
+      # the budget: a green band with solid edges and a label on top
+      shapes = if (!is.null(budget)) c(
+        list(band(budget[1], budget[2], rl_colours[["budget"]], 0.14)),
+        lapply(budget, function(x) list(type = "line", yref = "paper", y0 = 0, y1 = 1,
+                                         x0 = x, x1 = x, layer = "below",
+                                         line = list(color = rl_colours[["budget"]], width = 1.5)))),
+      annotations = if (!is.null(budget)) list(list(
+        x = mean(budget), y = 1, xref = "x", yref = "paper", yanchor = "bottom",
+        text = "<b>Your budget</b>", showarrow = FALSE,
+        font = list(color = rl_colours[["budget"]], size = 12))))
 }
 
 #' Marker sizes (pixels) for counts, by area: biggest count = `max` pixels
@@ -200,26 +212,103 @@ range_dot_chart <- function(s, budget = NULL) {
 #' @noRd
 dot_sizes <- function(n, min = 5, max = 25) min + (max - min) * sqrt(n / max(n))
 
+#' A shortlist star with a label, outside a table (e.g. "2 bedrooms" on the map)
+#'
+#' Works like the table stars: settings.js sends clicks as `input$<id>` with
+#' the `shortlist_key()`, and `toggle_shortlist()` handles them.
+#' @param key A `shortlist_key()`.
+#' @param input_id The namespaced input id, e.g. `session$ns("star")`.
+#' @noRd
+star_chip <- function(key, input_id, label, on = FALSE) {
+  tags$button(
+    type = "button", class = paste("rl-star rl-star-chip", if (on) "is-on"),
+    `data-key` = key, `data-input` = input_id, `aria-pressed` = tolower(on),
+    title = if (on) "Remove from shortlist" else "Add to shortlist",
+    HTML(paste0('<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="',
+                'M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>')),
+    span(label))
+}
+
+#' Columns hidden at first in every table (shown with the "Columns" button)
+#'
+#' Rarely needed detail: rent spread, psf, counts and dates, raw addresses.
+#' A table keeps one visible by passing e.g. `hide = setdiff(detail_cols, "Recent rentals")`.
+#' @noRd
+detail_cols <- c("Average rent", "25th percentile", "75th percentile", "Median S$ psf",
+                 "Recent rentals", "Last rented", "Distance to MRT/LRT (m)",
+                 "Street", "Address", "S$ psf", "PSF")
+
 #' A DataTable with the app's defaults
+#'
+#' Columns named in `hide` start hidden, and a "Columns" button lets people
+#' show them (the choice is remembered in the browser, `setupTable()` in
+#' settings.js). The Project column is always shown. District cells stay on
+#' one line, cut short with "…" (full name on hover). Every column can be
+#' made wider or narrower by dragging the edge of its header
+#' (`RentLens.setupTable()`). Distance columns to the renter's own places
+#' ("To Mum's (km)") are tinted light green.
 #'
 #' @param search What the search box looks in: "project" (the Project
 #'   column only; the default when there is one), "rental" (every column,
 #'   for tables of single rentals) or "table" (every column).
+#' @param hide Names of columns to hide at first; `character()` hides none.
+#' @param star An input id (already namespaced, `session$ns("star")`): adds a
+#'   star at the left of each row that adds that option to the shortlist or
+#'   takes it off. Clicks arrive as `input$star$key`, a `shortlist_key()`.
+#'   Needs Project and Bedrooms columns. The star isn't a real column: no
+#'   header, no sorting, not in the Columns menu.
 #' @noRd
 rl_datatable <- function(s, page_length = 10, selection = "multiple", escape = TRUE,
-                         search = if ("Project" %in% names(s)) "project" else "table", ...) {
+                         search = if ("Project" %in% names(s)) "project" else "table",
+                         hide = detail_cols, star = NULL, ...) {
   search <- match.arg(search, c("project", "rental", "table"))
+  star_col <- if (!is.null(star)) " "
+  if (!is.null(star)) {
+    s <- cbind(data.frame(` ` = shortlist_key(s$Project, s$Bedrooms), check.names = FALSE), s)
+  }
+  idx <- function(cols) which(names(s) %in% cols) - 1   # DataTables counts from 0
   # Other columns can't be searched when the box is for projects
-  not_searched <- if (search == "project") which(names(s) != "Project") - 1
+  not_searched <- if (search == "project") idx(setdiff(names(s), "Project")) else idx(star_col)
+  hidden <- idx(setdiff(hide, c("Project", star_col)))
+  defs <- list()
+  if (!is.null(star)) defs <- c(defs, list(list(
+    targets = 0, orderable = FALSE, className = "rl-star-cell", width = "1.75rem",
+    render = DT::JS(sprintf(paste(
+      "function (d, type) {",
+      "  if (type !== 'display') return d;",
+      "  return window.RentLens ? RentLens.starButton(d, '%s') : '';",
+      "}"), star)))))
+  if (length(not_searched)) defs <- c(defs, list(list(searchable = FALSE, targets = not_searched)))
+  if (length(hidden)) defs <- c(defs, list(list(visible = FALSE, targets = hidden)))
+  # Distance to the renter's own places ("To Mum's (km)", place_column()):
+  # tinted green, so their own columns stand out from the data's
+  places <- idx(grep("^To .* \\(km\\)$", names(s), value = TRUE))
+  if (length(places)) defs <- c(defs, list(list(targets = places, className = "dt-place")))
+  if ("District" %in% names(s)) defs <- c(defs, list(list(
+    targets = idx("District"), className = "dt-district",
+    render = DT::JS(
+      "function (d, type) {",
+      "  if (type !== 'display' || d == null) return d;",
+      "  return '<span class=\"dt-clip\" title=\"' + d + '\">' + d + '</span>';",
+      "}"))))
+  options <- list(pageLength = page_length, order = list(), scrollX = TRUE,
+                  dom = '<"dt-top"f>t<"dt-bottom"ip>',
+                  columnDefs = if (length(defs)) defs,
+                  language = list(search = "", searchPlaceholder = paste("Search", search)))
+  extensions <- character()
+  if (length(hidden)) {
+    extensions <- "Buttons"
+    options$dom <- '<"dt-top"Bf>t<"dt-bottom"ip>'
+    options$buttons <- list(list(extend = "colvis", text = "Columns", className = "dt-columns",
+                                 columns = idx(setdiff(names(s), c("Project", star_col)))))
+  }
+  # Column widths can be dragged; widths and shown columns are remembered
+  options$initComplete <- DT::JS(
+    "function () { if (window.RentLens) RentLens.setupTable(this.api()); }")
   datatable(s, rownames = FALSE, selection = selection, escape = escape,
             colnames = short_colnames(names(s)),
             class = "compact hover row-border",
-            options = list(pageLength = page_length, order = list(), scrollX = TRUE,
-                           dom = '<"dt-top"f>t<"dt-bottom"ip>',
-                           columnDefs = if (length(not_searched))
-                             list(list(searchable = FALSE, targets = not_searched)),
-                           language = list(search = "", searchPlaceholder = paste("Search", search))),
-            ...)
+            extensions = extensions, options = options, ...)
 }
 
 #' Column headers short enough not to stretch a table's header row:

@@ -15,26 +15,20 @@ mod_within_budget_ui <- function(id) {
       div(class = "d-flex flex-wrap gap-3 justify-content-between align-items-start mt-2",
           div(class = "text-muted small",
               "Each row is a project and bedroom type whose median recent rent is inside your ",
-              "budget. Select rows, then press 'Add to shortlist'."),
+              "budget. Press the star to add one to your shortlist."),
           min_rentals_input(ns("min_n")))
     ),
     nav_panel(
       "By district", value = "district", icon = icon("chart-bar"),
       plotly::plotlyOutput(ns("plot"), height = 620)
     ),
-    nav_spacer(),
-    # Rows are picked in the list, so the button only shows with it
-    nav_item(conditionalPanel(
-      "input.tab == 'list'", ns = ns,
-      actionButton(ns("add_short"), "Add to shortlist", icon = icon("star"),
-                   class = "btn-sm btn-primary")))
   )
 }
 
 #' @noRd
 mod_within_budget_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
-    setBookmarkExclude(c(dt_bookmark_inputs("table"), "add_short"))
+    setBookmarkExclude(c(dt_bookmark_inputs("table"), "star"))
 
     # One row per project + bedroom type whose recent median rent is in range
     within_data <- reactive({
@@ -74,11 +68,11 @@ mod_within_budget_server <- function(id, filters, shortlist) {
     output$table <- renderDT({
       s <- within_data() |> mutate(last = format(last, "%b %Y"))
       s <- prettify(s)
-      rl_datatable(s, page_length = 15) |> format_money_cols(s)
+      rl_datatable(s, page_length = 15, selection = "none", star = session$ns("star")) |>
+        format_money_cols(s)
     })
 
-    observeEvent(input$add_short, {
-      add_to_shortlist(shortlist, within_data(), input$table_rows_selected)
-    })
+    # The star at the left of each row
+    observeEvent(input$star, toggle_shortlist(shortlist, input$star$key))
   })
 }

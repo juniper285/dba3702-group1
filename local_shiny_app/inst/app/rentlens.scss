@@ -1,5 +1,41 @@
 // RentLens look and feel, added on top of the bslib theme (app_theme())
 
+// ---- Rendering details ---------------------------------------------------
+// Crisper, lighter text on macOS (other systems ignore these)
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+// Raised surfaces (cards, tiles, place rows) get a see-through shadow ring
+// instead of a solid grey border: it looks right on any background
+:root {
+  --rl-shadow-border:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --rl-shadow-border-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 2px -1px rgba(0, 0, 0, 0.08),
+    0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+// Headings break into even lines; short text avoids a lone last word
+h1, h2, h3, h4, h5, h6, .verdict-title, .wizard-title, .modal-title { text-wrap: balance; }
+.page-intro p, .verdict-body, .kpi-note, .empty-state p, .card-footer,
+.place-search-tip, .chat-note { text-wrap: pretty; }
+// Numbers that change in place keep their width, so nothing jumps
+.kpi-value, .nav-badge, table.dataTable, .saved-areas-table,
+.area-slider .irs, .area-limit input { font-variant-numeric: tabular-nums; }
+// A slight press-in on buttons (none for people who ask for less motion)
+@media (prefers-reduced-motion: no-preference) {
+  .btn:not(.btn-link), .example-chip, .chips span {
+    transition-property: color, background-color, border-color, box-shadow, scale;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+  }
+  .btn:not(.btn-link):not(:disabled):active, .example-chip:active,
+  .chips label:active span { scale: 0.96; }
+}
+
 // ---- Navbar --------------------------------------------------------------
 // Stays at the top while scrolling, so the menu (and My filters) is always
 // in reach, e.g. after the setup wizard scrolls down to the options list
@@ -37,7 +73,7 @@
   margin: 0.25rem 0 0.5rem;
   h4 { font-weight: 700; margin-bottom: 0.15rem; letter-spacing: -0.01em; }
 }
-.card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+.card { border: 0; box-shadow: var(--rl-shadow-border); }
 .card-header {
   background: #fff;
   font-weight: 600;
@@ -83,14 +119,21 @@
   align-items: center;
   padding: 0.9rem 1.1rem;
   margin-bottom: 1rem;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   .settings-icon {
     width: 2.5rem; height: 2.5rem; flex: none;
     display: flex; align-items: center; justify-content: center;
     border-radius: 999px; background: rgba($primary, 0.1); color: $primary;
   }
+}
+// The whole box opens My filters (settings.js), so it reacts like a button
+.settings-summary {
+  cursor: pointer;
+  transition-property: box-shadow, background-color;
+  transition-duration: 0.15s; transition-timing-function: ease-out;
+  &:hover { box-shadow: 0 0 0 1px rgba($primary, 0.45), 0 2px 6px rgba(0, 0, 0, 0.06); }
 }
 .settings-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .settings-chip {
@@ -135,8 +178,8 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   .place-icon {
     width: 2.1rem; height: 2.1rem; flex: none;
@@ -154,9 +197,15 @@
     font-weight: 500;
   }
   .place-address { font-size: 0.875rem; color: $text-muted; }
-  .place-edit { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $primary; } }
-  .place-remove { color: $text-muted; padding: 0.25rem 0.5rem; &:hover { color: $danger; } }
-  &.is-editing { border-color: $primary; box-shadow: 0 0 0 1px $primary; }
+  // icon-only links: a 40 px square to click, not just the icon
+  .place-edit, .place-remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2.5rem; min-height: 2.5rem; border-radius: $border-radius;
+    color: $text-muted;
+  }
+  .place-edit:hover { color: $primary; }
+  .place-remove:hover { color: $danger; }
+  &.is-editing { box-shadow: 0 0 0 2px $primary; }
 }
 .place-editing {
   font-size: 0.875rem;
@@ -236,7 +285,6 @@
     border-radius: 999px;
     font-size: 0.875rem;
     background: #fff;
-    transition: all 0.12s ease;
   }
   label:hover span { border-color: $primary; }
   input:checked + span { background: $primary; border-color: $primary; color: #fff; }
@@ -247,8 +295,8 @@
 // ---- Headline tiles ------------------------------------------------------
 .kpi {
   background: #fff;
-  border: 1px solid $border-color;
   border-radius: $border-radius-lg;
+  box-shadow: var(--rl-shadow-border);
   padding: 0.9rem 1.1rem;
   height: 100%;
   .kpi-label {
@@ -308,14 +356,15 @@
   h5 { font-weight: 700; }
 }
 .example-chip {
-  border: 1px solid $border-color;
+  border: 0;
+  box-shadow: var(--rl-shadow-border);
   background: #fff;
   border-radius: 999px;
   padding: 0.2rem 0.75rem;
   margin: 0.2rem;
   font-size: 0.85rem;
   color: $primary;
-  &:hover { border-color: $primary; background: rgba($primary, 0.06); }
+  &:hover { box-shadow: 0 0 0 1px $primary; background: rgba($primary, 0.06); }
 }
 
 // ---- Map -----------------------------------------------------------------
@@ -329,7 +378,12 @@
   padding: 0.3rem 0; border-bottom: 1px solid $border-color; font-size: 0.875rem;
   .saved-area-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; flex: none; }
   .saved-area-name { word-break: break-word; }
-  .saved-area-edit, .saved-area-remove { color: $text-muted; padding: 0 0.3rem; }
+  // as big as the row allows without the rows' buttons overlapping
+  .saved-area-edit, .saved-area-remove {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2rem; min-height: 2rem; border-radius: $border-radius;
+    color: $text-muted;
+  }
   .saved-area-edit:hover { color: $primary; }
   .saved-area-remove:hover { color: $danger; }
 }
@@ -342,7 +396,16 @@
 
 // ---- Tables --------------------------------------------------------------
 .dataTables_wrapper {
-  .dt-top { display: flex; justify-content: flex-end; margin-bottom: 0.25rem; }
+  .dt-top { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; }
+  // "Columns" (rl_datatable()): left, the search box right
+  .dt-buttons { margin-right: auto; }
+  .dt-buttons .dt-columns {
+    border: 0; border-radius: 999px; padding: 0.3rem 0.85rem;
+    background: #fff; box-shadow: var(--rl-shadow-border);
+    font-size: 0.85rem; font-weight: 500; color: $primary;
+    &::before { content: "\2630"; margin-right: 0.4rem; }   // a small "list" glyph
+    &:hover { box-shadow: 0 0 0 1px $primary; background: rgba($primary, 0.06); }
+  }
   .dataTables_filter input {
     border: 1px solid $border-color;
     border-radius: 999px;
@@ -351,14 +414,82 @@
   }
   .dt-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.85rem; }
 }
+// Shortlist stars at the left of a table (rl_datatable(star =)): one SVG,
+// outline when off and filled when on; a 32 px target in a dense table
+table.dataTable td.rl-star-cell { padding: 0 !important; width: 2rem; text-align: center; vertical-align: top; }
+.rl-star {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 999px;
+  background: none; color: $text-muted; cursor: pointer;
+  transition-property: color, background-color, scale;
+  transition-duration: 0.15s; transition-timing-function: ease-out;
+  svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+  &:hover { color: #b45309; background: rgba(#f59e0b, 0.12); }
+  &:active { scale: 0.96; }
+  &.is-on { color: #f59e0b; svg { fill: currentColor; } }
+  &:focus-visible { outline: 2px solid rgba($primary, 0.5); outline-offset: 1px; }
+}
+
+// The renter's own places ("To Mum's (km)"): light green, like the My filters chips
+table.dataTable {
+  td.dt-place { background-color: #f0fdf4; color: #166534; text-align: right; }
+  thead th.dt-place { background-color: #dcfce7; color: #166534; text-align: right; }
+  tbody tr:hover td.dt-place { background-color: #dcfce7; }
+}
+
+// Resizable columns (RentLens.setupTable()): a handle on each header's right edge
+table.dataTable thead th { position: relative; }
+.dt-resize {
+  position: absolute; top: 0; right: -4px; bottom: 0; width: 9px; z-index: 2;
+  cursor: col-resize;
+  &::after {   // a thin line that shows on hover
+    content: ""; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px;
+    background: $border-color; transition: background-color 0.1s ease-out;
+  }
+  &:hover::after { background: $primary; top: 0; bottom: 0; width: 2px; }
+}
+body.dt-resizing, body.dt-resizing * { cursor: col-resize !important; user-select: none; }
+// District names: one line, cut with "…" (full name on hover); wider when the column is widened
+.dt-clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 11rem; }
+
+// Star chips (star_chip()): "☆ 2 bedrooms" under a selected building on the map
+.sel-stars { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: -0.25rem 0 0.75rem; .small { width: 100%; } }
+.rl-star.rl-star-chip {
+  width: auto; height: auto; gap: 0.35rem; padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+  background: #fff; box-shadow: var(--rl-shadow-border);
+  font-size: 0.85rem; color: $body-color;
+  svg { color: $text-muted; }
+  &:hover { background: rgba(#f59e0b, 0.1); svg { color: #b45309; } }
+  &.is-on { background: rgba(#f59e0b, 0.14); box-shadow: 0 0 0 1px rgba(#f59e0b, 0.6); svg { color: #f59e0b; } }
+}
+
+// Shortlist toasts (shortlist_toast()): the link reads on the coloured background
+.toast .toast-link { color: inherit; font-weight: 600; text-decoration: underline; margin-left: 0.25rem; white-space: nowrap; }
+
+// The colvis menu: one row per column, a tick for those shown
+div.dt-button-collection {
+  border-radius: $border-radius-lg; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  .dt-button {
+    text-align: left; border: 0; background: none; border-radius: $border-radius;
+    font-size: 0.875rem; color: $text-muted;
+    &::before { content: ""; display: inline-block; width: 1.2rem; }
+    &.dt-button-active { color: $body-color; background: none; }
+    &.dt-button-active::before { content: "\2713"; color: $primary; font-weight: 700; }
+    &:hover { background: rgba($primary, 0.08); }
+  }
+}
 table.dataTable {
   font-size: 0.9rem;
+  td.dt-district { white-space: nowrap; }
   // Headers on one line: wrapped headers made a tall, mostly empty header
   // row above every table (wide tables scroll sideways instead)
   thead th { font-weight: 600; color: $text-muted; border-bottom: 1px solid $border-color !important;
              white-space: nowrap; }
   tbody tr.selected > * { box-shadow: inset 0 0 0 9999px rgba($primary, 0.12) !important; color: inherit !important; }
 }
+
+// While a chart or table updates, Shiny fades it out; keep it readable
+:root { --shiny-fade-opacity: 0.6; }
 
 // ---- Small screens -------------------------------------------------------
 @media (max-width: 576px) {

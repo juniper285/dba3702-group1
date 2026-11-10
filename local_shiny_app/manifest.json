@@ -3238,13 +3238,13 @@
       "checksum": "f4704e301b783f5b91dd294273b72f4e"
     },
     "inst/app/rentlens.scss": {
-      "checksum": "f7aa0267db08d748f5319a5b87b3e75e"
+      "checksum": "f795c47e34b00ad2faead085b5d49d85"
     },
     "inst/app/www/chat.js": {
       "checksum": "76559049cd1753212c9f485c2647bac3"
     },
     "inst/app/www/settings.js": {
-      "checksum": "d9ca572b5e8049061d3ba7108500679b"
+      "checksum": "559498e54c549a143c641c5055d7b641"
     },
     "inst/extdata/mrt_lines.rds": {
       "checksum": "da18d217946f2341e1bf2415dfed3d65"
@@ -3265,10 +3265,10 @@
       "checksum": "d53883cb84528ce3568964b4ba310a1c"
     },
     "R/app_config.R": {
-      "checksum": "fad792fc499bb6da453d96cc57fc6def"
+      "checksum": "10f2c95b4cb0ede1461cf1a5b8065fc1"
     },
     "R/app_server.R": {
-      "checksum": "4f4638fffa2aa4e1db5f2092d3392748"
+      "checksum": "07a02829d93247ceea629a12cb58c97c"
     },
     "R/app_ui.R": {
       "checksum": "9f3c9ec8d2206d433f6d70dc27494c7a"
@@ -3292,19 +3292,19 @@
       "checksum": "a93a748d90de907995a58f8d2abeda7f"
     },
     "R/fct_settings.R": {
-      "checksum": "6606b166ab34655a7d4459557882e7c9"
+      "checksum": "f57e547d11103f82896de48f7941f770"
     },
     "R/mod_about.R": {
-      "checksum": "16137c43451ff2e5be80cdafa17906a2"
+      "checksum": "b18a2d09072a115b61d522c1f33d9cd9"
     },
     "R/mod_budget_check.R": {
       "checksum": "07e2e3fa1adff6f0f48875061b7f2153"
     },
     "R/mod_chat.R": {
-      "checksum": "79906c90d9844fff036d64414d639f5f"
+      "checksum": "24d3807c9074a4dc8b0f62d165b77e1b"
     },
     "R/mod_compare.R": {
-      "checksum": "dd4c833e73427793446e0e5ad68c7c33"
+      "checksum": "f70a272295c8dd4ff3679b5ee008fff2"
     },
     "R/mod_filters.R": {
       "checksum": "79f8a02931d80366bd5f282c2a0084c0"
@@ -3313,28 +3313,28 @@
       "checksum": "49c365907457772996bc555c2d46364c"
     },
     "R/mod_map.R": {
-      "checksum": "c7d24d8407dbc5f9b5e5802562ddb63e"
+      "checksum": "de7baec0062c552c37f15a51e7981791"
     },
     "R/mod_properties.R": {
-      "checksum": "a84fd416a4261089e0bdcdb345d4f412"
+      "checksum": "4d6eebaac29b7e35a6ea054c0757f742"
     },
     "R/mod_saved_areas.R": {
       "checksum": "62172090066149dbc9b2a63248dec9cc"
     },
     "R/mod_settings.R": {
-      "checksum": "e82d9821d94f05bd3a06dfc51bd757c7"
+      "checksum": "38adbf527181b4cee37278e3c926fcc1"
     },
     "R/mod_shortlist.R": {
-      "checksum": "faa41df73bd627b8751f4feaffe7db7c"
+      "checksum": "cbd5070c21916f9e03605788b941f40b"
     },
     "R/mod_transactions.R": {
       "checksum": "034e9b46971349e97ef9a50f1992d76d"
     },
     "R/mod_value.R": {
-      "checksum": "f3555eae12941afcbe71abd6adceac66"
+      "checksum": "739a831554c58c52a1e668fcd254a4a1"
     },
     "R/mod_within_budget.R": {
-      "checksum": "d16f059ce90af26e6ccf21a796e61eec"
+      "checksum": "1a8f6bd353ae9bb82ab36118cf5c143a"
     },
     "R/rentalapp-package.R": {
       "checksum": "d195669a517fb7cf7586f15e3bc0d7cd"
@@ -3346,13 +3346,13 @@
       "checksum": "c462a0085bf29fc331865e11855d89f2"
     },
     "R/utils_format.R": {
-      "checksum": "c2b7541a1335d4a40344dd6be0b05bf6"
+      "checksum": "8a1dc86355e66fae25b3fbf51b0c6d69"
     },
     "R/utils_ui.R": {
-      "checksum": "07a828182a2d192ffe0b5f7642b0abd4"
+      "checksum": "ce760ba0044e20a36240143fb31b5745"
     },
     "README.md": {
-      "checksum": "b2ece2ab0fb86ed97103721410ced942"
+      "checksum": "b5f003f6e0e33ac8c8315c68ca5bfefb"
     }
   },
   "users": null

@@ -5,6 +5,17 @@
 #' @noRd
 app_sys <- function(...) system.file(..., package = "rentalapp")
 
+#' Version for one of our scripts, taken from its contents
+#'
+#' The version is part of the script's web address, so a changed file gets a
+#' new address and browsers can't keep using an old copy.
+#' @param file A file name in inst/app/www.
+#' @noRd
+asset_version <- function(file) {
+  hash <- unname(tools::md5sum(app_sys("app", "www", file)))
+  paste0("1.0.", strtoi(substr(hash, 1, 7), 16L))
+}
+
 #' Bootstrap theme shared by every page (styles in inst/app/rentlens.scss)
 #'
 #' The Inter font is linked from Google Fonts; offline, the system font is used.

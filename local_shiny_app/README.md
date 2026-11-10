@@ -64,6 +64,12 @@ local_shiny_app/
   `settings.js`.
 - Rental data is read once per R session by `rentals_data()` (`fct_data.R`),
   which also attaches each contract's nearest MRT/LRT station.
+- Every table goes through `rl_datatable()` (`utils_ui.R`). Detail columns
+  (`detail_cols`) start hidden behind a "Columns" button; a table keeps one in
+  view with `hide = setdiff(detail_cols, ...)`, or shows all with
+  `hide = character()`. Which columns each table shows is remembered in the
+  browser by `settings.js` (`RentLens.setupTable()`), with any column widths
+  set by dragging a header's edge (double-click resets it).
 
 ### My filters and the setup wizard
 
@@ -79,7 +85,7 @@ calls them "My filters".
 - Nothing saved = first visit: `mod_settings_server()` opens the setup wizard
   (budget, places, where to search, type of home, commute and MRT, with a
   preview of the closest homes). Finishing saves the settings, opens the Search
-  page and shows a tip on the options list and "Add to shortlist".
+  page and shows a tip on the options list and its shortlist stars.
 - "My filters" (navbar) or "Edit my filters" (the My filters box at the top
   of every page) opens the same sections as tabs. "Start over" clears the saved settings and reruns the
   wizard. To see the wizard again while developing, run

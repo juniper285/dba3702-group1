@@ -7,27 +7,26 @@ mod_shortlist_ui <- function(id) {
   ns <- NS(id)
   tagList(
     page_intro("Your shortlist",
-               "Compare the options you saved from Budget, Map and Check a listing."),
+               "Compare the options you saved from Search, Map and Check a listing."),
     conditionalPanel(
       "output.is_empty", ns = ns,
       card(empty_state("star", "Nothing shortlisted yet",
-                       p(HTML(paste0("On the <b>Search</b> or <b>Map</b> page, select rows in a ",
-                                     "table and press <b>Add to shortlist</b>. On <b>Check a ",
-                                     "listing</b>, add the project you are checking.")))))
+                       p(HTML(paste0("On the <b>Search</b> or <b>Map</b> page, press the star ",
+                                     "next to a home. On <b>Check a listing</b>, add the ",
+                                     "project you are checking.")))))
     ),
     conditionalPanel(
       "!output.is_empty", ns = ns,
       card(
         header_with_actions(
           "Saved options",
-          actionButton(ns("remove"), "Remove selected", icon = icon("trash-can"),
-                       class = "btn-sm btn-outline-secondary"),
           actionButton(ns("clear"), "Clear all", icon = icon("xmark"),
                        class = "btn-sm btn-outline-secondary"),
           downloadButton(ns("download"), "Download CSV", class = "btn-sm btn-primary")
         ),
         DTOutput(ns("table"), fill = FALSE),
-        card_footer("Figures use each option's rentals in the most recent period, ",
+        card_footer("Press a star to take that option off your shortlist. ",
+                    "Figures use each option's rentals in the most recent period, ",
                     "regardless of the other filters, so your shortlist stays comparable. ",
                     "Use 'Save search' on the Search page to keep a link to it.")
       ),
@@ -37,7 +36,7 @@ mod_shortlist_ui <- function(id) {
           card_header("Shortlist at a glance"),
           plotly::plotlyOutput(ns("plot"), height = 420),
           card_footer("Dot = median rent, line = typical range (middle 50%). ",
-                      "Red band = your budget range.")
+                      "Green band = your budget range.")
         ),
         card(
           card_header("How their rents have moved"),
@@ -52,7 +51,13 @@ mod_shortlist_ui <- function(id) {
 #' @noRd
 mod_shortlist_server <- function(id, filters, shortlist) {
   moduleServer(id, function(input, output, session) {
-    setBookmarkExclude(c(dt_bookmark_inputs("table"), "remove", "clear"))
+    setBookmarkExclude(c(dt_bookmark_inputs("table"), "star", "clear"))
+
+    # Fill in the stars in every table (settings.js, "rentlens-shortlist")
+    observe({
+      sl <- shortlist()
+      session$sendCustomMessage("rentlens-shortlist", as.list(shortlist_key(sl$project, sl$bed_group)))
+    })
 
     # Every rental of the shortlisted options in the chosen time period
     short_contracts <- reactive({
@@ -86,7 +91,8 @@ mod_shortlist_server <- function(id, filters, shortlist) {
 
     output$table <- renderDT({
       s <- prettify(short_data())
-      rl_datatable(s, page_length = 25, escape = FALSE) |>
+      rl_datatable(s, page_length = 25, escape = FALSE, selection = "none",
+                   star = session$ns("star")) |>
         format_money_cols(s) |>
         formatStyle("Budget fit",
                     color = styleEqual(c("Within range", "Below range", "Above range"),
@@ -94,15 +100,8 @@ mod_shortlist_server <- function(id, filters, shortlist) {
                     fontWeight = "bold")
     })
 
-    observeEvent(input$remove, {
-      rows <- input$table_rows_selected
-      if (length(rows) == 0) {
-        showNotification("Select rows in your shortlist to remove.", type = "warning")
-        return()
-      }
-      gone <- short_data()[rows, c("project", "bed_group")]
-      shortlist(anti_join(shortlist(), gone, by = c("project", "bed_group")))
-    })
+    # Every star here is on; pressing one takes that option off
+    observeEvent(input$star, toggle_shortlist(shortlist, input$star$key))
 
     observeEvent(input$clear, shortlist(empty_shortlist()))
 
@@ -157,10 +156,48 @@ mod_shortlist_server <- function(id, filters, shortlist) {
 #' @noRd
 add_to_shortlist <- function(shortlist, options, rows) {
   if (length(rows) == 0) {
-    showNotification("Select one or more rows in the table first.", type = "warning")
+    shortlist_toast("Select one or more rows in the table first.", added = FALSE)
     return(invisible())
   }
   new <- as.data.frame(options[rows, c("project", "bed_group")])
   shortlist(unique(rbind(shortlist(), new)))
-  showNotification(paste(length(rows), "option(s) added to your shortlist."), type = "message")
+  shortlist_toast(paste(length(rows), "option(s) added to your shortlist."))
+}
+
+#' One text key per shortlist option, used by the table stars
+#' @noRd
+shortlist_key <- function(project, bed_group) paste(project, bed_group, sep = " | ")
+
+#' Star or unstar one option (a star in a table, see `rl_datatable(star =)`)
+#'
+#' @param key A `shortlist_key()`.
+#' @return TRUE if it was added, FALSE if removed (invisibly).
+#' @noRd
+toggle_shortlist <- function(shortlist, key) {
+  sl <- shortlist()
+  have <- shortlist_key(sl$project, sl$bed_group) == key
+  parts <- strsplit(key, " | ", fixed = TRUE)[[1]]
+  beds <- parts[length(parts)]
+  what <- paste0(paste(parts[-length(parts)], collapse = " | "), " (",
+                 if (beds == "Unknown") "bedrooms unknown"
+                 else paste(beds, if (beds == "1") "bedroom" else "bedrooms"), ")")
+  if (any(have)) {
+    shortlist(sl[!have, , drop = FALSE])
+    shortlist_toast(paste(what, "removed from your shortlist."), added = FALSE)
+  } else {
+    new <- data.frame(project = paste(parts[-length(parts)], collapse = " | "), bed_group = beds)
+    shortlist(rbind(sl, new))
+    shortlist_toast(paste(what, "added to your shortlist."))
+  }
+  invisible(!any(have))
+}
+
+#' A small pop-up message (top right) after the shortlist changes, with a link to it
+#' @noRd
+shortlist_toast <- function(text, added = TRUE) {
+  go <- "document.querySelector('.navbar a[data-value=\"shortlist\"]').click(); return false;"
+  show_toast(toast(
+    text, if (added) tags$a(href = "#", class = "toast-link", onclick = go, "View shortlist"),
+    icon = icon(if (added) "star" else "star-half-stroke"),
+    type = if (added) "success" else "secondary", duration_s = 4))
 }

@@ -49,7 +49,7 @@ nice_names <- c(
   p75 = "75th percentile", psf = "Median S$ psf", n = "Recent rentals",
   within = "Share within budget", last = "Last rented", fits = "Budget fit",
   mrt_station = "Nearest MRT/LRT",
-  mrt_m = "Distance to MRT/LRT (m)", walk_min = "Walk to MRT/LRT (min, est.)",
+  mrt_m = "Distance to MRT/LRT (m)", walk_min = "Walk to MRT (min)",
   listings = "Listings"
 )
 

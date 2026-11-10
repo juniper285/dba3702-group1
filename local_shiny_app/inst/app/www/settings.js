@@ -18,9 +18,12 @@
 
   // Point at an element with a one-off popover (after the setup wizard);
   // it closes on the next click anywhere
-  function coach(m) {
+  function coach(m, tries) {
+    tries = tries || 0;
     setTimeout(function () {
       var el = document.querySelector(m.selector);
+      // the table may still be drawing: try again for a few seconds
+      if (!el && tries < 10) { coach(m, tries + 1); return; }
       if (!el || !window.bootstrap) return;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       var pop = bootstrap.Popover.getOrCreateInstance(el, {
@@ -184,7 +187,134 @@
     setTimeout(function () { setupArea(el); }, 0);
   });
 
-  window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped };
+  // ---- Tables (rl_datatable() in R): remember which columns each table
+  // shows and how wide they are, by column name, so a new place's distance
+  // column doesn't shift the others. Called on every render, so the choice
+  // survives new filters.
+  function tableStore(api) {
+    var id = $(api.table().container()).closest(".datatables").attr("id");
+    if (!id) return null;
+    var key = "rentlens-columns-" + id;
+    return {
+      read: function () {
+        try { return JSON.parse(window.localStorage.getItem(key) || "null") || {}; }
+        catch (e) { return {}; }
+      },
+      write: function (s) {
+        try { window.localStorage.setItem(key, JSON.stringify(s)); } catch (e) { /* this session only */ }
+      }
+    };
+  }
+  function colName(api, i) { return $(api.column(i).header()).text(); }
+
+  // Give column i a fixed width (px), or null for its natural width. Body
+  // cells hold the width; adjust() then copies it to the scrolling header.
+  function setWidth(api, i, w) {
+    var css = w ? w + "px" : "";
+    $(api.column(i).header()).css({ width: css, minWidth: css });
+    $(api.column(i).nodes()).css({ width: css, minWidth: css })
+      .find(".dt-clip").css("max-width", w ? (w - 16) + "px" : "");
+  }
+
+  function setupTable(api) {
+    var store = tableStore(api);
+    if (!store) return;
+    var saved = store.read();
+    api.columns().every(function (i) {
+      var n = colName(api, i);
+      if ((saved.shown || []).indexOf(n) >= 0) this.visible(true, false);
+      if ((saved.hidden || []).indexOf(n) >= 0) this.visible(false, false);
+      if (saved.widths && saved.widths[n]) setWidth(api, i, saved.widths[n]);
+    });
+    api.columns.adjust();
+
+    var save = function (change) {
+      var s = store.read();
+      change(s);
+      store.write(s);
+    };
+    $(api.table().node()).off("column-visibility.dt.rentlens")
+      .on("column-visibility.dt.rentlens", function () {
+        save(function (s) {
+          s.shown = []; s.hidden = [];
+          api.columns().every(function (i) { (this.visible() ? s.shown : s.hidden).push(colName(api, i)); });
+        });
+      });
+
+    // A drag handle on the right edge of each header (not the star column)
+    api.columns().every(function (i) {
+      var th = this.header();
+      if (!th || th.querySelector(".dt-resize") || !colName(api, i).trim()) return;
+      var grip = document.createElement("span");
+      grip.className = "dt-resize";
+      grip.title = "Drag to resize; double-click to reset";
+      th.appendChild(grip);
+      grip.addEventListener("click", function (e) { e.stopPropagation(); });   // don't sort
+      grip.addEventListener("dblclick", function (e) {
+        e.stopPropagation();
+        setWidth(api, i, null);
+        api.columns.adjust();
+        save(function (s) { if (s.widths) delete s.widths[colName(api, i)]; });
+      });
+      grip.addEventListener("mousedown", function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var x0 = e.clientX, w0 = th.getBoundingClientRect().width, w = w0, frame = null;
+        document.body.classList.add("dt-resizing");
+        var move = function (ev) {
+          w = Math.max(48, Math.round(w0 + ev.clientX - x0));
+          if (frame) return;
+          frame = requestAnimationFrame(function () { frame = null; setWidth(api, i, w); api.columns.adjust(); });
+        };
+        var up = function () {
+          document.removeEventListener("mousemove", move);
+          document.removeEventListener("mouseup", up);
+          document.body.classList.remove("dt-resizing");
+          save(function (s) { s.widths = s.widths || {}; s.widths[colName(api, i)] = w; });
+        };
+        document.addEventListener("mousemove", move);
+        document.addEventListener("mouseup", up);
+      });
+    });
+  }
+
+  // ---- The "My filters" box at the top of each page: a click anywhere on it
+  // opens My filters, like its "Edit my filters" button (filter_box_ui())
+  $(document).on("click", ".settings-summary", function (e) {
+    if ($(e.target).closest(".edit-filters, a, button, input").length) return;
+    var btn = this.querySelector(".edit-filters");
+    if (btn) btn.click();
+  });
+
+  // ---- Stars (rl_datatable(star =) in R): one per row, adds the option to
+  // the shortlist or takes it off. The server sends the starred options
+  // ("rentlens-shortlist") whenever the shortlist changes.
+  var starred = {};
+  var STAR_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '<path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>';
+  function starButton(key, inputId) {
+    var on = !!starred[key];
+    var safe = String(key).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    return '<button type="button" class="rl-star' + (on ? " is-on" : "") + '" data-key="' + safe +
+      '" data-input="' + inputId + '" aria-pressed="' + on + '" title="' +
+      (on ? "Remove from shortlist" : "Add to shortlist") + '">' + STAR_SVG + "</button>";
+  }
+  function paintStars() {
+    $(".rl-star").each(function () {
+      var on = !!starred[this.getAttribute("data-key")];
+      this.classList.toggle("is-on", on);
+      this.setAttribute("aria-pressed", on);
+      this.title = on ? "Remove from shortlist" : "Add to shortlist";
+    });
+  }
+  $(document).on("click", ".rl-star", function (e) {
+    e.stopPropagation();   // a star click shouldn't also select the row
+    this.classList.toggle("is-on");   // at once; the server confirms
+    Shiny.setInputValue(this.getAttribute("data-input"),
+                        { key: this.getAttribute("data-key"), at: Date.now() }, { priority: "event" });
+  });
+
+  window.RentLens = { searchPlaces: searchPlaces, renderPlace: renderPlace, renderTyped: renderTyped,
+                      setupTable: setupTable, starButton: starButton };
 
   // ---- Optional settings (optional_block() in R): using a greyed-out
   // control turns its option on, "Clear" turns it off ----
@@ -217,6 +347,11 @@
   Shiny.addCustomMessageHandler("rentlens-save-settings", function (json) { write(json); });
   Shiny.addCustomMessageHandler("rentlens-clear-settings", function (_) { write(null); });
   Shiny.addCustomMessageHandler("rentlens-coach", function (m) { coach(m); });
+  Shiny.addCustomMessageHandler("rentlens-shortlist", function (keys) {
+    starred = {};
+    (keys || []).forEach(function (k) { starred[k] = true; });
+    paintStars();
+  });
   // Saved map areas (mod_map.R), kept like the settings
   var AREAS_KEY = "rentlens-areas";
   Shiny.addCustomMessageHandler("rentlens-save-areas", function (json) {

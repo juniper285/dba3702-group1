@@ -60,7 +60,7 @@ Rscript -e 'pkgload::load_all(); run_app(options = list(port = 4321))'   # app a
 | `R/_disable_autoload.R` | Stops Shiny from sourcing `R/` itself; the package loader does it instead |
 | `R/rentalapp-package.R` | Package-wide `@import shiny/bslib/leaflet` and other `@importFrom` tags |
 | `R/run_app.R` | `run_app()`, the only exported function. It enables URL bookmarking |
-| `R/app_config.R` | `app_sys()` builds paths into `inst/`. `app_theme()` is the bslib theme, plus `inst/app/rentlens.scss` |
+| `R/app_config.R` | `app_sys()` builds paths into `inst/`. `asset_version()` versions our scripts by content, so browsers never keep an old copy. `app_theme()` is the bslib theme, plus `inst/app/rentlens.scss` |
 | `R/app_ui.R` | The navbar and its pages, listed below. The **Search** page has `value = "budget"` (an old name, kept for links and `nav_select`) |
 | `R/app_server.R` | Wires the modules together. It creates the shared `settings`, `filters`, `shortlist` and map selection (the map module keeps the saved areas) |
 
@@ -83,7 +83,7 @@ Pages in `R/app_ui.R`:
 | `fct_listing.R` | "Check a listing": `onemap_search()` (OneMap API, cached per session), `comparable_sets()`, `asking_verdict()`, `district_region` |
 | `fct_map.R` | Leaflet building blocks: `base_map()`, `map_palette()`, `add_key_places()`, `add_station_layers()` (MRT/LRT lines and stations, one layer: `mrt_group`), `update_my_places()` (purple pins), `update_station_ring()`, `summarise_locations()`, draw toolbar and `drawn_to_sf()` |
 | `fct_chat.R` | The "Ask RentLens" chatbot: `chat_config()` (reads `SOCLAAS_*` env vars; NULL = no key, chat hidden), `chat_system_prompt()`, `new_rentlens_chat()` (ellmer client with five tools), and the tools' plain functions `chat_rent_stats()`, `chat_rank_areas()`, `chat_find_projects()`, `chat_rent_trend()`, plus `chat_where()` (district code/name, station, project, street → rentals), `chat_beds()`, `chat_types()`, `tool_json()` |
-| `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (30 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
+| `fct_settings.R` | The **My filters** model (called settings in the code). `default_settings()`, `settings_to_json()`/`settings_from_json()` (checks every field and falls back to its default), `settings_summary()` (one capitalised chip per filter). Places (`new_places()`, `place_kinds` (no Home: old Home places load as Other, labelled Home), `chosen_place()`, `place_address()`, `place_label()`, `title_case_place()`, which keeps acronyms like NUS in capitals; `settings.js` has a copy of its word lists). `recent_choices` (6 months to 5 years), `period_for()`, `place_km_max` (31 = "any"), `max_places`, `settings_dependency()` (loads `settings.js`) |
 
 ### `local_shiny_app/R/`: modules (`mod_*`), each with `mod_x_ui(id)` and `mod_x_server(id, ...)`
 
@@ -92,14 +92,14 @@ Pages in `R/app_ui.R`:
 | `mod_settings.R` | **My filters** and the **first-visit setup wizard**. `settings_section_ui()` builds the five sections: budget, places, where to search, type of home, commute. The wizard shows them one step at a time; the dialog shows them as tabs. `optional_block()` makes the optional commute settings, greyed out until used (with a "Clear" link). `read_settings_form()` turns inputs into settings. Places are added one at a time and edited with the pencil, which loads one back into the form. Floor area: the slider's scale stops at `area_max` (4,000), whose end means "up to the largest home" (`area_top()`, 24,650 sq ft); the Lower/Upper limit boxes (`area_lo`/`area_hi`, plus m² copies) hold exact limits and win over the slider in `read_settings_form()`. `settings.js` keeps the boxes, both units and the slider in step, and swaps in its own `prettify` for the two-line ft²/m² handle labels. The server returns `list(settings = reactiveVal, first_visit, save = function(s))` |
 | `mod_filters.R` | Adapter from settings to data, plus the Search page's quick District/Project filters. It returns the reactives every other page uses: `base`, `market` (with the map selection applied), `selection`, `comparables`, `budget`, `places`, `summary`, ... |
 | `mod_budget_check.R` | Search page: is my budget realistic? (verdict tiles and a histogram) |
-| `mod_within_budget.R` | Search page: options within budget table, with distance columns. Its "Add to shortlist" button gets the wizard's closing tip |
-| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", saved areas ("Save this area", up to `max_areas` = 4, renamed/removed in the side panel, kept in `localStorage["rentlens-areas"]` and Save search links, stored by building coordinates), "Only buildings within my budget" switch (on by default), "How to use the map" guide. Maps only Exact/Good geocodes (`well_located()` in `fct_map.R`). `new_map_selection()` |
+| `mod_within_budget.R` | Search page: options within budget table, with distance columns. Each row has a shortlist star (`rl_datatable(star =)`); the first star gets the wizard's closing tip |
+| `mod_map.R` | Map page: building circles, heatmap, MRT/school/key-place layers, my places, click and draw selection, "Apply map selection to all pages", saved areas ("Save this area", up to `max_areas` = 4, renamed/removed in the side panel, kept in `localStorage["rentlens-areas"]` and Save search links, stored by building coordinates), "Only buildings within my budget" switch (on by default), shortlist star chips per bedroom type when one building is selected (`star_chip()` in `utils_ui.R`), "How to use the map" guide. Maps only Exact/Good geocodes (`well_located()` in `fct_map.R`). `new_map_selection()` |
 | `mod_listing_check.R` | Check a listing: is an asking rent fair? Looks the address up with OneMap or takes a map pin. Flags verdicts based on fewer than `few_rentals` (5); `no_rentals_message()` in `fct_listing.R` |
 | `mod_compare.R` | Market → Compare areas (districts vs budget). Charts grow with the number of districts; heatmap numbers are placed by position, because plotly reads "1", "2" on a category axis as positions |
 | `mod_saved_areas.R` | "Compare saved areas" card under the map (2+ saved areas): `compare_areas()` table (areas as columns, Singapore in grey), rent by bedrooms and by quarter. Uses `area_data` from `mod_map_server()`: the filters' mapped rentals, **ignoring** the within-budget switch. The area list helpers (`new_saved_areas()`, `add_area()`, `name_area()`, `areas_to_json()`/`areas_from_json()`, `area_palette`) are in `fct_map.R` |
 | `mod_properties.R` | Market → Compare properties (up to three projects side by side) |
 | `mod_value.R` | Market → Value for money (rent vs floor area, ranked by psf) |
-| `mod_shortlist.R` | Shortlist page; `add_to_shortlist()` |
+| `mod_shortlist.R` | Shortlist page; `add_to_shortlist()` (Check a listing), `shortlist_key()`, `toggle_shortlist()` (the table stars), `shortlist_toast()` (bslib toast). Sends the starred keys to the browser as `rentlens-shortlist` |
 | `mod_transactions.R` | More → Rental records (raw table) |
 | `mod_chat.R` | "Ask RentLens": floating button on every page (`footer` of `page_navbar`) opening a faint-green pop-up window over the darkened page (a Bootstrap modal; `inst/app/www/chat.js` lets it be dragged by its title bar and remembers where in `localStorage["rentlens-chat-pos"]`), `shinychat::chat_ui()`/`chat_server()` with history off. The `my_filters` tool reads `filters` with `isolate()` |
 | `mod_about.R` | More → About the data (static text, so no server). Update it when a page's behaviour changes |
@@ -109,7 +109,7 @@ Pages in `R/app_ui.R`:
 | File | Main contents |
 |------|---------------|
 | `utils_format.R` | `money()`, `area_text()` (e.g. "500 - 1,200 sq ft (46 - 111 m²)"), `sqft_per_sqm`, `quarter_label()`, `prettify()`, `format_money_cols()`, `listing_link()` |
-| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short), `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
+| `utils_ui.R` | Shared UI: `rl_colours`, `kpi()`, `page_intro()`, `empty_state()`, `filter_box_ui()`/`filter_note_ui()`/`filter_chips()` (the "My filters" box at the top of each page), `more_options()`/`min_rentals_input()` (collapsed "More options"), `rl_plotly()`, `rl_datatable()` (its `search` box looks in the Project column only by default; `short_colnames()` keeps headers short; columns in `hide`, by default `detail_cols`, start hidden behind a "Columns" button, District cells stay on one line, and place-distance columns get the light-green `dt-place` class), `detail_cols`, `rent_histogram()`, `range_dot_chart()`, `dot_sizes()` |
 | `utils_bookmark.R` | `dt_bookmark_inputs()`: DataTable inputs to leave out of "Save search" links |
 
 ### `local_shiny_app/inst/`: files shipped with the app
@@ -128,6 +128,9 @@ What `inst/app/www/settings.js` does:
 - Sends `input$"settings-stored"`, which is `"none"` on a first visit.
 - Handles the `rentlens-save-settings`, `rentlens-clear-settings`, `rentlens-coach` and `rentlens-save-areas` messages, and sends the stored saved areas as `input$"map-stored_areas"`.
 - Provides the OneMap autocomplete (`window.RentLens.searchPlaces`).
+- Draws the shortlist stars (`RentLens.starButton()`), sends clicks as the table's `star` input, and fills them in from the `rentlens-shortlist` message.
+- Sets up every table (`RentLens.setupTable()`): remembers which columns are shown and their widths (`localStorage["rentlens-columns-<output id>"]`, by column name), and adds the drag handle on each header's edge to resize a column (double-click resets).
+- Opens My filters when you click anywhere on the "My filters" box at the top of a page (it presses the box's "Edit my filters" button).
 - Turns on a greyed optional block when you use it.
 - Clears the "no scrolling" style Bootstrap can leave on `<body>` after the wizard's chained dialogs close.
 
@@ -171,7 +174,7 @@ What `inst/app/www/settings.js` does:
   | Constant | Value | Means | Slider range shown |
   |---|---|---|---|
   | `mrt_max` | 2000 | any distance | 100–1,900 m |
-  | `place_km_max` | 30 | any distance | 1–29 km |
+  | `place_km_max` | 31 | any distance | 1–30 km (scale drawn from 0 so ticks fall every 5 km) |
   | `area_top()` | 24,650 (largest home in the data) | no upper limit on floor area; `area_max` (4000) is only where the slider's scale ends | |
 
 - **Settings live in the browser, not the server.** There are no accounts. To see the wizard again, use My filters → Start over, or run `localStorage.removeItem("rentlens-settings")` in the console. The period is always recomputed from `recent` and never stored on its own.
